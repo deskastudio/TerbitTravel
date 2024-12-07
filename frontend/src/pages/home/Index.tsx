@@ -1,6 +1,6 @@
 // src/pages/Home.tsx
-import MainLayout from "@/layouts/MainLayout";
-import Banner from "@/components/fragments/Banner";
+import MainLayout from "@/components/layouts/MainLayout";
+import Banner from "@/components/partials/mainPartials/Banner";
 
 const Home = () => {
   return (

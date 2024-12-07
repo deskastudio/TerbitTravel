@@ -1,8 +1,6 @@
 // src/layouts/MainLayout.tsx
 import { ReactNode } from "react";
-import Header from "@/components/fragments/Header";
-import Layanan from "@/components/fragments/Layanan";
-import Destinasi from "@/components/fragments/Destinasi";
+import Header from "@/components/partials/mainPartials/Header";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -19,8 +17,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         {children}
       </main>
 
-      <Layanan />
-      <Destinasi />
+      {/* Footer */}
     </>
   );
 };
