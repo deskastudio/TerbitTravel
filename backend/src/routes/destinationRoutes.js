@@ -22,14 +22,14 @@ const upload = multer({ storage });
 
 const router = express.Router();
 
-router.post("/add", upload.array("foto"), addDestination); // Tambah destinasi
-// Route untuk menambahkan destinasi
+// Tambah destinasi
+router.post("/add", upload.array("foto"), addDestination);
 /**
  * @swagger
  * /destination/add:
  *   post:
- *     summary: Add new destination
- *     description: Add a new destination including multiple photos.
+ *     summary: Add a new destination
+ *     description: Add a new destination including name, location, description, and multiple images.
  *     tags: [Destination]
  *     requestBody:
  *       required: true
@@ -40,13 +40,13 @@ router.post("/add", upload.array("foto"), addDestination); // Tambah destinasi
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "Pantai Kuta"
+ *                 example: "Pantai Indah"
  *               lokasi:
  *                 type: string
- *                 example: "Bali, Indonesia"
+ *                 example: "Bali"
  *               deskripsi:
  *                 type: string
- *                 example: "Pantai Kuta adalah salah satu destinasi wisata yang terkenal di Bali."
+ *                 example: "Pantai yang indah dengan pasir putih."
  *               foto:
  *                 type: array
  *                 items:
@@ -55,25 +55,26 @@ router.post("/add", upload.array("foto"), addDestination); // Tambah destinasi
  *     responses:
  *       201:
  *         description: Destination added successfully
+ *       400:
+ *         description: Validation errors
  *       500:
  *         description: Error adding destination
  */
-router.put("/update/:id", upload.array("foto"), updateDestination); // Update destinasi
-// Route untuk mengedit destinasi berdasarkan ID
+
+// Update destinasi
+router.put("/update/:id", upload.array("foto"), updateDestination);
 /**
  * @swagger
  * /destination/update/{id}:
  *   put:
- *     summary: Update destination
- *     description: Update an existing destination by its ID.
+ *     summary: Update an existing destination
+ *     description: Update a destination by ID including name, location, description, and images.
  *     tags: [Destination]
  *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
+ *       - name: id
+ *         in: path
  *         required: true
- *         description: The ID of the destination to update
+ *         description: ID of the destination to update
  *     requestBody:
  *       required: true
  *       content:
@@ -83,13 +84,13 @@ router.put("/update/:id", upload.array("foto"), updateDestination); // Update de
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "Pantai Kuta"
+ *                 example: "Pantai Baru"
  *               lokasi:
  *                 type: string
- *                 example: "Bali, Indonesia"
+ *                 example: "Lombok"
  *               deskripsi:
  *                 type: string
- *                 example: "Pantai Kuta adalah salah satu destinasi wisata yang terkenal di Bali."
+ *                 example: "Pantai dengan ombak tenang dan pemandangan sunset."
  *               foto:
  *                 type: array
  *                 items:
@@ -100,85 +101,47 @@ router.put("/update/:id", upload.array("foto"), updateDestination); // Update de
  *         description: Destination updated successfully
  *       404:
  *         description: Destination not found
+ *       400:
+ *         description: Validation errors
  *       500:
  *         description: Error updating destination
  */
 
-router.delete("/delete/:id", deleteDestination); // Hapus destinasi
+// Hapus destinasi
+router.delete("/delete/:id", deleteDestination);
 /**
  * @swagger
  * /destination/delete/{id}:
  *   delete:
  *     summary: Delete a destination
- *     description: Delete a destination by its ID. Semua gambar terkait destinasi juga akan dihapus dari server.
+ *     description: Delete a destination by ID.
  *     tags: [Destination]
  *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
+ *       - name: id
+ *         in: path
  *         required: true
- *         description: The ID of the destination to delete
+ *         description: ID of the destination to delete
  *     responses:
  *       200:
  *         description: Destination deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Destination deleted successfully"
  *       404:
  *         description: Destination not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Destination not found"
  *       500:
  *         description: Error deleting destination
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Error deleting destination"
  */
-router.get("/getAll", getAllDestinations); // Ambil semua data destinasi
-// Route untuk mendapatkan semua destinasi
+
+// Ambil semua data destinasi
+router.get("/getAll", getAllDestinations);
 /**
  * @swagger
  * /destination/getAll:
  *   get:
  *     summary: Get all destinations
- *     description: Retrieve all destinations stored in the database, excluding image data.
+ *     description: Retrieve a list of all destinations.
  *     tags: [Destination]
  *     responses:
  *       200:
- *         description: A list of all destinations without image data
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   nama:
- *                     type: string
- *                     example: "Pantai Kuta"
- *                   lokasi:
- *                     type: string
- *                     example: "Bali, Indonesia"
- *                   deskripsi:
- *                     type: string
- *                     example: "Pantai Kuta adalah salah satu destinasi wisata yang terkenal di Bali."
+ *         description: Successfully fetched destinations
  *       500:
  *         description: Error fetching destinations
  */
