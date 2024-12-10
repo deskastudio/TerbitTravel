@@ -2,37 +2,41 @@ import {
   Card, 
   CardHeader, 
   CardTitle 
-}  from "@/components/ui/card";
+} from "@/components/ui/card";
 
-const Categories = () => {
+const Layanan = () => {
   const categories = [
-    { name: "Pyramid", image: "/assets/images/pyramid.jpg" },
-    { name: "Mountain", image: "/assets/images/mountain.jpg" },
-    { name: "The Mosque", image: "/assets/images/mosque.jpg" },
-    { name: "Desert", image: "/assets/images/desert.jpg" },
-    { name: "Tower", image: "/assets/images/tower.jpg" },
-    { name: "Beach", image: "/assets/images/beach.jpg" },
+    { name: "Beach", image: "src/assets/Banner/gambar1.jpg" },
+    { name: "Desert", image: "src/assets/Banner/gambar2.jpg" },
+    { name: "Mountain", image: "src/assets/Banner/gambar3.jpg" },
+    { name: "Temple", image: "src/assets/Banner/gambar4.jpg" },
   ];
 
   return (
-    <section className="text-center py-16 bg-white">
-      <h2 className="text-3xl font-bold mb-4">Categories</h2>
-      <p className="text-gray-600 mb-8">
+    <section className="text-center py-16">
+      {/* Title */}
+      <h2 className="text-3xl font-bold mb-4">Layanan Kami</h2>
+      <p className="text-gray-600 mb-8 mx-5">
         Here are lots of interesting destinations to visit, but don't be confused—they're already grouped by category.
       </p>
       
-      <div className="flex flex-wrap justify-center gap-6">
+      {/* Cards */}
+      <div className="flex flex-wrap justify-center">
         {categories.map((category) => (
-          <Card key={category.name} className="w-32 h-60 bg-gray-100 rounded-lg flex flex-col items-center shadow-lg overflow-hidden">
-            <CardHeader className="flex items-center justify-center w-full h-full rounded-t-lg overflow-hidden">
+          <Card
+            key={category.name}
+            className="w-[150px] md:w-[200px] lg:w-[220px] flex flex-col items-center overflow-hidden"
+          >
+            <CardHeader className="relative w-full">
+              {/* Image with Ellipse Shape */}
               <img
                 src={category.image}
                 alt={category.name}
-                className="object-cover w-full h-48 rounded-lg"
-                style={{ clipPath: 'ellipse(50% 75% at 50% 50%)' }}
+                className="object-cover w-full h-[150px] md:h-[180px] lg:h-[200px]"
+                style={{ clipPath: 'ellipse(50% 45% at 50% 50%)' }}
               />
             </CardHeader>
-            <CardTitle className="mt-4 text-lg font-semibold">{category.name}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{category.name}</CardTitle>
           </Card>
         ))}
       </div>
@@ -40,4 +44,4 @@ const Categories = () => {
   );
 };
 
-export default Categories;
+export default Layanan;

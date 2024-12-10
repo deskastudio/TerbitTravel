@@ -7,48 +7,103 @@ const Header = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   return (
-    <header className="bg-gray-800 text-white py-4 fixed w-screen z-50">
+    <header className="bg-gray-100 shadow-md py-4 fixed w-full z-50">
       <div className="container mx-auto flex items-center justify-between px-4">
-        {/* Logo / Title */}
-        <div className="text-lg font-bold">MyApp</div>
+        {/* Logo */}
+        <div className="flex items-center space-x-2">
+          <img
+            src="/Logo/TerbitTravel_Logo.svg"
+            alt="Logo"
+            className="w-[50px] h-auto"
+          />
+          <span className="text-2xl font-bold text-primary">Terbit Travel</span>
+        </div>
 
         {/* Navigation Links */}
-        <nav className="hidden md:flex space-x-4">
-          <Button variant="link" asChild>
-            <a href="/">Home</a>
-          </Button>
-          <Button variant="link" asChild>
-            <a href="/about">About</a>
-          </Button>
-          <Button variant="link" asChild>
-            <a href="/contact">Contact</a>
-          </Button>
+        <nav className="hidden md:flex space-x-8">
+          <a
+            href="/"
+            className="text-gray-700 hover:text-primary font-medium transition"
+          >
+            Beranda
+          </a>
+          <a
+            href="/destinations"
+            className="text-gray-700 hover:text-primary font-medium transition"
+          >
+            Paket Wisata
+          </a>
+          <a
+            href="/contact"
+            className="text-gray-700 hover:text-primary font-medium transition"
+          >
+            Destinasi
+          </a>
+          <a
+            href="/profile"
+            className="text-gray-700 hover:text-primary font-medium transition"
+          >
+            Profile
+          </a>
+          <a
+            href="/article"
+            className="text-gray-700 hover:text-primary font-medium transition"
+          >
+            Artikel
+          </a>
         </nav>
 
         {/* Action Buttons */}
-        <div className="hidden md:flex space-x-2">
-          <Button variant="outline">Sign In</Button>
-          <Button variant="default">Sign Up</Button>
+        <div className="hidden md:flex space-x-4">
+          <Button variant="outline" className="px-6">
+            Masuk
+          </Button>
+          <Button variant="default" className="px-6">
+            Daftar
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
         <div className="md:hidden">
-          <Button variant="ghost" onClick={toggleMenu}>
-            Menu
+          <Button
+            variant="ghost"
+            onClick={toggleMenu}
+            className="text-gray-700 hover:text-primary"
+          >
+            {isOpen ? "Close" : "Menu"}
           </Button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-gray-800 text-white py-4">
-          <nav className="flex flex-col space-y-2 px-4">
-            <a href="/" className="block text-white">Home</a>
-            <a href="/about" className="block text-white">About</a>
-            <a href="/contact" className="block text-white">Contact</a>
-            <div className="flex space-x-2 mt-2">
-              <Button variant="outline" className="w-full">Sign In</Button>
-              <Button variant="default" className="w-full">Sign Up</Button>
+        <div className="md:hidden bg-gray-100 text-gray-700 shadow-md py-4">
+          <nav className="flex flex-col space-y-4 px-4">
+            <a
+              href="/"
+              className="block font-medium hover:text-primary transition"
+            >
+              Beranda
+            </a>
+            <a
+              href="/about"
+              className="block font-medium hover:text-primary transition"
+            >
+              Paket Wisata
+            </a>
+            <a
+              href="/contact"
+              className="block font-medium hover:text-primary transition"
+            >
+              Destinasi
+            </a>
+            <div className="flex flex-col space-y-2 mt-4">
+              <Button variant="outline" className="w-full">
+                Sign In
+              </Button>
+              <Button variant="default" className="w-full">
+                Sign Up
+              </Button>
             </div>
           </nav>
         </div>

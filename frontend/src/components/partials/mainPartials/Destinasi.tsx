@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -10,17 +10,23 @@ import {
 
 export function PopularDestinationsCarousel() {
   const destinations = [
-    { name: "Great Barrier", image: "/assets/images/great-barrier.jpg", places: 22, activities: 3, price: "$895.50" },
-    { name: "Swiss Alps", image: "/assets/images/swiss-alps.jpg", places: 12, activities: 2, price: "$769.99" },
-    { name: "Santorini", image: "/assets/images/santorini.jpg", places: 34, activities: 3, price: "$39.80" },
-    { name: "Venice", image: "/assets/images/venice.jpg", places: 10, activities: 1, price: "$939.60" },
-    { name: "Venice", image: "/assets/images/venice.jpg", places: 10, activities: 1, price: "$939.60" },
+    { name: "Great Barrier", image: "src/assets/Banner/gambar1.jpg", places: "Jakarta, Indonesia" },
+    { name: "Swiss Alps", image: "src/assets/Banner/gambar2.jpg", places: "Kalimantan, Indonesia" },
+    { name: "Santorini", image: "src/assets/Banner/gambar3.jpg", places: "Lampung, Indonesia" },
+    { name: "Venice", image: "src/assets/Banner/gambar4.jpg", places: "Bali, Indonesia" },
+    { name: "Venice", image: "src/assets/Banner/gambar2.jpg", places: "London, Ingrris" },
+    { name: "Venice", image: "src/assets/Banner/gambar3.jpg", places: "Paris, Prancis" },
+    { name: "Swiss Alps", image: "src/assets/Banner/gambar2.jpg", places: "Kalimantan, Indonesia" },
+    { name: "Great Barrier", image: "src/assets/Banner/gambar1.jpg", places: "Jakarta, Indonesia" },
+    { name: "Venice", image: "src/assets/Banner/gambar4.jpg", places: "Bali, Indonesia" },
+    { name: "Santorini", image: "src/assets/Banner/gambar3.jpg", places: "Lampung, Indonesia" },
+
   ];
 
   return (
-    <section className="text-center py-16 bg-white w-full">
-      <h2 className="text-3xl font-bold mb-4">Popular Destinations</h2>
-      <p className="text-gray-600 mb-8">
+    <section className="text-center py-2 w-full">
+      <h2 className="text-3xl font-bold mb-4 mx-2">Destinasi Populer</h2>
+      <p className="text-gray-600 mb-8 mx-2">
         Sost Brilliant reasons Entrada should be your one-stop-shop!
       </p>
 
@@ -45,16 +51,15 @@ export function PopularDestinationsCarousel() {
                     </CardHeader>
                     <CardContent className="p-4 text-left">
                       <CardTitle className="text-lg font-semibold">{destination.name}</CardTitle>
-                      <CardDescription className="text-sm text-gray-500">
-                        {destination.places} Places | {destination.activities} Activities
-                      </CardDescription>
-                      <p className="text-xl font-bold mt-4">{destination.price}</p>
+                      <div className="mt-2 flex justify-between items-center">
+                        <CardDescription className="text-sm text-gray-500">
+                          {destination.places}
+                        </CardDescription>
+                        <Button variant="outline" className="w-1/3">
+                          Book Now
+                        </Button>
+                      </div>
                     </CardContent>
-                    <CardFooter className="p-4">
-                      <Button variant="default" className="w-full">
-                        Book Now
-                      </Button>
-                    </CardFooter>
                   </Card>
                 </div>
               </CarouselItem>
