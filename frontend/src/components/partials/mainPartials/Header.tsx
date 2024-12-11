@@ -22,7 +22,7 @@ const Header = () => {
               alt="Logo"
               className="w-[50px] h-auto"
             />
-            <span className="text-2xl font-bold text-primary">Terbit Travel</span>
+            <span className="text-xl font-bold text-primary">Travedia Terbit Semesta</span>
           </div>
 
           {/* Navigation Links */}
