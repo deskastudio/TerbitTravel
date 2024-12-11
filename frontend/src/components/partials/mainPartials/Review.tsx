@@ -7,7 +7,7 @@ const testimonials = [
     role: "Marketing Manager at Stech",
     date: "December 10, 2024",
     comment:
-      "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Tempore quibusdam ducimus libero ad tempora doloribus expedita laborum saepe voluptas perferendis delectus assumenda.",
+      "Timnya sangat profesional dan responsif. Saya sangat merekomendasikan layanan mereka untuk siapa pun yang merencanakan perjalanan yang tak terlupakan.",
   },
   {
     id: 2,
@@ -15,7 +15,7 @@ const testimonials = [
     role: "Software Engineer at TechCorp",
     date: "November 5, 2024",
     comment:
-      "Amazing experience! They handled everything professionally and made sure everything went smoothly.",
+      "Mereka memperhatikan terhadap detail dan pendekatan yang mengutamakan pelanggan membuat seluruh prosesnya menyenangkan. Benar-benar mitra perjalanan saya!",
   },
   {
     id: 3,
@@ -23,7 +23,7 @@ const testimonials = [
     role: "Product Manager at InnovateX",
     date: "October 22, 2024",
     comment:
-      "Fantastic service! They went above and beyond to meet our expectations. Highly recommended.",
+      "Setiap aspek dari layanan ini melebihi ekspektasi saya. Saya akan menggunakan layanan mereka lagi untuk petualangan saya berikutnya.",
   },
 ];
 
@@ -55,11 +55,7 @@ const Review = () => {
 
           {/* Static Image */}
           <div className="w-full p-6 bg-gray-800 md:flex md:items-center rounded-2xl md:bg-transparent md:p-0 lg:px-12 md:justify-evenly">
-            <img
-              className="h-24 w-24 md:mx-6 rounded-full object-cover shadow-md md:h-[32rem] md:w-80 lg:h-[36rem] lg:w-[26rem] md:rounded-2xl"
-              src="https://images.unsplash.com/photo-1488508872907-592763824245?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80"
-              alt="client photo"
-            />
+            <img src="src/assets/Banner/reviewImage.svg" alt="" className="w-1/2"/>
 
             {/* Dynamic Content */}
             <div className="mt-2 md:mx-6">

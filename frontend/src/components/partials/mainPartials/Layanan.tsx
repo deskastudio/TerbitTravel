@@ -17,7 +17,7 @@ const Layanan = () => {
       {/* Title */}
       <h2 className="text-3xl font-bold mb-4">Layanan Kami</h2>
       <p className="text-gray-600 mb-8 mx-5">
-        Here are lots of interesting destinations to visit, but don't be confused—they're already grouped by category.
+        Jelajahi berbagai layanan kami yang dirancang untuk memberikan pengalaman liburan terbaik.
       </p>
       
       {/* Cards */}
