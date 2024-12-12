@@ -1,97 +1,82 @@
-import Review from "../models/Review.js";
+import Review from "../models/review.js";
 
-// Tambah Review Baru (untuk semua user)
+// Menambah review (hanya untuk user)
 export const addReview = async (req, res) => {
   try {
-    const { nama, isi } = req.body;
+    const { isi } = req.body;
 
-    // Membuat instance baru Review
+    if (!isi || isi.trim() === "") {
+      return res.status(400).json({ message: "Isi review is required" });
+    }
+
     const newReview = new Review({
-      nama,
+      userId: req.userId, // User ID dari token
       isi,
+      tanggal: new Date(),
     });
 
-    // Simpan review ke database
     await newReview.save();
 
-    res
-      .status(201)
-      .json({ message: "Review added successfully", review: newReview });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to add review", error });
-  }
-};
-
-// Ambil Semua Review (untuk semua user)
-export const getAllReviews = async (req, res) => {
-  try {
-    // Mengambil semua review yang statusnya visible
-    const reviews = await Review.find({ status: "visible" }).sort({
-      tanggal: -1,
-    });
-    res.status(200).json(reviews);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch reviews", error });
-  }
-};
-
-// Menampilkan/Sembunyikan Review (untuk admin)
-export const toggleReviewVisibility = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body; // expected: 'visible' or 'hidden'
-
-    // Hanya admin yang bisa melakukan ini
-    if (req.user.role !== "admin") {
-      return res
-        .status(403)
-        .json({
-          message: "You do not have permission to perform this action.",
-        });
-    }
-
-    const review = await Review.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true } // Mengembalikan review yang sudah di-update
+    // Populate user data untuk respons
+    const populatedReview = await Review.findById(newReview._id).populate(
+      "userId",
+      "nama"
     );
 
-    if (!review) {
-      return res.status(404).json({ message: "Review not found" });
-    }
-
-    res
-      .status(200)
-      .json({ message: `Review status updated to ${status}`, review });
+    res.status(201).json({
+      message: "Review added successfully",
+      review: populatedReview,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to update review visibility", error });
+    res.status(500).json({ message: "Error adding review", error });
   }
 };
 
-// Hapus Review (untuk admin)
+// Menghapus review (hanya admin)
 export const deleteReview = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { reviewId } = req.params;
 
-    // Hanya admin yang bisa menghapus
-    if (req.user.role !== "admin") {
-      return res
-        .status(403)
-        .json({
-          message: "You do not have permission to perform this action.",
-        });
-    }
-
-    const review = await Review.findByIdAndDelete(id);
-
+    const review = await Review.findByIdAndDelete(reviewId);
     if (!review) {
       return res.status(404).json({ message: "Review not found" });
     }
 
-    res.status(200).json({ message: "Review deleted successfully" });
+    res.json({ message: "Review deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: "Failed to delete review", error });
+    res.status(500).json({ message: "Error deleting review", error });
+  }
+};
+
+// Menampilkan semua review (bebas akses)
+export const getAllReviews = async (req, res) => {
+  try {
+    const reviews = await Review.find().populate("userId", "nama");
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching reviews", error });
+  }
+};
+
+// Menampilkan review berdasarkan ID user yang login
+export const getReviewById = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+
+    // Cari review berdasarkan ID dan pastikan review milik user yang login
+    const review = await Review.findOne({
+      _id: reviewId,
+      userId: req.userId,
+    }).populate("userId", "nama");
+
+    if (!review) {
+      return res
+        .status(404)
+        .json({ message: "Review not found or not belonging to you" });
+    }
+
+    res.json(review);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching review", error });
   }
 };

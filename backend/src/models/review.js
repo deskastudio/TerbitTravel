@@ -1,29 +1,20 @@
 import mongoose from "mongoose";
 
-const reviewSchema = new mongoose.Schema(
-  {
-    nama: {
-      type: String,
-      required: true,
-    },
-    isi: {
-      type: String,
-      required: true,
-    },
-    tanggal: {
-      type: Date,
-      default: Date.now,
-    },
-    status: {
-      type: String,
-      enum: ["visible", "hidden"],
-      default: "visible", // Defaultnya adalah visible
-    },
+const reviewSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Referensi ke model User
+    required: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  isi: {
+    type: String,
+    required: true,
+  },
+  tanggal: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
 const Review = mongoose.model("Review", reviewSchema);
 

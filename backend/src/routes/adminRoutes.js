@@ -10,10 +10,10 @@ import {
   validateLogin,
   handleValidationErrors,
 } from "../middleware/validators.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Login admin
 /**
  * @swagger
  * /admin/login:
@@ -41,13 +41,14 @@ const router = express.Router();
  */
 router.post("/login", validateLogin, handleValidationErrors, loginAdmin);
 
-// Endpoint untuk menambah admin
 /**
  * @swagger
  * /admin/add:
  *   post:
  *     summary: Add new admin
  *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -69,13 +70,14 @@ router.post("/login", validateLogin, handleValidationErrors, loginAdmin);
  */
 router.post("/add", addAdmin);
 
-// Endpoint untuk menghapus admin
 /**
  * @swagger
  * /admin/admin/{adminId}:
  *   delete:
  *     summary: Delete admin by ID
  *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: adminId
@@ -91,15 +93,16 @@ router.post("/add", addAdmin);
  *       500:
  *         description: Error deleting admin
  */
-router.delete("/admin/:adminId", deleteAdmin);
+router.delete("/admin/:adminId", authMiddleware, deleteAdmin);
 
-// Endpoint untuk mendapatkan semua admin
 /**
  * @swagger
  * /admin/dataAdmin:
  *   get:
  *     summary: Get all admins
  *     tags: [Admin]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: A list of admins
@@ -117,6 +120,6 @@ router.delete("/admin/:adminId", deleteAdmin);
  *       500:
  *         description: Error fetching admin data
  */
-router.get("/dataAdmin", getAllAdmins);
+router.get("/dataAdmin", authMiddleware, getAllAdmins);
 
 export default router;

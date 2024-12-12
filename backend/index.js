@@ -11,6 +11,7 @@ import armadaRoutes from "./src/routes/armadaRoutes.js";
 import consumeRoutes from "./src/routes/consumeRoutes.js";
 import blogRoutes from "./src/routes/blogRoutes.js";
 import profileRoutes from "./src/routes/profileRoutes.js";
+import reviewRoutes from "./src/routes/reviewRoutes.js";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -33,6 +34,7 @@ app.use("/armada", armadaRoutes);
 app.use("/consume", consumeRoutes);
 app.use("/blog", blogRoutes);
 app.use("/profiles", profileRoutes);
+app.use("/reviews", reviewRoutes);
 
 //swager
 setupSwagger(app);
