@@ -1,29 +1,54 @@
 import express from "express";
 import multer from "multer";
+import path from "path";
 import {
   addDestination,
   updateDestination,
   deleteDestination,
   getAllDestinations,
 } from "../controllers/destinationController.js";
-import path from "path";
+import { validateDestinationData } from "../middleware/destinationValidator.js";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
 
 // Konfigurasi multer untuk menyimpan file gambar di subfolder `uploads/destination`
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/destination"); // Menyimpan gambar di subfolder destination
+    cb(null, "./uploads/destination");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Nama file dengan timestamp
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
 const upload = multer({ storage });
-
 const router = express.Router();
 
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Destination
+ *     description: API for managing destinations
+ */
+
 // Tambah destinasi
-router.post("/add", upload.array("foto"), addDestination);
+router.post(
+  "/add",
+  authMiddleware,
+  checkRole("admin"),
+  upload.array("foto"),
+  validateDestinationData,
+  addDestination
+);
 /**
  * @swagger
  * /destination/add:
@@ -31,6 +56,8 @@ router.post("/add", upload.array("foto"), addDestination);
  *     summary: Add a new destination
  *     description: Add a new destination including name, location, description, and multiple images.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -57,12 +84,21 @@ router.post("/add", upload.array("foto"), addDestination);
  *         description: Destination added successfully
  *       400:
  *         description: Validation errors
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Error adding destination
  */
 
 // Update destinasi
-router.put("/update/:id", upload.array("foto"), updateDestination);
+router.put(
+  "/update/:id",
+  authMiddleware,
+  checkRole("admin"),
+  upload.array("foto"),
+  validateDestinationData,
+  updateDestination
+);
 /**
  * @swagger
  * /destination/update/{id}:
@@ -70,11 +106,15 @@ router.put("/update/:id", upload.array("foto"), updateDestination);
  *     summary: Update an existing destination
  *     description: Update a destination by ID including name, location, description, and images.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
- *       - name: id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
  *         description: ID of the destination to update
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -103,12 +143,19 @@ router.put("/update/:id", upload.array("foto"), updateDestination);
  *         description: Destination not found
  *       400:
  *         description: Validation errors
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Error updating destination
  */
 
 // Hapus destinasi
-router.delete("/delete/:id", deleteDestination);
+router.delete(
+  "/delete/:id",
+  authMiddleware,
+  checkRole("admin"),
+  deleteDestination
+);
 /**
  * @swagger
  * /destination/delete/{id}:
@@ -116,22 +163,28 @@ router.delete("/delete/:id", deleteDestination);
  *     summary: Delete a destination
  *     description: Delete a destination by ID.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
- *       - name: id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
  *         description: ID of the destination to delete
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Destination deleted successfully
  *       404:
  *         description: Destination not found
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Error deleting destination
  */
 
 // Ambil semua data destinasi
-router.get("/getAll", getAllDestinations);
+router.get("/getAll", authMiddleware, getAllDestinations);
 /**
  * @swagger
  * /destination/getAll:
@@ -139,6 +192,8 @@ router.get("/getAll", getAllDestinations);
  *     summary: Get all destinations
  *     description: Retrieve a list of all destinations.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Successfully fetched destinations

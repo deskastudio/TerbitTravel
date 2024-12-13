@@ -55,7 +55,6 @@ export const updateArmada = async (req, res) => {
         try {
           if (fs.existsSync(oldImagePath)) {
             await fs.promises.unlink(oldImagePath);
-            console.log(`File lama berhasil dihapus: ${oldImagePath}`);
           }
         } catch (err) {
           console.error(`Gagal menghapus file lama ${oldImagePath}:`, err);
@@ -102,10 +101,8 @@ export const deleteArmada = async (req, res) => {
     // Hapus semua file gambar yang terkait dengan armada ini
     for (const gambarPath of armada.gambar) {
       const filePath = path.join(__dirname, "../../", gambarPath);
-      console.log(`Mencoba menghapus file: ${filePath}`);
 
       try {
-        // Verifikasi bahwa path berada dalam direktori uploads
         const uploadsDir = path.join(__dirname, "../../uploads");
         if (!filePath.startsWith(uploadsDir)) {
           console.warn(`Invalid path detected: ${filePath}`);
@@ -114,16 +111,12 @@ export const deleteArmada = async (req, res) => {
 
         if (fs.existsSync(filePath)) {
           await fs.promises.unlink(filePath);
-          console.log(`File berhasil dihapus: ${filePath}`);
-        } else {
-          console.log(`File tidak ditemukan: ${filePath}`);
         }
       } catch (err) {
         console.error(`Gagal menghapus file ${filePath}:`, err);
       }
     }
 
-    // Hapus armada dari database
     await Armada.findByIdAndDelete(id);
     res.status(200).json({ message: "Armada berhasil dihapus" });
   } catch (error) {

@@ -4,21 +4,16 @@ import Profile from "../models/profile.js";
 export const addProfile = async (req, res) => {
   try {
     const { nama, deskripsi } = req.body;
-    const gambar = req.files ? req.files.map((file) => file.path) : [];
-
-    if (gambar.length === 0) {
-      return res.status(400).json({ message: "Gambar is required" });
-    }
+    const gambar = req.files.map((file) => file.path);
 
     const newProfile = new Profile({ nama, deskripsi, gambar });
     await newProfile.save();
+
     res
       .status(201)
       .json({ message: "Profile created successfully", profile: newProfile });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to create profile", error: error.message });
+    res.status(500).json({ message: "Failed to create profile", error });
   }
 };
 
@@ -28,9 +23,7 @@ export const getAllProfiles = async (req, res) => {
     const profiles = await Profile.find();
     res.status(200).json(profiles);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch profiles", error: error.message });
+    res.status(500).json({ message: "Failed to fetch profiles", error });
   }
 };
 
@@ -39,17 +32,13 @@ export const updateProfile = async (req, res) => {
   try {
     const { id } = req.params;
     const { nama, deskripsi } = req.body;
-    const gambar = req.files ? req.files.map((file) => file.path) : undefined;
+    const gambar = req.files.map((file) => file.path);
 
-    const updatedData = {
-      nama,
-      deskripsi,
-      ...(gambar && { gambar }), // Hanya update gambar jika ada
-    };
-
-    const updatedProfile = await Profile.findByIdAndUpdate(id, updatedData, {
-      new: true,
-    });
+    const updatedProfile = await Profile.findByIdAndUpdate(
+      id,
+      { nama, deskripsi, gambar },
+      { new: true }
+    );
 
     if (!updatedProfile) {
       return res.status(404).json({ message: "Profile not found" });
@@ -60,9 +49,7 @@ export const updateProfile = async (req, res) => {
       profile: updatedProfile,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to update profile", error: error.message });
+    res.status(500).json({ message: "Failed to update profile", error });
   }
 };
 
@@ -78,8 +65,6 @@ export const deleteProfile = async (req, res) => {
 
     res.status(200).json({ message: "Profile deleted successfully" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to delete profile", error: error.message });
+    res.status(500).json({ message: "Failed to delete profile", error });
   }
 };

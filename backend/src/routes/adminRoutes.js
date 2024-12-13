@@ -29,10 +29,10 @@ const router = express.Router();
  *             properties:
  *               email:
  *                 type: string
- *                 example: "admin@example.com"
+ *                 example: "dimas@gmail.com"
  *               password:
  *                 type: string
- *                 example: "password123"
+ *                 example: "admin123"
  *     responses:
  *       200:
  *         description: Successful login

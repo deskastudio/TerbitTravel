@@ -1,5 +1,5 @@
-// src/routes/blogRoutes.js
 import express from "express";
+import multer from "multer";
 import {
   addBlog,
   updateBlog,
@@ -7,30 +7,31 @@ import {
   getAllBlogs,
 } from "../controllers/blogController.js";
 import { validateBlogData } from "../middleware/blogValidator.js";
-import multer from "multer";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import path from "path";
 
 // Konfigurasi multer untuk menyimpan gambar
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
+  destination: (req, file, cb) => {
     cb(null, "./uploads/blog/");
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
 const upload = multer({ storage });
-
 const router = express.Router();
 
-// Routes add blog
 /**
  * @swagger
  * /blog/add:
  *   post:
- *     summary: Add a new blog post
+ *     summary: Add a new blog post (Admin only)
  *     description: Add a new blog post with title, author, main image, additional images, and content.
  *     tags: [Blog]
+ *     security:
+ *       - BearerAuth: [] # Token is required
  *     requestBody:
  *       required: true
  *       content:
@@ -65,6 +66,8 @@ const router = express.Router();
  */
 router.post(
   "/add",
+  authMiddleware,
+  checkRole("admin"),
   upload.fields([
     { name: "gambarUtama", maxCount: 1 },
     { name: "gambarTambahan", maxCount: 10 },
@@ -73,19 +76,22 @@ router.post(
   addBlog
 );
 
-//route update blog
 /**
  * @swagger
  * /blog/update/{id}:
  *   put:
- *     summary: Update an existing blog post
+ *     summary: Update an existing blog post (Admin only)
  *     description: Update a blog post by ID with title, author, main image, additional images, and content.
  *     tags: [Blog]
+ *     security:
+ *       - BearerAuth: [] # Token is required
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
  *         description: ID of the blog to update
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -122,6 +128,8 @@ router.post(
  */
 router.put(
   "/update/:id",
+  authMiddleware,
+  checkRole("admin"),
   upload.fields([
     { name: "gambarUtama", maxCount: 1 },
     { name: "gambarTambahan", maxCount: 10 },
@@ -130,14 +138,15 @@ router.put(
   updateBlog
 );
 
-// route delete blog
 /**
  * @swagger
  * /blog/delete/{id}:
  *   delete:
- *     summary: Delete a blog post
+ *     summary: Delete a blog post (Admin only)
  *     description: Delete a blog post by its ID.
  *     tags: [Blog]
+ *     security:
+ *       - BearerAuth: [] # Token is required
  *     parameters:
  *       - name: id
  *         in: path
@@ -153,16 +162,17 @@ router.put(
  *       500:
  *         description: Error deleting blog
  */
-router.delete("/delete/:id", deleteBlog);
+router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteBlog);
 
-//route get all blogs
 /**
  * @swagger
  * /blog/get:
  *   get:
- *     summary: Get all blog posts
+ *     summary: Get all blog posts (Accessible by logged-in users)
  *     description: Retrieve a list of all blog posts.
  *     tags: [Blog]
+ *     security:
+ *       - BearerAuth: [] # Token is required
  *     responses:
  *       200:
  *         description: Successfully fetched all blog posts
@@ -204,7 +214,6 @@ router.delete("/delete/:id", deleteBlog);
  *       500:
  *         description: Error fetching blogs
  */
-
-router.get("/get", getAllBlogs);
+router.get("/get", authMiddleware, getAllBlogs);
 
 export default router;

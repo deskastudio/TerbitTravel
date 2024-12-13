@@ -13,23 +13,30 @@ import {
 
 const router = express.Router();
 
-// Konfigurasi multer untuk multiple files
+// Konfigurasi multer untuk penyimpanan gambar
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/profiles"); // Folder penyimpanan
+    cb(null, "./uploads/profiles");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname); // Nama file unik
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 const upload = multer({ storage });
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Profile
+ *     description: API for managing profiles
+ */
 
 // Tambah profil baru
 router.post(
   "/add",
   upload.array("gambar", 5),
-  validateFiles, // Middleware untuk validasi file
-  validateProfileData, // Middleware untuk validasi nama dan deskripsi
+  validateFiles,
+  validateProfileData,
   addProfile
 );
 /**
@@ -37,6 +44,7 @@ router.post(
  * /profiles/add:
  *   post:
  *     summary: Add a new profile
+ *     description: Add a new profile with name, description, and up to 5 images.
  *     tags: [Profile]
  *     requestBody:
  *       required: true
@@ -72,6 +80,7 @@ router.get("/", getAllProfiles);
  * /profiles:
  *   get:
  *     summary: Get all profiles
+ *     description: Retrieve all stored profiles.
  *     tags: [Profile]
  *     responses:
  *       200:
@@ -84,7 +93,7 @@ router.get("/", getAllProfiles);
 router.put(
   "/update/:id",
   upload.array("gambar", 5),
-  validateProfileData, // Middleware untuk validasi nama dan deskripsi
+  validateProfileData,
   updateProfile
 );
 /**
@@ -92,6 +101,7 @@ router.put(
  * /profiles/update/{id}:
  *   put:
  *     summary: Update an existing profile
+ *     description: Update a profile by its ID with optional new images.
  *     tags: [Profile]
  *     parameters:
  *       - name: id
@@ -107,10 +117,10 @@ router.put(
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "John Updated"
+ *                 example: "Updated Name"
  *               deskripsi:
  *                 type: string
- *                 example: "Updated description"
+ *                 example: "Updated Description"
  *               gambar:
  *                 type: array
  *                 items:
@@ -132,6 +142,7 @@ router.delete("/delete/:id", deleteProfile);
  * /profiles/delete/{id}:
  *   delete:
  *     summary: Delete a profile
+ *     description: Delete a profile by its ID.
  *     tags: [Profile]
  *     parameters:
  *       - name: id

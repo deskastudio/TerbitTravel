@@ -10,20 +10,26 @@ import {
   parseLauk,
   validateConsumeData,
 } from "../middleware/consumeValidator.js";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-
-// Konfigurasi multer untuk menangani multipart/form-data
 const upload = multer();
 
-// Tambah konsumsi baru
-router.post("/add", upload.none(), parseLauk, validateConsumeData, addConsume);
+/**
+ * @swagger
+ * tags:
+ *   - name: Consume
+ *     description: API untuk mengelola konsumsi
+ */
+
 /**
  * @swagger
  * /consume/add:
  *   post:
- *     summary: Add a new consume
+ *     summary: Add a new consume (Admin only)
  *     tags: [Consume]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -53,26 +59,31 @@ router.post("/add", upload.none(), parseLauk, validateConsumeData, addConsume);
  *       500:
  *         description: Failed to add consume
  */
-
-// Update konsumsi
-router.put(
-  "/update/:id",
+router.post(
+  "/add",
+  authMiddleware,
+  checkRole("admin"),
   upload.none(),
   parseLauk,
   validateConsumeData,
-  updateConsume
+  addConsume
 );
+
 /**
  * @swagger
  * /consume/update/{id}:
  *   put:
- *     summary: Update an existing consume
+ *     summary: Update an existing consume (Admin only)
  *     tags: [Consume]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
  *         description: Consume ID
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -104,20 +115,31 @@ router.put(
  *       500:
  *         description: Failed to update consume
  */
+router.put(
+  "/update/:id",
+  authMiddleware,
+  checkRole("admin"),
+  upload.none(),
+  parseLauk,
+  validateConsumeData,
+  updateConsume
+);
 
-// Hapus konsumsi
-router.delete("/delete/:id", deleteConsume);
 /**
  * @swagger
  * /consume/delete/{id}:
  *   delete:
- *     summary: Delete a consume
+ *     summary: Delete a consume (Admin only)
  *     tags: [Consume]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
  *         description: Consume ID
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: Consume deleted successfully
@@ -126,20 +148,55 @@ router.delete("/delete/:id", deleteConsume);
  *       500:
  *         description: Failed to delete consume
  */
+router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteConsume);
 
-// Ambil semua konsumsi
-router.get("/get", getAllConsumes);
 /**
  * @swagger
  * /consume/get:
  *   get:
- *     summary: Get all consumes
+ *     summary: Get all consumes (Logged-in users)
  *     tags: [Consume]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Successfully fetched consumes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     description: ID konsumsi
+ *                     example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                   nama:
+ *                     type: string
+ *                     description: Nama konsumsi
+ *                     example: "Nasi Goreng"
+ *                   harga:
+ *                     type: number
+ *                     description: Harga konsumsi
+ *                     example: 25000
+ *                   lauk:
+ *                     type: array
+ *                     description: Pilihan lauk
+ *                     items:
+ *                       type: string
+ *                       example: "Ayam Goreng"
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2023-08-30T09:30:00.000Z"
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2023-08-31T09:30:00.000Z"
  *       500:
  *         description: Failed to fetch consumes
  */
+router.get("/get", authMiddleware, getAllConsumes);
 
 export default router;
