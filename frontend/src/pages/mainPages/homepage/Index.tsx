@@ -8,7 +8,7 @@ import KerjaSamaMitra from "@/components/partials/mainPartials/KerjaSamaMitra";
 import Review from "@/components/partials/mainPartials/Review";
 import Footer from "@/components/partials/mainPartials/Footer";
 
-const Home = () => {
+const Homepage = () => {
   return (
     <MainLayout>
       <Hero />
@@ -22,4 +22,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Homepage;

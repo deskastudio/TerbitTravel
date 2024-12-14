@@ -1,9 +1,10 @@
-import Home from "./pages/home/Index";
+import MainRoutes from './routes/MainRoutes';
+
 
 function App() {
   return (
     <div>
-      <Home />
+      <MainRoutes />
     </div>
   );
 }
