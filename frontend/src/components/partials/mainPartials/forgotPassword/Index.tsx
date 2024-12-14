@@ -104,7 +104,7 @@ const ForgotPasswordForm: React.FC = () => {
           <div className="flex justify-center mt-2">
             <Link
               to="/login"
-              className="text-primary hover:underline inline-flex items-center"
+              className="text-primary hover:underline inline-flex items-center text-sm"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Login
