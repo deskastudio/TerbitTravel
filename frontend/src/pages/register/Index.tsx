@@ -1,9 +1,11 @@
+import RegisterForm from "@/components/partials/mainPartials/register/Index";
+
 const register = () => {
     return (
         <>
-        <h1>deska mulyana</h1>
+            <RegisterForm />
         </>
-    )
+      )
 }
 
 export default register;

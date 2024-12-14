@@ -6,7 +6,6 @@ import Destinasi from "@/components/partials/mainPartials/Destination";
 import Hero from "@/components/partials/mainPartials/Hero";
 import KerjaSamaMitra from "@/components/partials/mainPartials/KerjaSamaMitra";
 import Review from "@/components/partials/mainPartials/Review";
-import Footer from "@/components/partials/mainPartials/Footer";
 
 const Homepage = () => {
   return (
@@ -17,7 +16,6 @@ const Homepage = () => {
       <Destinasi />
       <KerjaSamaMitra />
       <Review />
-      <Footer />
     </MainLayout>
   );
 };

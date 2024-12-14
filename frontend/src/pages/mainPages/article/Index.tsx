@@ -1,7 +1,11 @@
+import MainLayout from "@/components/layouts/MainLayout";
+
 const Article = () => {
     return (
         <>
-        <h1>halaman artikel</h1>
+        <MainLayout>
+            <h1>halaman artikel</h1>
+        </MainLayout>
         </>
     )
 }

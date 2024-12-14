@@ -6,6 +6,7 @@ import Profile from '../pages/mainPages/profile/Index';
 import Article from '@/pages/mainPages/article/Index';
 import TourPackage from '@/pages/mainPages/tourPackage/Index';
 import Destination from '@/pages/mainPages/destination/Index';
+import ForgotPassword from '@/pages/forgotPassword/Index';
 
 function MainRoutes() {
   return (
@@ -18,6 +19,7 @@ function MainRoutes() {
         <Route path="/tour-package" element={<TourPackage />} />
         <Route path="/destination" element={<Destination />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Routes>
     </Router>
   );

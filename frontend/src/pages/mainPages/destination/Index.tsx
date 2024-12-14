@@ -1,7 +1,12 @@
+import MainLayout from "@/components/layouts/MainLayout";
+
+
 const Destination = () => {
     return (
         <>
-        <h1>halaman destinasi</h1>
+        <MainLayout>
+            <h1>halaman destinasi</h1>
+        </MainLayout>
         </>
     )
 }

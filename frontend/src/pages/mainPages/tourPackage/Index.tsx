@@ -1,7 +1,11 @@
+import MainLayout from "@/components/layouts/MainLayout";
+
 const tourPackage = () => {
     return (
         <>
-        <h1>halaman paket wisata</h1>
+        <MainLayout>
+            <h1>halaman paket wisata</h1>
+        </MainLayout>
         </>
     )
 }

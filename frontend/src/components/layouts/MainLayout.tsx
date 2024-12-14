@@ -1,6 +1,8 @@
 // src/layouts/MainLayout.tsx
 import { ReactNode } from "react";
 import Header from "@/components/partials/mainPartials/Header";
+import Footer from "@/components/partials/mainPartials/Footer";
+
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -18,6 +20,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </main>
 
       {/* Footer */}
+      <Footer />
+
+      
     </>
   );
 };

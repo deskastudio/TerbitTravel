@@ -1,11 +1,11 @@
+import LoginForm from "@/components/partials/mainPartials/login/Index";
+
 const login = () => {
     return (
         <>
-        <h1>deska mulyana</h1>
-        
+            <LoginForm />
         </>
-        
-    )
+      )
 }
 
 export default login;
