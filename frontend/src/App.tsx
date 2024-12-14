@@ -1,11 +1,15 @@
+import { BrowserRouter as Router } from 'react-router-dom';
+import AdminRoutes from './routes/AdminRoutes';
 import MainRoutes from './routes/MainRoutes';
-
 
 function App() {
   return (
-    <div>
-      <MainRoutes />
-    </div>
+    <Router>
+      <div>
+        <AdminRoutes />
+        <MainRoutes />
+      </div>
+    </Router>
   );
 }
 

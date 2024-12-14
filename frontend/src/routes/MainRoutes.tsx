@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Homepage from '../pages/mainPages/homepage/Index';
 import Login from '../pages/login/Index';
 import Register from '../pages/register/Index';
@@ -10,18 +10,16 @@ import ForgotPassword from '@/pages/forgotPassword/Index';
 
 function MainRoutes() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Homepage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/article" element={<Article />} />
-        <Route path="/tour-package" element={<TourPackage />} />
-        <Route path="/destination" element={<Destination />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<Homepage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/article" element={<Article />} />
+      <Route path="/tour-package" element={<TourPackage />} />
+      <Route path="/destination" element={<Destination />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+    </Routes>
   );
 }
 
