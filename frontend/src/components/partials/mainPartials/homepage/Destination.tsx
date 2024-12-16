@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import MaintenanceModal from "./MaintananceModal";
+import MaintenanceModal from "../MaintananceModal";
 import {
   Carousel,
   CarouselContent,

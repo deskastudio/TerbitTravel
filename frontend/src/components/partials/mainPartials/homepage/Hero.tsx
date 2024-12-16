@@ -1,5 +1,5 @@
 import { useState } from "react";
-import MaintenanceModal from "./MaintananceModal";
+import MaintenanceModal from "../MaintananceModal";
 
 const Hero: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false); // State untuk modal

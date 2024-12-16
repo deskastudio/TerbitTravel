@@ -1,10 +1,14 @@
 import MainLayout from "@/components/layouts/MainLayout";
+import TourPackagesPage from "@/components/partials/mainPartials/tourPackage/Index";
 
 const tourPackage = () => {
     return (
         <>
         <MainLayout>
-            <h1>halaman paket wisata</h1>
+            <div className="container mx-auto py-32">
+                <TourPackagesPage />
+            </div>
+            
         </MainLayout>
         </>
     )

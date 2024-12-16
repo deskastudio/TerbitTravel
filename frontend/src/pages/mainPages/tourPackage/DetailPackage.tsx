@@ -1,17 +1,16 @@
 import MainLayout from "@/components/layouts/MainLayout";
-import DestinationPage from "@/components/partials/mainPartials/destination/Index"
+import TourPackageDetails from '@/components/partials/mainPartials/tourPackage/[id]/DetailPackage';
 
-
-const Destination = () => {
+const DetailTourPackage = () => {
     return (
         <>
         <MainLayout>
             <div className="container mx-auto py-32">
-                <DestinationPage />
+                <TourPackageDetails />
             </div>
         </MainLayout>
         </>
     )
 }
 
-export default Destination;
+export default DetailTourPackage;
