@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import path from "path";
 import {
   addArmada,
   updateArmada,
@@ -7,9 +8,9 @@ import {
   getAllArmada,
 } from "../controllers/armadaController.js";
 import { validateArmadaData } from "../middleware/armadaValidator.js";
-import path from "path";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
 
-// Konfigurasi multer untuk menyimpan file gambar di subfolder `uploads/armada`
+// Konfigurasi Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads/armada");
@@ -18,17 +19,25 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
-
 const upload = multer({ storage });
 
 const router = express.Router();
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Armada
+ *     description: Endpoint untuk pengelolaan armada (hanya untuk admin)
+ */
+
 /**
  * @swagger
  * /armada/add:
  *   post:
- *     summary: Add a new armada with multiple images
- *     description: Add a new armada including multiple images, capacity, price, and brand.
+ *     summary: Tambah data armada baru
  *     tags: [Armada]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -38,45 +47,57 @@ const router = express.Router();
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "Armada X"
+ *                 description: Nama armada
+ *                 example: "Armada A"
  *               kapasitas:
  *                 type: number
+ *                 description: Kapasitas penumpang
  *                 example: 50
+ *               harga:
+ *                 type: number
+ *                 description: Harga per hari
+ *                 example: 200000
+ *               merek:
+ *                 type: string
+ *                 description: Merek armada
+ *                 example: "Toyota"
  *               gambar:
  *                 type: array
  *                 items:
  *                   type: string
  *                   format: binary
- *               harga:
- *                 type: number
- *                 example: 1500000
- *               merek:
- *                 type: string
- *                 example: "Merek A"
  *     responses:
  *       201:
- *         description: Armada added successfully
+ *         description: Armada berhasil ditambahkan
  *       400:
- *         description: Bad request, validation error
+ *         description: Validasi gagal
  *       500:
- *         description: Error adding armada
+ *         description: Kesalahan server
  */
-router.post("/add", upload.array("gambar"), validateArmadaData, addArmada);
+router.post(
+  "/add",
+  authMiddleware,
+  checkRole("admin"),
+  upload.array("gambar"),
+  validateArmadaData,
+  addArmada
+);
 
 /**
  * @swagger
  * /armada/update/{id}:
  *   put:
- *     summary: Update armada information with multiple images
- *     description: Update an existing armada including multiple images, capacity, price, and brand.
+ *     summary: Update data armada
  *     tags: [Armada]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: The ID of the armada to update
+ *         description: ID armada yang akan diupdate
  *     requestBody:
  *       required: true
  *       content:
@@ -86,27 +107,33 @@ router.post("/add", upload.array("gambar"), validateArmadaData, addArmada);
  *             properties:
  *               nama:
  *                 type: string
+ *                 description: Nama armada
  *               kapasitas:
  *                 type: number
+ *                 description: Kapasitas penumpang
+ *               harga:
+ *                 type: number
+ *                 description: Harga per hari
+ *               merek:
+ *                 type: string
+ *                 description: Merek armada
  *               gambar:
  *                 type: array
  *                 items:
  *                   type: string
  *                   format: binary
- *               harga:
- *                 type: number
- *               merek:
- *                 type: string
  *     responses:
  *       200:
- *         description: Armada updated successfully
+ *         description: Armada berhasil diupdate
  *       404:
- *         description: Armada not found
+ *         description: Armada tidak ditemukan
  *       500:
- *         description: Error updating armada
+ *         description: Kesalahan server
  */
 router.put(
   "/update/:id",
+  authMiddleware,
+  checkRole("admin"),
   upload.array("gambar"),
   validateArmadaData,
   updateArmada
@@ -116,36 +143,38 @@ router.put(
  * @swagger
  * /armada/delete/{id}:
  *   delete:
- *     summary: Delete armada
- *     description: Delete an armada by its ID along with the associated images.
+ *     summary: Hapus data armada
  *     tags: [Armada]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: The ID of the armada to delete
+ *         description: ID armada yang akan dihapus
  *     responses:
  *       200:
- *         description: Armada deleted successfully
+ *         description: Armada berhasil dihapus
  *       404:
- *         description: Armada not found
+ *         description: Armada tidak ditemukan
  *       500:
- *         description: Error deleting armada
+ *         description: Kesalahan server
  */
-router.delete("/delete/:id", deleteArmada);
+router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
 
 /**
  * @swagger
  * /armada/getAll:
  *   get:
- *     summary: Get all armadas
- *     description: Retrieve a list of all armadas stored in the database.
+ *     summary: Ambil semua data armada
  *     tags: [Armada]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: A list of all armadas
+ *         description: Daftar semua armada
  *         content:
  *           application/json:
  *             schema:
@@ -153,21 +182,29 @@ router.delete("/delete/:id", deleteArmada);
  *               items:
  *                 type: object
  *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     description: ID armada
  *                   nama:
  *                     type: string
+ *                     description: Nama armada
  *                   kapasitas:
  *                     type: number
+ *                     description: Kapasitas penumpang
  *                   gambar:
  *                     type: array
  *                     items:
  *                       type: string
+ *                     description: Path gambar armada
  *                   harga:
  *                     type: number
+ *                     description: Harga per hari
  *                   merek:
  *                     type: string
+ *                     description: Merek armada
  *       500:
- *         description: Error fetching armadas
+ *         description: Kesalahan server
  */
-router.get("/getAll", getAllArmada);
+router.get("/getAll", authMiddleware, checkRole("admin"), getAllArmada);
 
 export default router;

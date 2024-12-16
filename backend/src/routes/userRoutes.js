@@ -1,4 +1,3 @@
-// src/routes/userRoutes.js
 import express from "express";
 import {
   registerUser,
@@ -11,10 +10,10 @@ import {
   validateLogin,
   handleValidationErrors,
 } from "../middleware/validators.js";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Register user
 /**
  * @swagger
  * /user/register:
@@ -55,7 +54,6 @@ router.post(
   registerUser
 );
 
-// Login user
 /**
  * @swagger
  * /user/login:
@@ -83,13 +81,14 @@ router.post(
  */
 router.post("/login", validateLogin, handleValidationErrors, loginUser);
 
-// Endpoint untuk menghapus user
 /**
  * @swagger
  * /user/user/{userId}:
  *   delete:
  *     summary: Delete user by ID
  *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
@@ -100,25 +99,48 @@ router.post("/login", validateLogin, handleValidationErrors, loginUser);
  *     responses:
  *       200:
  *         description: User deleted successfully
+ *       403:
+ *         description: Forbidden
  *       404:
  *         description: User not found
  *       500:
  *         description: Error deleting user
  */
-router.delete("/user/:userId", deleteUser);
+router.delete("/user/:userId", authMiddleware, checkRole("admin"), deleteUser);
 
-//endpoint untuk mendapatkan seluruh data user
 /**
  * @swagger
  * /user/dataUser:
  *   get:
  *     summary: Get all users data
  *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: A list of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   nama:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   alamat:
+ *                     type: string
+ *                   noTelp:
+ *                     type: string
+ *                   instansi:
+ *                     type: string
+ *       403:
+ *         description: Forbidden
  *       500:
  *         description: Error fetching user data
  */
-router.get("/dataUser", getAllUsers);
+router.get("/dataUser", authMiddleware, checkRole("admin"), getAllUsers);
+
 export default router;

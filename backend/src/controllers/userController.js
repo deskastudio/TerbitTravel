@@ -1,6 +1,8 @@
-import User from "../models/user.js"; // Pastikan jalur ini benar
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import User from "../models/user.js";
 
+// Register user
 export const registerUser = async (req, res) => {
   const { nama, email, password, alamat, noTelp, instansi } = req.body;
 
@@ -25,6 +27,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
+// Login user
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -37,12 +40,26 @@ export const loginUser = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    res.status(200).json({ message: "Login successful", user });
+
+    // Create JWT token
+    const token = jwt.sign(
+      { id: user._id, role: "user" },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+      }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
 };
 
+// Delete user by ID
 export const deleteUser = async (req, res) => {
   const { userId } = req.params;
 
@@ -56,10 +73,11 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ message: "Error deleting user", error });
   }
 };
-// Menampilkan semua data user
+
+// Get all users
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({}, "-password"); // Menyembunyikan password
+    const users = await User.find({}, "-password"); // Hide password
     res.status(200).json(users);
   } catch (error) {
     res.status(500).json({ message: "Error fetching user data", error });

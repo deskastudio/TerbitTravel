@@ -4,18 +4,27 @@ import {
   updateContact,
   getContact,
 } from "../controllers/contactController.js";
-import { validateContactData } from "../middleware/contactValidator.js"; // Hanya impor `validateContactData`
+import { validateContactData } from "../middleware/contactValidator.js";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Route untuk menambahkan data kontak (hanya bisa dilakukan sekali)
+/**
+ * @swagger
+ * tags:
+ *   - name: Contact
+ *     description: API untuk mengelola data kontak
+ */
+
 /**
  * @swagger
  * /contact/add:
  *   post:
- *     summary: Add contact data
+ *     summary: Add contact data (Admin only)
  *     description: Add contact data only once. Further actions can only update the existing contact.
  *     tags: [Contact]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -49,16 +58,23 @@ const router = express.Router();
  *       500:
  *         description: Error adding contact data
  */
-router.post("/add", validateContactData, addContact);
+router.post(
+  "/add",
+  authMiddleware,
+  checkRole("admin"),
+  validateContactData,
+  addContact
+);
 
-// Route untuk mengedit data kontak yang sudah ada
 /**
  * @swagger
  * /contact/update:
  *   put:
- *     summary: Update contact data
+ *     summary: Update contact data (Admin only)
  *     description: Update the existing contact data.
  *     tags: [Contact]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -92,16 +108,23 @@ router.post("/add", validateContactData, addContact);
  *       500:
  *         description: Error updating contact data
  */
-router.put("/update", validateContactData, updateContact);
+router.put(
+  "/update",
+  authMiddleware,
+  checkRole("admin"),
+  validateContactData,
+  updateContact
+);
 
-// Route untuk mendapatkan data kontak yang sudah ada
 /**
  * @swagger
  * /contact/get:
  *   get:
- *     summary: Get contact data
+ *     summary: Get contact data (Admin only)
  *     description: Retrieve the contact data that has been stored.
  *     tags: [Contact]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Successfully retrieved contact data
@@ -133,6 +156,6 @@ router.put("/update", validateContactData, updateContact);
  *       500:
  *         description: Error fetching contact data
  */
-router.get("/get", getContact);
+router.get("/get", authMiddleware, checkRole("admin"), getContact);
 
 export default router;

@@ -11,7 +11,21 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: "http://localhost:5000",
+        url: "http://localhost:5000", // Sesuaikan dengan URL server Anda
+      },
+    ],
+    components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT", // Mendefinisikan bahwa token adalah JWT
+        },
+      },
+    },
+    security: [
+      {
+        BearerAuth: [], // Mendefinisikan bahwa seluruh API membutuhkan token
       },
     ],
   },
