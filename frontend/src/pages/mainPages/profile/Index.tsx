@@ -1,12 +1,14 @@
 import MainLayout from "@/components/layouts/MainLayout";
+import ProfilePage from "@/components/partials/mainPartials/profile/Index"
 
 const Profile = () => {
     return (
         <>
         <MainLayout>
-            <h1>halaman profile</h1>
+            <div className="container mx-auto py-32">
+                <ProfilePage />
+            </div>
         </MainLayout>
-        
         </>
     )
 }

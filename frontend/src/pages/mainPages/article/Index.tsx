@@ -1,10 +1,13 @@
 import MainLayout from "@/components/layouts/MainLayout";
+import ArticlePage from "@/components/partials/mainPartials/article/Index"
 
 const Article = () => {
     return (
         <>
         <MainLayout>
-            <h1>halaman artikel</h1>
+            <div className="container mx-auto py-32">
+                <ArticlePage />
+            </div>
         </MainLayout>
         </>
     )
