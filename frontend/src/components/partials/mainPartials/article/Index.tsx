@@ -150,13 +150,21 @@ export default function AttractiveArticlesPage() {
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.max(prev - 1, 1));
+                }}
               />
             </PaginationItem>
             {[...Array(totalPages)].map((_, index) => (
               <PaginationItem key={index}>
                 <PaginationLink
-                  onClick={() => setCurrentPage(index + 1)}
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(index + 1);
+                  }}
                   isActive={currentPage === index + 1}
                 >
                   {index + 1}
@@ -165,7 +173,11 @@ export default function AttractiveArticlesPage() {
             ))}
             <PaginationItem>
               <PaginationNext
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                }}
               />
             </PaginationItem>
           </PaginationContent>

@@ -55,7 +55,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         icon: SquareTerminal,
         isActive: true,
         items: [
-          { title: "History", url: "#" },
+          { title: "Terbit Dashboard", url: "/admin-dashboard" },
           { title: "Starred", url: "#" },
           { title: "Settings", url: "#" },
         ],
@@ -65,7 +65,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: Bot,
         items: [
-          { title: "Genesis", url: "#" },
+          { title: "Seluruh Paket Wisata", url: "/all-package-tour" },
           { title: "Explorer", url: "#" },
           { title: "Quantum", url: "#" },
         ],
@@ -85,6 +85,17 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         title: "Profile",
         url: "#",
         icon: Settings2,
+        items: [
+          { title: "General", url: "#" },
+          { title: "Team", url: "#" },
+          { title: "Billing", url: "#" },
+          { title: "Limits", url: "#" },
+        ],
+      },
+      {
+        title: "Artikel",
+        url: "#",
+        icon: BookOpen,
         items: [
           { title: "General", url: "#" },
           { title: "Team", url: "#" },
