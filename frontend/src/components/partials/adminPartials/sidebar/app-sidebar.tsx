@@ -57,7 +57,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: Bot,
         items: [
-          { title: "Tambah Destinasi", url: "#" },
+          { title: "Tambah Destinasi", url: "/admin-add-destination" },
           { title: "Detail Destinasi", url: "#" },
         ],
       },
@@ -66,7 +66,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: BookOpen,
         items: [
-          { title: "Tambah Armada", url: "#" },
+          { title: "Tambah Armada", url: "/admin-add-armada" },
           { title: "Detail Armada", url: "#" },
         ],
       },
@@ -75,7 +75,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: Settings2,
         items: [
-          { title: "Tambah Konsumsi", url: "#" },
+          { title: "Tambah Konsumsi", url: "/admin-add-consumption" },
           { title: "Detail Konsumsi", url: "#" },
         ],
       },
@@ -84,7 +84,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: BookOpen,
         items: [
-          { title: "Tambah Hotel", url: "#" },
+          { title: "Tambah Hotel", url: "/admin-add-hotel" },
           { title: "Detail Hotel", url: "#" },
         ],
       },
@@ -95,7 +95,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
       { name: "Pemesanan", url: "#", icon: Map },
     ],
     NavContent: [
-      { name: "Artikel", url: "/admin-article", icon: Folder },
+      { name: "Artikel", url: "/admin-all-article", icon: Folder },
       { name: "Testimoni", url: "#", icon: Forward },
       { name: "Banner", url: "#", icon: Trash2 },
     ]

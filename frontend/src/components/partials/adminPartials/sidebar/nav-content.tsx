@@ -8,6 +8,7 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate untuk navigasi
 
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ import {
 type Content = {
   name: string;
   url: string;
+  addUrl?: string;  // Properti addUrl untuk menambahkan URL tambahan
   icon: LucideIcon;
 };
 
@@ -38,6 +40,19 @@ type NavContentProps = {
 
 const NavContent: React.FC<NavContentProps> = ({ Contents }) => {
   const { isMobile } = useSidebar();
+  const navigate = useNavigate(); // Inisialisasi useNavigate
+
+  const handleViewProject = (url: string) => {
+    navigate(url); // Navigasi ke URL yang diberikan
+  };
+
+  const handleAddProject = (url: string) => {
+    navigate(url); // Navigasi ke halaman "Tambah Proyek"
+  };
+
+  const handleDeleteProject = (url: string) => {
+    navigate(url); // Navigasi ke halaman konfirmasi penghapusan proyek
+  };
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -63,16 +78,16 @@ const NavContent: React.FC<NavContentProps> = ({ Contents }) => {
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}
               >
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleViewProject(item.url)}>
                   <Folder className="text-muted-foreground" />
                   <span>View Project</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleAddProject(item.addUrl || "/admin-add-article")}>
                   <Forward className="text-muted-foreground" />
-                  <span>Share Project</span>
+                  <span>Tambah Artikel</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDeleteProject("/delete-project-url")}>
                   <Trash2 className="text-muted-foreground" />
                   <span>Delete Project</span>
                 </DropdownMenuItem>
