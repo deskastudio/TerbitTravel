@@ -26,24 +26,24 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-type Project = {
+type Content = {
   name: string;
   url: string;
   icon: LucideIcon;
 };
 
-type NavProjectsProps = {
-  projects: Project[];
+type NavContentProps = {
+  Contents: Content[];
 };
 
-const NavProjects: React.FC<NavProjectsProps> = ({ projects }) => {
+const NavContent: React.FC<NavContentProps> = ({ Contents }) => {
   const { isMobile } = useSidebar();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>General</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map((item) => (
+        {Contents.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url}>
@@ -85,4 +85,4 @@ const NavProjects: React.FC<NavProjectsProps> = ({ projects }) => {
   );
 };
 
-export default NavProjects;
+export default NavContent;

@@ -4,18 +4,21 @@ import {
   BookOpen,
   Bot,
   Command,
-  Frame,
+  Folder,
+  Forward,
   GalleryVerticalEnd,
   Map,
   PieChart,
   Settings2,
   SquareTerminal,
+  Trash2,
 } from "lucide-react";
 
 import NavMain from "../sidebar/nav-main";
 import NavProjects from "../sidebar/nav-project";
 import NavUser from "../sidebar/nav-user";
 import TeamSwitcher from "../sidebar/nav-switcher";
+import NavContent from "../sidebar/nav-content";
 import {
   Sidebar,
   SidebarContent,
@@ -50,65 +53,52 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
     ],
     navMain: [
       {
-        title: "Dashboard",
-        url: "#",
-        icon: SquareTerminal,
-        isActive: true,
-        items: [
-          { title: "Terbit Dashboard", url: "/admin-dashboard" },
-          { title: "Starred", url: "#" },
-          { title: "Settings", url: "#" },
-        ],
-      },
-      {
-        title: "Paket Wisata",
+        title: "Destinasi",
         url: "#",
         icon: Bot,
         items: [
-          { title: "Seluruh Paket Wisata", url: "/all-package-tour" },
-          { title: "Explorer", url: "#" },
-          { title: "Quantum", url: "#" },
+          { title: "Tambah Destinasi", url: "#" },
+          { title: "Detail Destinasi", url: "#" },
         ],
       },
       {
-        title: "Destinasi",
+        title: "Armada",
         url: "#",
         icon: BookOpen,
         items: [
-          { title: "Introduction", url: "#" },
-          { title: "Get Started", url: "#" },
-          { title: "Tutorials", url: "#" },
-          { title: "Changelog", url: "#" },
+          { title: "Tambah Armada", url: "#" },
+          { title: "Detail Armada", url: "#" },
         ],
       },
       {
-        title: "Profile",
+        title: "Konsumsi",
         url: "#",
         icon: Settings2,
         items: [
-          { title: "General", url: "#" },
-          { title: "Team", url: "#" },
-          { title: "Billing", url: "#" },
-          { title: "Limits", url: "#" },
+          { title: "Tambah Konsumsi", url: "#" },
+          { title: "Detail Konsumsi", url: "#" },
         ],
       },
       {
-        title: "Artikel",
+        title: "Hotel",
         url: "#",
         icon: BookOpen,
         items: [
-          { title: "General", url: "#" },
-          { title: "Team", url: "#" },
-          { title: "Billing", url: "#" },
-          { title: "Limits", url: "#" },
+          { title: "Tambah Hotel", url: "#" },
+          { title: "Detail Hotel", url: "#" },
         ],
       },
     ],
     projects: [
-      { name: "Design Engineering", url: "#", icon: Frame },
-      { name: "Sales & Marketing", url: "#", icon: PieChart },
-      { name: "Travel", url: "#", icon: Map },
+      { name: "Dashboard", url: "/admin-dashboard", icon: SquareTerminal },
+      { name: "Paket Wisata", url: "/admin-all-package-tour", icon: PieChart },
+      { name: "Pemesanan", url: "#", icon: Map },
     ],
+    NavContent: [
+      { name: "Artikel", url: "/admin-article", icon: Folder },
+      { name: "Testimoni", url: "#", icon: Forward },
+      { name: "Banner", url: "#", icon: Trash2 },
+    ]
   }), []);
 
   return (
@@ -117,8 +107,9 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
         <NavProjects projects={data.projects} />
+        <NavMain items={data.navMain} />
+        <NavContent Contents={data.NavContent} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

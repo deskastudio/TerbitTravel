@@ -34,12 +34,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import TableTourPackage from "@/components/partials/adminPartials/tourPackage/data-table"
+import TableArticle from "@/components/partials/adminPartials/article/data-table"
 
-const data: TourPackage[] = [
+const data: Article[] = [
   {
     id: "1",
-    destination: "Paris",
+    destination: "Lambaga",
     duration: "7 days",
     price: 1299,
     rating: 4.5,
@@ -47,7 +47,7 @@ const data: TourPackage[] = [
   },
   {
     id: "2",
-    destination: "Tokyo",
+    destination: "Kota",
     duration: "10 days",
     price: 2499,
     rating: 4.8,
@@ -55,7 +55,7 @@ const data: TourPackage[] = [
   },
   {
     id: "3",
-    destination: "New York",
+    destination: "Gajah",
     duration: "5 days",
     price: 999,
     rating: 4.2,
@@ -63,7 +63,7 @@ const data: TourPackage[] = [
   },
   {
     id: "4",
-    destination: "Rome",
+    destination: "Kuda",
     duration: "6 days",
     price: 1199,
     rating: 4.6,
@@ -71,7 +71,7 @@ const data: TourPackage[] = [
   },
   {
     id: "5",
-    destination: "Bali",
+    destination: "Beruk",
     duration: "8 days",
     price: 1599,
     rating: 4.7,
@@ -79,7 +79,7 @@ const data: TourPackage[] = [
   },
   {
     id: "6",
-    destination: "London",
+    destination: "Sepatu",
     duration: "6 days",
     price: 1399,
     rating: 4.4,
@@ -119,7 +119,7 @@ const data: TourPackage[] = [
   },
 ]
 
-export type TourPackage = {
+export type Article = {
   id: string
   destination: string
   duration: string
@@ -128,7 +128,7 @@ export type TourPackage = {
   availability: "Available" | "Limited" | "Sold Out"
 }
 
-export const columns: ColumnDef<TourPackage>[] = [
+export const columns: ColumnDef<Article>[] = [
   {
     accessorKey: "destination",
     header: ({ column }) => {
@@ -221,7 +221,7 @@ export const columns: ColumnDef<TourPackage>[] = [
   },
 ]
 
-const TourPackagesPage = () => {
+const ArticlePage = () => {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -248,7 +248,7 @@ const TourPackagesPage = () => {
 
   return (
     <>
-      <TourPackagesFilterBar table={table} />
+      <ArticleFilterBar table={table} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -284,13 +284,13 @@ const TourPackagesPage = () => {
         </Table>
       </div>
       <div className="py-4">
-        <TableTourPackage table={table} />
+        <TableArticle table={table} />
       </div>
     </>
   )
 }
 
-const TourPackagesFilterBar = ({ table }: { table: ReturnType<typeof useReactTable<TourPackage>> }) => (
+const ArticleFilterBar = ({ table }: { table: ReturnType<typeof useReactTable<Article>> }) => (
   <div className="flex items-center py-4">
     <Input
       placeholder="Filter destinations..."
@@ -325,4 +325,4 @@ const TourPackagesFilterBar = ({ table }: { table: ReturnType<typeof useReactTab
   </div>
 )
 
-export default TourPackagesPage
+export default ArticlePage;

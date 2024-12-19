@@ -37,7 +37,7 @@ type NavMainProps = {
 const NavMain: React.FC<NavMainProps> = ({ items }) => {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>Data Master</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible
