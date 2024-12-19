@@ -82,3 +82,22 @@ export const getAllConsumes = async (req, res) => {
       .json({ message: "Failed to fetch consumes", error: error.message });
   }
 };
+// Ambil data konsumsi berdasarkan ID
+export const getConsumeById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const consume = await Consume.findById(id);
+    if (!consume) {
+      return res.status(404).json({ message: "Consume not found" });
+    }
+
+    res.status(200).json(consume);
+  } catch (error) {
+    console.error("Error fetching consume by ID:", error);
+    res.status(500).json({
+      message: "Failed to fetch consume",
+      error: error.message,
+    });
+  }
+};

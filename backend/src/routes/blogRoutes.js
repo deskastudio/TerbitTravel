@@ -1,14 +1,16 @@
+// src/routes/blogRoutes.js
 import express from "express";
 import multer from "multer";
+import path from "path";
 import {
   addBlog,
   updateBlog,
   deleteBlog,
   getAllBlogs,
+  getBlogById, // Import fungsi baru untuk mendapatkan blog berdasarkan ID
 } from "../controllers/blogController.js";
 import { validateBlogData } from "../middleware/blogValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
-import path from "path";
 
 // Konfigurasi multer untuk menyimpan gambar
 const storage = multer.diskStorage({
@@ -215,5 +217,31 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteBlog);
  *         description: Error fetching blogs
  */
 router.get("/get", authMiddleware, getAllBlogs);
+
+/**
+ * @swagger
+ * /blog/get/{id}:
+ *   get:
+ *     summary: Get a blog post by ID
+ *     description: Retrieve a specific blog post by its ID.
+ *     tags: [Blog]
+ *     security:
+ *       - BearerAuth: [] # Token is required
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: ID of the blog to get
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Blog fetched successfully
+ *       404:
+ *         description: Blog not found
+ *       500:
+ *         description: Error fetching blog
+ */
+router.get("/get/:id", authMiddleware, getBlogById);
 
 export default router;

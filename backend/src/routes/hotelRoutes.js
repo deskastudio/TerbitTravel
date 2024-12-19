@@ -6,6 +6,7 @@ import {
   updateHotel,
   deleteHotel,
   getAllHotels,
+  getHotelById,
 } from "../controllers/hotelController.js";
 import { validateHotelData } from "../middleware/hotelValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
@@ -206,5 +207,66 @@ router.get("/getAll", authMiddleware, getAllHotels);
  *       500:
  *         description: Server error
  */
-
+/**
+ * @swagger
+ * /hotel/get/{id}:
+ *   get:
+ *     summary: Get hotel by ID
+ *     description: Retrieve a hotel by its ID.
+ *     tags: [Hotel]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the hotel to retrieve
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully fetched hotel by ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: Hotel ID
+ *                   example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                 nama:
+ *                   type: string
+ *                   description: Name of the hotel
+ *                   example: "Hotel Santika"
+ *                 alamat:
+ *                   type: string
+ *                   description: Address of the hotel
+ *                   example: "Jl. Malioboro No.123, Yogyakarta"
+ *                 bintang:
+ *                   type: integer
+ *                   description: Rating of the hotel
+ *                   example: 4
+ *                 harga:
+ *                   type: number
+ *                   description: Price per night
+ *                   example: 500000
+ *                 fasilitas:
+ *                   type: array
+ *                   description: List of facilities
+ *                   items:
+ *                     type: string
+ *                   example: ["WiFi", "Pool", "Spa"]
+ *                 gambar:
+ *                   type: array
+ *                   description: List of image paths
+ *                   items:
+ *                     type: string
+ *                   example: ["/uploads/hotel/1.jpg", "/uploads/hotel/2.jpg"]
+ *       404:
+ *         description: Hotel not found
+ *       500:
+ *         description: Failed to fetch hotel
+ */
+router.get("/get/:id", authMiddleware, getHotelById); // Rute baru untuk mendapatkan hotel berdasarkan ID
 export default router;

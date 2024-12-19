@@ -6,6 +6,7 @@ import {
   updateDestination,
   deleteDestination,
   getAllDestinations,
+  getDestinationById,
 } from "../controllers/destinationController.js";
 import { validateDestinationData } from "../middleware/destinationValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
@@ -200,5 +201,29 @@ router.get("/getAll", authMiddleware, getAllDestinations);
  *       500:
  *         description: Error fetching destinations
  */
+/**
+ * @swagger
+ * /destination/{id}:
+ *   get:
+ *     summary: Ambil data destinasi berdasarkan ID
+ *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID destinasi yang akan diambil
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Data destinasi ditemukan
+ *       404:
+ *         description: Destinasi tidak ditemukan
+ *       500:
+ *         description: Kesalahan server
+ */
+router.get("/:id", authMiddleware, getDestinationById);
 
 export default router;

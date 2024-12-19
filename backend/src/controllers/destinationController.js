@@ -22,12 +22,10 @@ export const addDestination = async (req, res) => {
       foto: fotoPaths,
     });
     await newDestination.save();
-    res
-      .status(201)
-      .json({
-        message: "Destination added successfully",
-        data: newDestination,
-      });
+    res.status(201).json({
+      message: "Destination added successfully",
+      data: newDestination,
+    });
   } catch (error) {
     console.error("Error adding destination:", error);
     res
@@ -130,5 +128,24 @@ export const getAllDestinations = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to fetch destinations", error: error.message });
+  }
+};
+// Ambil data destinasi berdasarkan ID
+export const getDestinationById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const destination = await Destination.findById(id);
+    if (!destination) {
+      return res.status(404).json({ message: "Destination not found" });
+    }
+
+    res.status(200).json(destination);
+  } catch (error) {
+    console.error("Error fetching destination by ID:", error);
+    res.status(500).json({
+      message: "Failed to fetch destination",
+      error: error.message,
+    });
   }
 };
