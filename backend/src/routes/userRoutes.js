@@ -9,7 +9,7 @@ import {
   getUserById,
   updateUser,
 } from "../controllers/userController.js";
-import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -112,7 +112,7 @@ router.post("/login", loginUser);
  *       500:
  *         description: Error deleting user
  */
-router.delete("/user/:userId", authMiddleware, checkRole("admin"), deleteUser);
+router.delete("/user/:userId", authMiddleware, deleteUser);
 
 /**
  * @swagger
@@ -147,7 +147,7 @@ router.delete("/user/:userId", authMiddleware, checkRole("admin"), deleteUser);
  *       500:
  *         description: Error fetching user data
  */
-router.get("/dataUser", authMiddleware, checkRole("admin"), getAllUsers);
+router.get("/dataUser", authMiddleware, getAllUsers);
 
 /**
  * @swagger
