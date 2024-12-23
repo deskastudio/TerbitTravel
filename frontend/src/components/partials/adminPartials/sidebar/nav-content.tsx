@@ -30,7 +30,6 @@ import {
 type Content = {
   name: string;
   url: string;
-  addUrl?: string;  // Properti addUrl untuk menambahkan URL tambahan
   icon: LucideIcon;
 };
 
@@ -82,7 +81,7 @@ const NavContent: React.FC<NavContentProps> = ({ Contents }) => {
                   <Folder className="text-muted-foreground" />
                   <span>View Project</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleAddProject(item.addUrl || "/admin-add-article")}>
+                <DropdownMenuItem onClick={() => handleAddProject("/admin-add-article")}>
                   <Forward className="text-muted-foreground" />
                   <span>Tambah Artikel</span>
                 </DropdownMenuItem>
