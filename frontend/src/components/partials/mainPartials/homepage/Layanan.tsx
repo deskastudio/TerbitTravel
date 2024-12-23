@@ -25,7 +25,7 @@ const Layanan = () => {
         {categories.map((category) => (
           <Card
             key={category.name}
-            className="w-[150px] md:w-[200px] lg:w-[220px] flex flex-col items-center overflow-hidden"
+            className="w-[150px] md:w-[200px] lg:w-[220px] flex flex-col items-center overflow-hidden bg-gray-100"
           >
             <CardHeader className="relative w-full">
               {/* Image with Ellipse Shape */}

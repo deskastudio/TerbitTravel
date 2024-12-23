@@ -139,15 +139,17 @@ export default function TourPackagesPage() {
 
   return (
     <div className="space-y-6 mx-2">
-      <h1 className="text-3xl font-bold">Tour Packages</h1>
-
+      <div className="text-center mb-12">
+        <h1 className="text-4xl font-bold mb-4">Paket Wisata</h1>
+        <p className="text-xl text-gray-600">Discover the world's most breathtaking locations and unforgettable experiences</p>
+      </div>
       <div className="flex justify-between items-center">
         <Input
           type="text"
           placeholder="Search packages..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+          className="max-w-sm bg-white"
         />
         <Select value={sortOrder} onValueChange={(value: "asc" | "desc") => setSortOrder(value)}>
           <SelectTrigger className="w-[180px]">

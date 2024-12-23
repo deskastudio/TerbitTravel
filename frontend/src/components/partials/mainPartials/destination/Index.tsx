@@ -110,7 +110,7 @@ export default function DestinationPage() {
           placeholder="Search tours..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="md:w-1/3"
+          className="md:w-1/3 bg-white"
         />
         <div className="flex-1 space-y-2">
           <Label>Price Range: ${priceRange[0]} - ${priceRange[1]}</Label>
@@ -125,7 +125,7 @@ export default function DestinationPage() {
       </div>
 
       <Tabs value={activeContinent} onValueChange={setActiveContinent} className="mb-8">
-        <TabsList className="w-full justify-start overflow-x-auto">
+        <TabsList className="justify-start overflow-x-auto">
           <TabsTrigger value="all">All Destinations</TabsTrigger>
           <TabsTrigger value="Europe">Europe</TabsTrigger>
           <TabsTrigger value="Asia">Asia</TabsTrigger>
