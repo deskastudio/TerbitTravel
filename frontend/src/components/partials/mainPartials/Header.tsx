@@ -2,7 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State untuk menu mobile
@@ -62,6 +68,17 @@ const Header = () => {
                 <DropdownMenuItem>
                   <Link to="/user-profile">Profile</Link>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link to="/faq">FAQ</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/terms">Syarat dan Ketentuan</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="/privacy-policy">Kebijakan Privasi</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
                     setIsLoggedIn(false); // Simulasikan logout
@@ -137,9 +154,17 @@ const Header = () => {
                   <DropdownMenuItem>
                     <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <Link to="/settings">Settings</Link>
+                    <Link to="/faq">FAQ</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/terms">Syarat dan Ketentuan</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/privacy-policy">Kebijakan Privasi</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => {
                       setIsLoggedIn(false); // Simulasikan logout
