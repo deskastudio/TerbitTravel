@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom"; // Gunakan Link untuk navigasi
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State untuk menu mobile
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // State untuk status login (ubah sesuai logika autentikasi Anda)
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen); // Fungsi untuk toggle menu
-  const closeMenu = () => setIsMenuOpen(false); // Fungsi untuk menutup menu
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
 
   // Daftar navigasi
   const navLinks = [
@@ -45,18 +48,43 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Action Buttons */}
+        {/* Action Buttons or Avatar */}
         <div className="hidden md:flex space-x-4">
-          <Link to="/login">
-            <Button variant="outline" className="px-6">
-              Masuk
-            </Button>
-          </Link>
-          <Link to="/register">
-            <Button variant="default" className="px-6">
-              Daftar
-            </Button>
-          </Link>
+          {isLoggedIn ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar>
+                  <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <Link to="/user-profile">Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsLoggedIn(false); // Simulasikan logout
+                  }}
+                >
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="outline" className="px-6">
+                  Masuk
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button variant="default" className="px-6">
+                  Daftar
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -90,22 +118,52 @@ const Header = () => {
             <Link
               key={index}
               to={link.path}
-              onClick={closeMenu} // Tutup menu setelah navigasi
+              onClick={closeMenu}
               className="text-gray-700 hover:text-primary text-xl font-medium transition"
             >
               {link.name}
             </Link>
           ))}
-          <Link to="/login" onClick={closeMenu}>
-            <Button variant="outline" className="px-6">
-              Masuk
-            </Button>
-          </Link>
-          <Link to="/register" onClick={closeMenu}>
-            <Button variant="default" className="px-6">
-              Daftar
-            </Button>
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Avatar>
+                    <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" />
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center">
+                  <DropdownMenuItem>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/settings">Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setIsLoggedIn(false); // Simulasikan logout
+                    }}
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              <Link to="/login" onClick={closeMenu}>
+                <Button variant="outline" className="px-6">
+                  Masuk
+                </Button>
+              </Link>
+              <Link to="/register" onClick={closeMenu}>
+                <Button variant="default" className="px-6">
+                  Daftar
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
