@@ -13,6 +13,7 @@ import TermsConditionsPage from '@/components/partials/mainPartials/syarat-keten
 import PrivacyPolicy from '@/components/partials/mainPartials/privacy-policy/Index';
 import Faq from '@/components/partials/mainPartials/faq/Index';
 import UserProfile from '@/pages/mainPages/user-profile/Index';
+import Booking from '@/pages/mainPages/form-pemesanan/Index';
 
 function MainRoutes() {
   return (
@@ -30,6 +31,7 @@ function MainRoutes() {
       <Route path="/terms-condition" element={<TermsConditionsPage />} />
       <Route path="/faq" element={<Faq/>} />
       <Route path="/user-profile" element={<UserProfile/>} />
+      <Route path="/booking" element={<Booking/>} />
 
       {/* crud ecample */}
       <Route path="/crud-example" element={<CrudExample />} />

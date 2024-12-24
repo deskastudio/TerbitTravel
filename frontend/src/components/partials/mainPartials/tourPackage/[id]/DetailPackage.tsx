@@ -255,7 +255,7 @@ export default function TourPackageDetails() {
           <div className="text-3xl font-semibold text-primary mb-4">Price: ${tourPackage.price}</div>
         </CardContent>
         <CardFooter>
-        <Button size="lg">Book Now</Button>
+        <Button size="lg" onClick={() => navigate(`/booking`)}>Book Now</Button>
         </CardFooter>
       </Card>
 
