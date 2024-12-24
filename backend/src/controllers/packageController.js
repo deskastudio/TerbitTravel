@@ -1,5 +1,6 @@
-import mongoose from "mongoose"; // Import mongoose untuk validasi ObjectId
-import Package from "../models/package.js"; // Import model Package
+// controllers/packageController.js
+import mongoose from "mongoose";
+import Package from "../models/package.js";
 
 /**
  * Menambah paket baru
@@ -13,16 +14,13 @@ export const addPackage = async (req, res) => {
       exclude,
       harga,
       status,
+      durasi,
+      jadwal,
       destination,
       hotel,
       armada,
       consume,
     } = req.body;
-
-    // Validasi apakah field penting ada
-    if (!destination || !consume || !hotel || !armada) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
 
     const newPackage = new Package({
       nama,
@@ -31,6 +29,8 @@ export const addPackage = async (req, res) => {
       exclude,
       harga,
       status,
+      durasi,
+      jadwal,
       destination,
       hotel,
       armada,
@@ -104,29 +104,18 @@ export const updatePackage = async (req, res) => {
       exclude,
       harga,
       status,
-      destination, // Pastikan ID di sini adalah ObjectId yang valid
+      durasi,
+      jadwal,
+      destination,
       hotel,
       armada,
-      consume, // Pastikan ID di sini adalah ObjectId yang valid
+      consume,
     } = req.body;
 
-    // Periksa dan konversi ID menjadi ObjectId jika berupa string
-    const destinationId = new mongoose.Types.ObjectId(destination);
-    const hotelId = new mongoose.Types.ObjectId(hotel);
-    const armadaId = new mongoose.Types.ObjectId(armada);
-    const consumeId = new mongoose.Types.ObjectId(consume);
-
-    // Validasi apakah ObjectId valid (harus 24 karakter panjangnya)
-    if (
-      !mongoose.Types.ObjectId.isValid(destinationId) ||
-      !mongoose.Types.ObjectId.isValid(consumeId) ||
-      !mongoose.Types.ObjectId.isValid(hotelId) ||
-      !mongoose.Types.ObjectId.isValid(armadaId)
-    ) {
-      return res.status(400).json({ message: "Invalid ObjectId(s) provided" });
+    if (!mongoose.Types.ObjectId.isValid(packageId)) {
+      return res.status(400).json({ message: "Invalid package ID" });
     }
 
-    // Update paket
     const updatedPackage = await Package.findByIdAndUpdate(
       packageId,
       {
@@ -136,17 +125,15 @@ export const updatePackage = async (req, res) => {
         exclude,
         harga,
         status,
-        destination: destinationId,
-        hotel: hotelId,
-        armada: armadaId,
-        consume: consumeId,
+        durasi,
+        jadwal,
+        destination,
+        hotel,
+        armada,
+        consume,
       },
-      { new: true } // Mengembalikan data terbaru setelah pembaruan
-    )
-      .populate("destination", "lokasi gambar")
-      .populate("hotel", "nama alamat bintang")
-      .populate("armada", "nama kapasitas")
-      .populate("consume", "nama lauk harga");
+      { new: true }
+    );
 
     if (!updatedPackage) {
       return res.status(404).json({ message: "Package not found" });

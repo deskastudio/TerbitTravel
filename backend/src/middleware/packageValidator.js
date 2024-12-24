@@ -1,64 +1,47 @@
+// middleware/validatePackageData.js
 export const validatePackageData = (req, res, next) => {
-  let {
-    nama,
-    deskripsi,
-    include,
-    exclude,
-    harga,
-    status,
-    destination,
-    hotel,
-    armada,
-    consume,
-  } = req.body;
+  let { include, exclude, jadwal } = req.body;
 
-  // Pastikan include dan exclude adalah array (jika dikirim sebagai string, split menggunakan koma)
+  // Konversi string ke array jika perlu
   if (typeof include === "string") {
     include = include.split(",").map((item) => item.trim());
+    req.body.include = include;
   }
+
   if (typeof exclude === "string") {
     exclude = exclude.split(",").map((item) => item.trim());
+    req.body.exclude = exclude;
   }
 
-  // Validasi keberadaan semua field
-  if (
-    !nama ||
-    !deskripsi ||
-    !include ||
-    !exclude ||
-    !harga ||
-    !destination ||
-    !hotel ||
-    !armada ||
-    !consume
-  ) {
-    return res.status(400).json({ message: "All fields are required" });
+  if (typeof jadwal === "string") {
+    try {
+      jadwal = JSON.parse(jadwal); // Jika dikirim sebagai JSON string, parsing ke array
+      req.body.jadwal = jadwal;
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: "'jadwal' must be an array or valid JSON" });
+    }
   }
 
-  // Validasi bahwa include dan exclude adalah array
+  // Validasi ulang bahwa include, exclude, dan jadwal adalah array
   if (!Array.isArray(include) || !Array.isArray(exclude)) {
     return res
       .status(400)
       .json({ message: "'include' and 'exclude' must be arrays" });
   }
 
-  // Validasi bahwa status memiliki nilai valid
-  if (status && !["available", "sold out"].includes(status)) {
-    return res
-      .status(400)
-      .json({ message: "'status' must be 'available' or 'sold out'" });
+  if (!Array.isArray(jadwal)) {
+    return res.status(400).json({ message: "'jadwal' must be an array" });
   }
 
-  // Validasi bahwa harga adalah angka positif
-  if (isNaN(harga) || harga <= 0) {
-    return res
-      .status(400)
-      .json({ message: "'harga' must be a positive number" });
+  // Validasi format jadwal
+  if (jadwal.some((item) => !item.tanggalAwal || !item.tanggalAkhir)) {
+    return res.status(400).json({
+      message:
+        "Each 'jadwal' item must include 'tanggalAwal' and 'tanggalAkhir'",
+    });
   }
 
-  // Simpan data yang sudah diproses kembali ke req.body
-  req.body.include = include;
-  req.body.exclude = exclude;
-
-  next(); // Melanjutkan ke proses berikutnya jika semua validasi lolos
+  next();
 };

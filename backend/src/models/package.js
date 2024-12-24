@@ -1,3 +1,4 @@
+// models/package.js
 import mongoose from "mongoose";
 
 const packageSchema = new mongoose.Schema({
@@ -10,11 +11,11 @@ const packageSchema = new mongoose.Schema({
     required: true,
   },
   include: {
-    type: [String], // List of included items
+    type: [String],
     required: true,
   },
   exclude: {
-    type: [String], // List of excluded items
+    type: [String],
     required: true,
   },
   harga: {
@@ -23,31 +24,45 @@ const packageSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["available", "sold out"], // Pilihan status
-    default: "sold out", // Default menjadi 'sold out'
+    enum: ["available", "sold out"],
+    default: "available",
   },
+  durasi: {
+    type: String,
+    required: true,
+  },
+  jadwal: [
+    {
+      tanggalAwal: { type: Date, required: true },
+      tanggalAkhir: { type: Date, required: true },
+      status: {
+        type: String,
+        enum: ["tersedia", "tidak tersedia"],
+        default: "tersedia",
+      },
+    },
+  ],
   destination: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Destination", // Referensi ke model destinasi
+    ref: "Destination",
     required: true,
   },
   hotel: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Hotel", // Referensi ke model hotel
+    ref: "Hotel",
     required: true,
   },
   armada: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Armada", // Referensi ke model armada
+    ref: "Armada",
     required: true,
   },
   consume: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Consume", // Referensi ke model konsumsi
+    ref: "Consume",
     required: true,
   },
 });
 
 const Package = mongoose.model("Package", packageSchema);
-
 export default Package;

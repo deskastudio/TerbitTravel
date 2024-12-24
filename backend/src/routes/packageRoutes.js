@@ -53,6 +53,26 @@ const upload = multer(); // Middleware untuk menangani multipart form-data
  *                 type: string
  *                 enum: [available, sold out]
  *                 description: Status of the package
+ *               durasi:
+ *                 type: string
+ *                 description: Duration of the package
+ *               jadwal:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     tanggalAwal:
+ *                       type: string
+ *                       format: date
+ *                       description: Start date of the schedule
+ *                     tanggalAkhir:
+ *                       type: string
+ *                       format: date
+ *                       description: End date of the schedule
+ *                     status:
+ *                       type: string
+ *                       enum: [tersedia, tidak tersedia]
+ *                       description: Status of the schedule
  *               destination:
  *                 type: string
  *                 description: Destination ID
@@ -163,6 +183,26 @@ router.get("/:packageId", getPackageById);
  *                 type: string
  *                 enum: [available, sold out]
  *                 description: Status of the package
+ *               durasi:
+ *                 type: string
+ *                 description: Duration of the package
+ *               jadwal:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     tanggalAwal:
+ *                       type: string
+ *                       format: date
+ *                       description: Start date of the schedule
+ *                     tanggalAkhir:
+ *                       type: string
+ *                       format: date
+ *                       description: End date of the schedule
+ *                     status:
+ *                       type: string
+ *                       enum: [tersedia, tidak tersedia]
+ *                       description: Status of the schedule
  *               destination:
  *                 type: string
  *                 description: Destination ID
