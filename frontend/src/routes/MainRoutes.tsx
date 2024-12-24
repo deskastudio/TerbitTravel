@@ -9,9 +9,9 @@ import Destination from '@/pages/mainPages/destination/Index';
 import ForgotPassword from '@/pages/forgotPassword/Index';
 import TourPackageDetails from '@/pages/mainPages/tourPackage/DetailPackage';
 import CrudExample from '@/components/CrudExample';
-import TermsConditionsPage from '@/components/partials/mainPartials/syarat-ketentuan/Index';
-import PrivacyPolicy from '@/components/partials/mainPartials/privacy-policy/Index';
-import Faq from '@/components/partials/mainPartials/faq/Index';
+import TermsConditionsPage from '@/pages/mainPages/syarat-ketentuan/Index';
+import PrivacyPolicy from '@/pages/mainPages/privacy-policy/Index';
+import Faq from '@/pages/mainPages/faq/Index'
 import UserProfile from '@/pages/mainPages/user-profile/Index';
 import Booking from '@/pages/mainPages/form-pemesanan/Index';
 

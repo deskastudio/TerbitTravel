@@ -12,7 +12,7 @@ const TermsConditionsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <h1 className="text-3xl font-bold">Terms & Conditions</h1>
       <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
       

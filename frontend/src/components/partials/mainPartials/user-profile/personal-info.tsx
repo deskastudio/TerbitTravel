@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useForm, SubmitHandler, Controller } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,15 @@ const formSchema = z.object({
   bio: z.string().max(500, {
     message: "Bio must not exceed 500 characters.",
   }),
+  address: z.string().max(250, {
+    message: "Address must not exceed 250 characters.",
+  }),
+  profilePhoto: z.instanceof(FileList).refine((fileList) => fileList.length <= 1, {
+    message: "Please upload only one photo.",
+  }),
+  institution: z.string().max(100, {
+    message: "Institution name must not exceed 100 characters.",
+  }),
 });
 
 // Define interface for default values
@@ -40,6 +49,9 @@ interface DefaultValues {
   email: string;
   phone: string;
   bio: string;
+  address: string;
+  profilePhoto: FileList | null;
+  institution: string;
 }
 
 // Default values
@@ -48,11 +60,15 @@ const defaultValues: DefaultValues = {
   email: "john.doe@example.com",
   phone: "1234567890",
   bio: "I'm a software developer with a passion for creating user-friendly applications.",
+  address: "123 Main Street, Some City, Some Country",
+  profilePhoto: null,
+  institution: "Example University",
 };
 
 const PersonalInfo: React.FC = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
   // Initialize the form using react-hook-form
   const form = useForm<DefaultValues>({
@@ -68,6 +84,14 @@ const PersonalInfo: React.FC = () => {
       description: "Your personal information has been updated successfully.",
     });
     setIsEditing(false);
+  };
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const file = e.target.files[0];
+      setSelectedPhoto(file);
+    }
   };
 
   return (
@@ -131,6 +155,63 @@ const PersonalInfo: React.FC = () => {
                 <FormDescription>
                   Tell us a little about yourself. Max 500 characters.
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Address</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={!isEditing} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormItem>
+            <FormLabel>Profile Photo</FormLabel>
+            <FormControl>
+              <Controller
+                control={form.control}
+                name="profilePhoto"
+                render={({ field }) => (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      field.onChange(e.target.files);
+                      handleFileChange(e);
+                    }}
+                    disabled={!isEditing}
+                  />
+                )}
+              />
+            </FormControl>
+            <FormMessage />
+            {/* Display the selected photo */}
+            {selectedPhoto && (
+              <div className="mt-2">
+                <img
+                  src={URL.createObjectURL(selectedPhoto)}
+                  alt="Selected Photo"
+                  className="w-32 h-32 object-cover rounded-full"
+                />
+              </div>
+            )}
+          </FormItem>
+          <FormField
+            control={form.control}
+            name="institution"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Institution</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={!isEditing} />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}

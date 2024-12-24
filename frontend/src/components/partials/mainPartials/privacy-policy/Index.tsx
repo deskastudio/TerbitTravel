@@ -6,7 +6,7 @@ const PrivacyPolicyPage = () => {
   const [selectedTab, setSelectedTab] = useState("collection");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4">
       <h1 className="text-3xl font-bold">Privacy Policy</h1>
       <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
       

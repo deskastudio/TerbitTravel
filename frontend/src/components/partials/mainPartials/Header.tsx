@@ -69,16 +69,6 @@ const Header = () => {
                   <Link to="/user-profile">Profile</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link to="/faq">FAQ</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link to="/terms">Syarat dan Ketentuan</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link to="/privacy-policy">Kebijakan Privasi</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
                     setIsLoggedIn(false); // Simulasikan logout
@@ -154,17 +144,7 @@ const Header = () => {
                   <DropdownMenuItem>
                     <Link to="/profile">Profile</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Link to="/faq">FAQ</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/terms">Syarat dan Ketentuan</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/privacy-policy">Kebijakan Privasi</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />     
                   <DropdownMenuItem
                     onClick={() => {
                       setIsLoggedIn(false); // Simulasikan logout
