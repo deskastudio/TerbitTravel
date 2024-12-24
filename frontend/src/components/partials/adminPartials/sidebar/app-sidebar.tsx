@@ -58,7 +58,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         icon: Bot,
         items: [
           { title: "Tambah Destinasi", url: "/admin-add-destination" },
-          { title: "Detail Destinasi", url: "#" },
+          { title: "Detail Destinasi", url: "/admin-detail-destination" },
         ],
       },
       {
@@ -67,7 +67,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         icon: BookOpen,
         items: [
           { title: "Tambah Armada", url: "/admin-add-armada" },
-          { title: "Detail Armada", url: "#" },
+          { title: "Detail Armada", url: "/admin-detail-armada" },
         ],
       },
       {
@@ -76,7 +76,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         icon: Settings2,
         items: [
           { title: "Tambah Konsumsi", url: "/admin-add-consumption" },
-          { title: "Detail Konsumsi", url: "#" },
+          { title: "Detail Konsumsi", url: "/admin-detail-consumption" },
         ],
       },
       {
@@ -85,7 +85,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         icon: BookOpen,
         items: [
           { title: "Tambah Hotel", url: "/admin-add-hotel" },
-          { title: "Detail Hotel", url: "#" },
+          { title: "Detail Hotel", url: "/admin-detail-hotel" },
         ],
       },
     ],

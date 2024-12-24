@@ -7,6 +7,7 @@ import AddArmada from '@/pages/adminPages/armada/add-armada';
 import AddConsumption from '@/pages/adminPages/consumption/add-consumption';
 import AddHotel from '@/pages/adminPages/hotel/add-hotel';
 import AddArticle from '@/pages/adminPages/article/add-article';
+import DetailDestination from '@/pages/adminPages/destination/detail-destination';
 
 function AdminRoutes() {
   return (
@@ -19,6 +20,7 @@ function AdminRoutes() {
       <Route path="/admin-add-consumption" element={<AddConsumption />} />
       <Route path="/admin-add-hotel" element={<AddHotel />} />
       <Route path="/admin-add-article" element={<AddArticle />} />
+      <Route path="/admin-detail-destination" element={<DetailDestination />} />
 
     </Routes>
   );
