@@ -36,3 +36,26 @@ export const bookingFormSchema = z.object({
 })
 
 export type BookingFormValues = z.infer<typeof bookingFormSchema>
+
+export const profileSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number"),
+  address: z.string().min(5, "Address must be at least 5 characters"),
+})
+
+export const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, 
+      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"),
+  confirmPassword: z.string(),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+})
+
+export type ProfileFormValues = z.infer<typeof profileSchema>
+export type PasswordFormValues = z.infer<typeof passwordSchema>
