@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   alamat: { type: String, required: true },
   noTelp: { type: String, required: true },
   instansi: { type: String },
+  foto: { type: String }, // Tambahkan untuk menyimpan path gambar
 });
 
 const User = mongoose.model("User", userSchema);

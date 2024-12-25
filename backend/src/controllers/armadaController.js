@@ -141,3 +141,23 @@ export const getAllArmada = async (req, res) => {
     });
   }
 };
+
+// Ambil data armada berdasarkan ID
+export const getArmadaById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const armada = await Armada.findById(id);
+    if (!armada) {
+      return res.status(404).json({ message: "Armada tidak ditemukan" });
+    }
+
+    res.status(200).json(armada);
+  } catch (error) {
+    console.error("Error fetching armada by ID:", error);
+    res.status(500).json({
+      message: "Gagal mengambil data armada",
+      error: error.message,
+    });
+  }
+};

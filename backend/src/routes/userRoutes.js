@@ -1,29 +1,39 @@
 import express from "express";
+import multer from "multer";
+import path from "path";
 import {
   registerUser,
   loginUser,
   deleteUser,
   getAllUsers,
+  getUserById,
+  updateUser,
 } from "../controllers/userController.js";
-import {
-  validateRegister,
-  validateLogin,
-  handleValidationErrors,
-} from "../middleware/validators.js";
-import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
+
+// Konfigurasi multer untuk file upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads/user");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
 
 /**
  * @swagger
  * /user/register:
  *   post:
- *     summary: Register new user
+ *     summary: Register a new user
  *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -39,6 +49,9 @@ const router = express.Router();
  *                 type: string
  *               instansi:
  *                 type: string
+ *               foto:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -47,12 +60,7 @@ const router = express.Router();
  *       500:
  *         description: Error registering user
  */
-router.post(
-  "/register",
-  validateRegister,
-  handleValidationErrors,
-  registerUser
-);
+router.post("/register", upload.single("foto"), registerUser);
 
 /**
  * @swagger
@@ -79,13 +87,13 @@ router.post(
  *       500:
  *         description: Server error
  */
-router.post("/login", validateLogin, handleValidationErrors, loginUser);
+router.post("/login", loginUser);
 
 /**
  * @swagger
  * /user/user/{userId}:
  *   delete:
- *     summary: Delete user by ID
+ *     summary: Delete a user by ID
  *     tags: [User]
  *     security:
  *       - BearerAuth: []
@@ -99,20 +107,18 @@ router.post("/login", validateLogin, handleValidationErrors, loginUser);
  *     responses:
  *       200:
  *         description: User deleted successfully
- *       403:
- *         description: Forbidden
  *       404:
  *         description: User not found
  *       500:
  *         description: Error deleting user
  */
-router.delete("/user/:userId", authMiddleware, checkRole("admin"), deleteUser);
+router.delete("/user/:userId", authMiddleware, deleteUser);
 
 /**
  * @swagger
  * /user/dataUser:
  *   get:
- *     summary: Get all users data
+ *     summary: Get all users
  *     tags: [User]
  *     security:
  *       - BearerAuth: []
@@ -136,11 +142,103 @@ router.delete("/user/:userId", authMiddleware, checkRole("admin"), deleteUser);
  *                     type: string
  *                   instansi:
  *                     type: string
- *       403:
- *         description: Forbidden
+ *                   foto:
+ *                     type: string
  *       500:
  *         description: Error fetching user data
  */
-router.get("/dataUser", authMiddleware, checkRole("admin"), getAllUsers);
+router.get("/dataUser", authMiddleware, getAllUsers);
+
+/**
+ * @swagger
+ * /user/{userId}:
+ *   get:
+ *     summary: Get a user by ID
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the user to retrieve
+ *     responses:
+ *       200:
+ *         description: User data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 nama:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 alamat:
+ *                   type: string
+ *                 noTelp:
+ *                   type: string
+ *                 instansi:
+ *                   type: string
+ *                 foto:
+ *                   type: string
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Error fetching user data
+ */
+router.get("/:userId", authMiddleware, getUserById);
+
+/**
+ * @swagger
+ * /user/update/{userId}:
+ *   put:
+ *     summary: Update a user's data
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the user to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nama:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               alamat:
+ *                 type: string
+ *               noTelp:
+ *                 type: string
+ *               instansi:
+ *                 type: string
+ *               foto:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Error updating user
+ */
+router.put(
+  "/update/:userId",
+  upload.single("foto"),
+  authMiddleware,
+  updateUser
+);
 
 export default router;

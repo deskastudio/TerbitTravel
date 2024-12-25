@@ -6,6 +6,7 @@ import {
   updateArmada,
   deleteArmada,
   getAllArmada,
+  getArmadaById, // Import the new function
 } from "../controllers/armadaController.js";
 import { validateArmadaData } from "../middleware/armadaValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
@@ -206,5 +207,30 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
  *         description: Kesalahan server
  */
 router.get("/getAll", authMiddleware, checkRole("admin"), getAllArmada);
+
+/**
+ * @swagger
+ * /armada/{id}:
+ *   get:
+ *     summary: Ambil data armada berdasarkan ID
+ *     tags: [Armada]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID armada yang akan diambil
+ *     responses:
+ *       200:
+ *         description: Data armada ditemukan
+ *       404:
+ *         description: Armada tidak ditemukan
+ *       500:
+ *         description: Kesalahan server
+ */
+router.get("/:id", authMiddleware, checkRole("admin"), getArmadaById);
 
 export default router;

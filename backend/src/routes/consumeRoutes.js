@@ -5,12 +5,13 @@ import {
   updateConsume,
   deleteConsume,
   getAllConsumes,
+  getConsumeById, // Import function to get consume by ID
 } from "../controllers/consumeController.js";
 import {
   parseLauk,
   validateConsumeData,
 } from "../middleware/consumeValidator.js";
-import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 const upload = multer();
@@ -62,7 +63,6 @@ const upload = multer();
 router.post(
   "/add",
   authMiddleware,
-  checkRole("admin"),
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -94,11 +94,9 @@ router.post(
  *               nama:
  *                 type: string
  *                 description: Nama konsumsi
- *                 example: "Nasi Uduk"
  *               harga:
  *                 type: number
  *                 description: Harga konsumsi
- *                 example: 30000
  *               lauk:
  *                 type: array
  *                 description: Pilihan lauk
@@ -118,7 +116,6 @@ router.post(
 router.put(
   "/update/:id",
   authMiddleware,
-  checkRole("admin"),
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -148,7 +145,7 @@ router.put(
  *       500:
  *         description: Failed to delete consume
  */
-router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteConsume);
+router.delete("/delete/:id", authMiddleware, deleteConsume);
 
 /**
  * @swagger
@@ -198,5 +195,30 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteConsume);
  *         description: Failed to fetch consumes
  */
 router.get("/get", authMiddleware, getAllConsumes);
+
+/**
+ * @swagger
+ * /consume/{id}:
+ *   get:
+ *     summary: Ambil data konsumsi berdasarkan ID
+ *     tags: [Consume]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID konsumsi yang akan diambil
+ *     responses:
+ *       200:
+ *         description: Data konsumsi ditemukan
+ *       404:
+ *         description: Konsumsi tidak ditemukan
+ *       500:
+ *         description: Kesalahan server
+ */
+router.get("/:id", authMiddleware, getConsumeById);
 
 export default router;
