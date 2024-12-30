@@ -1,8 +1,20 @@
 export const TEAM_MEMBERS = [
     {
       id: '1',
+      name: "Dias Yusdiansyah",
+      role: "director of human resource management and development",                
+      image: "./Profile/Tim/human1.svg",
+      bio: "-",
+      social: {
+        linkedin: "#",
+        twitter: "#",
+        email: "#"
+      }
+    },
+    {
+      id: '2',
       name: "Achmad Sobari",
-      role: "-",
+      role: "Founder",
       image: "./Profile/Tim/human1.svg",
       bio: "-",
       social: {
@@ -12,9 +24,9 @@ export const TEAM_MEMBERS = [
       }
     },
     {
-      id: '2',
-      name: "Dias Yusdiansyah",
-      role: "-",                
+      id: '3',
+      name: "Muhammad Imanudin",  
+      role: "Project Leader",                
       image: "./Profile/Tim/human1.svg",
       bio: "-",
       social: {

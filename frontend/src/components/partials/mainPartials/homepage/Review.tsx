@@ -3,29 +3,30 @@ import { useState } from "react";
 const testimonials = [
   {
     id: 1,
-    name: "Ema Watson",
-    role: "Marketing Manager at Stech",
-    date: "December 10, 2024",
+    name: "Putri Ayu",
+    role: "Kepala Sekolah",
+    date: "10 Desember 2024",
     comment:
       "Timnya sangat profesional dan responsif. Saya sangat merekomendasikan layanan mereka untuk siapa pun yang merencanakan perjalanan yang tak terlupakan.",
   },
   {
     id: 2,
-    name: "John Doe",
-    role: "Software Engineer at TechCorp",
-    date: "November 5, 2024",
+    name: "Ahmad Fauzi",
+    role: "Guru",
+    date: "5 November 2024",
     comment:
-      "Mereka memperhatikan terhadap detail dan pendekatan yang mengutamakan pelanggan membuat seluruh prosesnya menyenangkan. Benar-benar mitra perjalanan saya!",
+      "Mereka sangat perhatian terhadap detail dan pendekatan yang mengutamakan pelanggan membuat seluruh prosesnya menyenangkan. Benar-benar mitra perjalanan terbaik saya!",
   },
   {
     id: 3,
-    name: "Jane Smith",
-    role: "Product Manager at InnovateX",
-    date: "October 22, 2024",
+    name: "Siti Lestari",
+    role: "Guru",
+    date: "22 Oktober 2024",
     comment:
-      "Setiap aspek dari layanan ini melebihi ekspektasi saya. Saya akan menggunakan layanan mereka lagi untuk petualangan saya berikutnya.",
+      "Setiap aspek dari layanan ini melebihi ekspektasi saya. Saya pasti akan menggunakan layanan mereka lagi untuk petualangan saya berikutnya.",
   },
 ];
+
 
 const Review = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
