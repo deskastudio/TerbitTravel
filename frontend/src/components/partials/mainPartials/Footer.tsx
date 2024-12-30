@@ -48,12 +48,12 @@ const Footer = () => {
     { 
       name: "Instagram", 
       href: "https://www.instagram.com/terbit.travel/", 
-      src: "../src/assets/Sosmed/instagramIcon.svg" 
+      src: "../Sosmed/instagramIcon.svg" 
     },
     { 
       name: "Facebook", 
       href: "https://www.facebook.com/profile.php?id=61559141878271", 
-      src: "../src/assets/Sosmed/facebookIcon.svg" 
+      src: "../Sosmed/facebookIcon.svg"
     },
     // { 
     //   name: "Tiktok", 
@@ -63,7 +63,7 @@ const Footer = () => {
     { 
       name: "YouTube", 
       href: "https://www.youtube.com/@TerbitTravelAndService", 
-      src: "../src/assets/Sosmed/youtubeIcon.svg" 
+      src: "../Sosmed/youtubeIcon.svg" 
     },
   ];
 

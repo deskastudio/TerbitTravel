@@ -8,10 +8,10 @@ import {
 
 const Banner = () => {
   const banners = [
-    { id: 1, src: "src/assets/Banner/banner3.png", alt: "Banner 1" },
-    { id: 2, src: "src/assets/Banner/banner4.png", alt: "Banner 2" },
-    { id: 3, src: "src/assets/Banner/banner5.png", alt: "Banner 3" },
-    { id: 4, src: "src/assets/Banner/banner6.png", alt: "Banner 4" },
+    { id: 1, src: "../Beranda/Banner/banner3.png", alt: "Banner 1" },
+    { id: 2, src: "../Beranda/Banner/banner4.png", alt: "Banner 2" },
+    { id: 3, src: "../Beranda/Banner/banner5.png", alt: "Banner 3" },
+    { id: 4, src: "../Beranda/Banner/banner6.png", alt: "Banner 4" },
   ];
 
   return (

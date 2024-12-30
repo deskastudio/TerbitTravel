@@ -50,12 +50,12 @@ const Review = () => {
           Apa kata Sobat Terbit?
         </h1>
 
-        <main className="relative z-20 w-full mt-8 md:flex md:items-center xl:mt-12">
+        <main className="relative z-20 w-full mt-8 md:mt-10 md:flex md:items-center xl:mt-12">
           <div className="absolute w-full bg-gray-800 -z-10 md:h-96 rounded-2xl"></div>
 
           {/* Static Image */}
           <div className="w-full p-6 bg-gray-800 md:flex md:items-center rounded-2xl md:bg-transparent md:p-0 lg:px-12 md:justify-evenly">
-            <img src="src/assets/Banner/reviewImage.svg" alt="" className="w-1/2"/>
+            <img src="../Beranda/reviewImage.svg" alt="" className="w-1/2"/>
 
             {/* Dynamic Content */}
             <div className="mt-2 md:mx-6">
