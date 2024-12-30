@@ -1,36 +1,64 @@
 import express from "express";
 import multer from "multer";
+import path from "path";
 import {
   addDestination,
   updateDestination,
   deleteDestination,
   getAllDestinations,
+  getDestinationById,
 } from "../controllers/destinationController.js";
-import path from "path";
+import { validateDestinationData } from "../middleware/destinationValidator.js";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
 
 // Konfigurasi multer untuk menyimpan file gambar di subfolder `uploads/destination`
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads/destination"); // Menyimpan gambar di subfolder destination
+    cb(null, "./uploads/destination");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Nama file dengan timestamp
+    cb(null, Date.now() + path.extname(file.originalname));
   },
 });
 
 const upload = multer({ storage });
-
 const router = express.Router();
 
-router.post("/add", upload.array("foto"), addDestination); // Tambah destinasi
-// Route untuk menambahkan destinasi
+/**
+ * @swagger
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Destination
+ *     description: API for managing destinations
+ */
+
+// Tambah destinasi
+router.post(
+  "/add",
+  authMiddleware,
+  checkRole("admin"),
+  upload.array("foto"),
+  validateDestinationData,
+  addDestination
+);
 /**
  * @swagger
  * /destination/add:
  *   post:
- *     summary: Add new destination
- *     description: Add a new destination including multiple photos.
+ *     summary: Add a new destination
+ *     description: Add a new destination including name, location, description, and multiple images.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -40,13 +68,13 @@ router.post("/add", upload.array("foto"), addDestination); // Tambah destinasi
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "Pantai Kuta"
+ *                 example: "Pantai Indah"
  *               lokasi:
  *                 type: string
- *                 example: "Bali, Indonesia"
+ *                 example: "Bali"
  *               deskripsi:
  *                 type: string
- *                 example: "Pantai Kuta adalah salah satu destinasi wisata yang terkenal di Bali."
+ *                 example: "Pantai yang indah dengan pasir putih."
  *               foto:
  *                 type: array
  *                 items:
@@ -55,25 +83,39 @@ router.post("/add", upload.array("foto"), addDestination); // Tambah destinasi
  *     responses:
  *       201:
  *         description: Destination added successfully
+ *       400:
+ *         description: Validation errors
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Error adding destination
  */
-router.put("/update/:id", upload.array("foto"), updateDestination); // Update destinasi
-// Route untuk mengedit destinasi berdasarkan ID
+
+// Update destinasi
+router.put(
+  "/update/:id",
+  authMiddleware,
+  checkRole("admin"),
+  upload.array("foto"),
+  validateDestinationData,
+  updateDestination
+);
 /**
  * @swagger
  * /destination/update/{id}:
  *   put:
- *     summary: Update destination
- *     description: Update an existing destination by its ID.
+ *     summary: Update an existing destination
+ *     description: Update a destination by ID including name, location, description, and images.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
+ *         description: ID of the destination to update
  *         schema:
  *           type: string
- *         required: true
- *         description: The ID of the destination to update
  *     requestBody:
  *       required: true
  *       content:
@@ -83,13 +125,13 @@ router.put("/update/:id", upload.array("foto"), updateDestination); // Update de
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "Pantai Kuta"
+ *                 example: "Pantai Baru"
  *               lokasi:
  *                 type: string
- *                 example: "Bali, Indonesia"
+ *                 example: "Lombok"
  *               deskripsi:
  *                 type: string
- *                 example: "Pantai Kuta adalah salah satu destinasi wisata yang terkenal di Bali."
+ *                 example: "Pantai dengan ombak tenang dan pemandangan sunset."
  *               foto:
  *                 type: array
  *                 items:
@@ -100,87 +142,88 @@ router.put("/update/:id", upload.array("foto"), updateDestination); // Update de
  *         description: Destination updated successfully
  *       404:
  *         description: Destination not found
+ *       400:
+ *         description: Validation errors
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Error updating destination
  */
 
-router.delete("/delete/:id", deleteDestination); // Hapus destinasi
+// Hapus destinasi
+router.delete(
+  "/delete/:id",
+  authMiddleware,
+  checkRole("admin"),
+  deleteDestination
+);
 /**
  * @swagger
  * /destination/delete/{id}:
  *   delete:
  *     summary: Delete a destination
- *     description: Delete a destination by its ID. Semua gambar terkait destinasi juga akan dihapus dari server.
+ *     description: Delete a destination by ID.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
+ *         description: ID of the destination to delete
  *         schema:
  *           type: string
- *         required: true
- *         description: The ID of the destination to delete
  *     responses:
  *       200:
  *         description: Destination deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Destination deleted successfully"
  *       404:
  *         description: Destination not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Destination not found"
+ *       401:
+ *         description: Unauthorized
  *       500:
  *         description: Error deleting destination
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Error deleting destination"
  */
-router.get("/getAll", getAllDestinations); // Ambil semua data destinasi
-// Route untuk mendapatkan semua destinasi
+
+// Ambil semua data destinasi
+router.get("/getAll", authMiddleware, getAllDestinations);
 /**
  * @swagger
  * /destination/getAll:
  *   get:
  *     summary: Get all destinations
- *     description: Retrieve all destinations stored in the database, excluding image data.
+ *     description: Retrieve a list of all destinations.
  *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: A list of all destinations without image data
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   nama:
- *                     type: string
- *                     example: "Pantai Kuta"
- *                   lokasi:
- *                     type: string
- *                     example: "Bali, Indonesia"
- *                   deskripsi:
- *                     type: string
- *                     example: "Pantai Kuta adalah salah satu destinasi wisata yang terkenal di Bali."
+ *         description: Successfully fetched destinations
  *       500:
  *         description: Error fetching destinations
  */
+/**
+ * @swagger
+ * /destination/{id}:
+ *   get:
+ *     summary: Ambil data destinasi berdasarkan ID
+ *     tags: [Destination]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID destinasi yang akan diambil
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Data destinasi ditemukan
+ *       404:
+ *         description: Destinasi tidak ditemukan
+ *       500:
+ *         description: Kesalahan server
+ */
+router.get("/:id", authMiddleware, getDestinationById);
 
 export default router;

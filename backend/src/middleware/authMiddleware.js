@@ -1,40 +1,10 @@
-// src/middleware/validators.js
-import { body, validationResult } from "express-validator";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import Admin from "../models/admin.js"; // Pastikan path model admin sesuai
+import Admin from "../models/admin.js";
+import User from "../models/user.js";
 
-// Middleware untuk validasi registrasi
-export const validateRegister = [
-  body("nama").notEmpty().withMessage("Nama is required"),
-  body("email").isEmail().withMessage("Valid email is required"),
-  body("password")
-    .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 characters long"),
-  body("alamat").optional().isString(),
-  body("noTelp").optional().isString(),
-  body("instansi").optional().isString(),
-  handleValidationErrors,
-];
-
-// Middleware untuk validasi login
-export const validateLogin = [
-  body("email").notEmpty().withMessage("Email is required"),
-  body("email").isEmail().withMessage("Valid email is required"),
-  body("password").notEmpty().withMessage("Password is required"),
-  handleValidationErrors,
-];
-
-// Middleware untuk menangani error validasi
-export const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-};
-
-// Middleware untuk otentikasi admin
-export const authenticateAdmin = async (req, res, next) => {
+// Middleware untuk otentikasi admin saat login
+export const authenticateAdmin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -50,11 +20,89 @@ export const authenticateAdmin = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Jika login berhasil, simpan data admin di request untuk keperluan selanjutnya
-    req.admin = admin;
-    next();
+    // Buat token JWT dengan role
+    const token = jwt.sign(
+      { id: admin._id, role: admin.role }, // Menyertakan role dalam payload
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || "1h", // Token valid untuk 1 jam
+      }
+    );
+
+    res.status(200).json({
+      message: "Admin login successful",
+      token, // Kirimkan token JWT
+    });
   } catch (error) {
-    console.error("Authentication error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error });
   }
+};
+
+// Middleware untuk otentikasi user saat login
+export const authenticateUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Cari user berdasarkan email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Verifikasi password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Buat token JWT
+    const token = jwt.sign(
+      { id: user._id, role: "user" }, // Role default user
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+      }
+    );
+
+    res.status(200).json({
+      message: "User login successful",
+      token, // Kirimkan token JWT
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// Middleware untuk verifikasi JWT
+export const authMiddleware = (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1]; // Ambil token Bearer
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Authentication failed: No token provided" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Verifikasi token
+    req.userId = decoded.id; // Simpan userId dari token ke req
+    req.userRole = decoded.role; // Simpan role dari token ke req
+    next(); // Lanjutkan ke controller berikutnya
+  } catch (error) {
+    res.status(401).json({
+      message: "Authentication failed: Invalid or expired token",
+      error,
+    });
+  }
+};
+
+// Middleware tambahan untuk memeriksa role
+export const checkRole = (role) => (req, res, next) => {
+  if (req.userRole !== role) {
+    return res
+      .status(403)
+      .json({
+        message: `Access denied: Only ${role} can perform this action.`,
+      });
+  }
+  next();
 };

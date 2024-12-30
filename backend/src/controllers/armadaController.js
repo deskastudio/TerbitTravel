@@ -55,7 +55,6 @@ export const updateArmada = async (req, res) => {
         try {
           if (fs.existsSync(oldImagePath)) {
             await fs.promises.unlink(oldImagePath);
-            console.log(`File lama berhasil dihapus: ${oldImagePath}`);
           }
         } catch (err) {
           console.error(`Gagal menghapus file lama ${oldImagePath}:`, err);
@@ -102,10 +101,8 @@ export const deleteArmada = async (req, res) => {
     // Hapus semua file gambar yang terkait dengan armada ini
     for (const gambarPath of armada.gambar) {
       const filePath = path.join(__dirname, "../../", gambarPath);
-      console.log(`Mencoba menghapus file: ${filePath}`);
 
       try {
-        // Verifikasi bahwa path berada dalam direktori uploads
         const uploadsDir = path.join(__dirname, "../../uploads");
         if (!filePath.startsWith(uploadsDir)) {
           console.warn(`Invalid path detected: ${filePath}`);
@@ -114,16 +111,12 @@ export const deleteArmada = async (req, res) => {
 
         if (fs.existsSync(filePath)) {
           await fs.promises.unlink(filePath);
-          console.log(`File berhasil dihapus: ${filePath}`);
-        } else {
-          console.log(`File tidak ditemukan: ${filePath}`);
         }
       } catch (err) {
         console.error(`Gagal menghapus file ${filePath}:`, err);
       }
     }
 
-    // Hapus armada dari database
     await Armada.findByIdAndDelete(id);
     res.status(200).json({ message: "Armada berhasil dihapus" });
   } catch (error) {
@@ -142,6 +135,26 @@ export const getAllArmada = async (req, res) => {
     res.status(200).json(armadas);
   } catch (error) {
     console.error("Error fetching armadas:", error);
+    res.status(500).json({
+      message: "Gagal mengambil data armada",
+      error: error.message,
+    });
+  }
+};
+
+// Ambil data armada berdasarkan ID
+export const getArmadaById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const armada = await Armada.findById(id);
+    if (!armada) {
+      return res.status(404).json({ message: "Armada tidak ditemukan" });
+    }
+
+    res.status(200).json(armada);
+  } catch (error) {
+    console.error("Error fetching armada by ID:", error);
     res.status(500).json({
       message: "Gagal mengambil data armada",
       error: error.message,

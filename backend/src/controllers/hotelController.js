@@ -136,3 +136,22 @@ export const getAllHotels = async (req, res) => {
       .json({ message: "Failed to fetch hotels", error: error.message });
   }
 };
+// Fungsi untuk mendapatkan hotel berdasarkan ID
+export const getHotelById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const hotel = await Hotel.findById(id);
+
+    if (!hotel) {
+      return res.status(404).json({ message: "Hotel not found" });
+    }
+
+    res.status(200).json(hotel);
+  } catch (error) {
+    console.error("Error fetching hotel:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch hotel", error: error.message });
+  }
+};

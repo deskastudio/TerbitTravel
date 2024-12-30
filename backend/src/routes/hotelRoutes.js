@@ -1,3 +1,4 @@
+// src/routes/hotelRoutes.js
 import express from "express";
 import multer from "multer";
 import {
@@ -5,8 +6,10 @@ import {
   updateHotel,
   deleteHotel,
   getAllHotels,
+  getHotelById,
 } from "../controllers/hotelController.js";
 import { validateHotelData } from "../middleware/hotelValidator.js";
+import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
 import path from "path";
 
 // Konfigurasi multer untuk menyimpan file gambar di subfolder `uploads/hotel`
@@ -20,16 +23,43 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-
 const router = express.Router();
 
 /**
  * @swagger
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   - name: Hotel
+ *     description: API for managing hotels
+ */
+
+// Tambah hotel baru
+router.post(
+  "/add",
+  authMiddleware,
+  checkRole("admin"),
+  upload.array("gambar", 5),
+  validateHotelData,
+  addHotel
+);
+/**
+ * @swagger
  * /hotel/add:
  *   post:
- *     summary: Add a new hotel with multiple images
- *     description: Add a new hotel including multiple images, rating, price, and facilities.
+ *     summary: Add a new hotel
+ *     description: Add a new hotel including images, rating, price, and facilities.
  *     tags: [Hotel]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -51,39 +81,48 @@ const router = express.Router();
  *               bintang:
  *                 type: integer
  *                 example: 4
- *                 description: Rating of the hotel (1 to 5)
  *               harga:
  *                 type: number
  *                 example: 500000
- *                 description: Price per night in IDR
  *               fasilitas:
  *                 type: string
  *                 example: "WiFi, Kolam Renang, Spa"
- *                 description: Facilities separated by commas
  *     responses:
  *       201:
  *         description: Hotel added successfully
  *       400:
- *         description: Bad request, validation error
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
  *       500:
- *         description: Error adding hotel
+ *         description: Server error
  */
-router.post("/add", upload.array("gambar", 5), validateHotelData, addHotel);
 
+// Update hotel
+router.put(
+  "/update/:id",
+  authMiddleware,
+  checkRole("admin"),
+  upload.array("gambar", 5),
+  validateHotelData,
+  updateHotel
+);
 /**
  * @swagger
  * /hotel/update/{id}:
  *   put:
- *     summary: Update hotel information with multiple images
- *     description: Update an existing hotel including multiple images, rating, price, and facilities.
+ *     summary: Update hotel details
+ *     description: Update a hotel's information, including images, rating, price, and facilities.
  *     tags: [Hotel]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
+ *         description: Hotel ID
  *         schema:
  *           type: string
- *         required: true
- *         description: The ID of the hotel to update
  *     requestBody:
  *       required: true
  *       content:
@@ -93,10 +132,10 @@ router.post("/add", upload.array("gambar", 5), validateHotelData, addHotel);
  *             properties:
  *               nama:
  *                 type: string
- *                 example: "Hotel Santika"
+ *                 example: "Hotel Baru"
  *               alamat:
  *                 type: string
- *                 example: "Jl. Malioboro No.123, Yogyakarta"
+ *                 example: "Jl. Baru No.1, Jakarta"
  *               gambar:
  *                 type: array
  *                 items:
@@ -104,98 +143,130 @@ router.post("/add", upload.array("gambar", 5), validateHotelData, addHotel);
  *                   format: binary
  *               bintang:
  *                 type: integer
- *                 example: 4
- *                 description: Rating of the hotel (1 to 5)
+ *                 example: 5
  *               harga:
  *                 type: number
- *                 example: 500000
- *                 description: Price per night in IDR
+ *                 example: 750000
  *               fasilitas:
  *                 type: string
- *                 example: "WiFi, Kolam Renang, Spa"
- *                 description: Facilities separated by commas
+ *                 example: "Gym, Restoran, WiFi"
  *     responses:
  *       200:
  *         description: Hotel updated successfully
  *       404:
  *         description: Hotel not found
+ *       401:
+ *         description: Unauthorized
  *       500:
- *         description: Error updating hotel
+ *         description: Server error
  */
-router.put(
-  "/update/:id",
-  upload.array("gambar", 5),
-  validateHotelData,
-  updateHotel
-);
 
-// Update data hotel
-
-// route untuk hapus data hotel
+// Hapus hotel
+router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteHotel);
 /**
  * @swagger
  * /hotel/delete/{id}:
  *   delete:
- *     summary: Delete hotel
- *     description: Delete a hotel by its ID along with the associated image.
+ *     summary: Delete a hotel
+ *     description: Delete a hotel by ID along with its associated images.
  *     tags: [Hotel]
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: The ID of the hotel to delete
+ *         description: Hotel ID
  *     responses:
  *       200:
  *         description: Hotel deleted successfully
  *       404:
  *         description: Hotel not found
+ *       401:
+ *         description: Unauthorized
  *       500:
- *         description: Error deleting hotel
+ *         description: Server error
  */
-router.delete("/delete/:id", deleteHotel); // Hapus hotel
 
+// Ambil semua hotel
+router.get("/getAll", authMiddleware, getAllHotels);
 /**
  * @swagger
  * /hotel/getAll:
  *   get:
  *     summary: Get all hotels
- *     description: Retrieve a list of all hotels stored in the database.
+ *     description: Retrieve a list of all hotels.
  *     tags: [Hotel]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: A list of all hotels
+ *         description: Successfully fetched hotels
+ *       500:
+ *         description: Server error
+ */
+/**
+ * @swagger
+ * /hotel/get/{id}:
+ *   get:
+ *     summary: Get hotel by ID
+ *     description: Retrieve a hotel by its ID.
+ *     tags: [Hotel]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the hotel to retrieve
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully fetched hotel by ID
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   nama:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: Hotel ID
+ *                   example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                 nama:
+ *                   type: string
+ *                   description: Name of the hotel
+ *                   example: "Hotel Santika"
+ *                 alamat:
+ *                   type: string
+ *                   description: Address of the hotel
+ *                   example: "Jl. Malioboro No.123, Yogyakarta"
+ *                 bintang:
+ *                   type: integer
+ *                   description: Rating of the hotel
+ *                   example: 4
+ *                 harga:
+ *                   type: number
+ *                   description: Price per night
+ *                   example: 500000
+ *                 fasilitas:
+ *                   type: array
+ *                   description: List of facilities
+ *                   items:
  *                     type: string
- *                     example: "Hotel Santika"
- *                   alamat:
+ *                   example: ["WiFi", "Pool", "Spa"]
+ *                 gambar:
+ *                   type: array
+ *                   description: List of image paths
+ *                   items:
  *                     type: string
- *                     example: "Jl. Malioboro No.123, Yogyakarta"
- *                   gambar:
- *                     type: string
- *                     example: "/uploads/hotel/123456789.png"
- *                   bintang:
- *                     type: integer
- *                     example: 4
- *                   harga:
- *                     type: number
- *                     example: 500000
- *                   fasilitas:
- *                     type: array
- *                     items:
- *                       type: string
- *                       example: "WiFi"
+ *                   example: ["/uploads/hotel/1.jpg", "/uploads/hotel/2.jpg"]
+ *       404:
+ *         description: Hotel not found
  *       500:
- *         description: Error fetching hotels
+ *         description: Failed to fetch hotel
  */
-router.get("/getAll", getAllHotels);
-
+router.get("/get/:id", authMiddleware, getHotelById); // Rute baru untuk mendapatkan hotel berdasarkan ID
 export default router;
