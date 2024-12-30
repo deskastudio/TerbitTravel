@@ -36,7 +36,7 @@ const MaintenanceModal: React.FC<MaintenanceModalProps> = ({ handleClose }) => {
       >
         <div className="mb-6">
           <img
-            src="src/assets/Sosmed/MaintananceIcon.svg"
+            src="../Sosmed/MaintananceIcon.svg"
             alt="Maintenance Icon"
             className="w-20"
           />
