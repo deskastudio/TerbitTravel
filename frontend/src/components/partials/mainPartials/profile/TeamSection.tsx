@@ -22,7 +22,7 @@ interface TeamMember {
 const TeamSection = () => {
   return (
     <section className="py-10">
-      <h2 className="text-4xl font-bold mb-8 text-center">Our Team</h2>
+      <h2 className="text-4xl font-bold mb-8 text-center">Tim Travedia</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
         {TEAM_MEMBERS.map((member: TeamMember, index: number) => (
           <motion.div 
