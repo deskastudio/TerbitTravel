@@ -2,7 +2,7 @@ export const TEAM_MEMBERS = [
     {
       id: '1',
       name: "Dias Yusdiansyah",
-      role: "director of human resource management and development",                
+      role: "Director of human resource management and development",                
       image: "./Profile/Tim/human1.svg",
       bio: "-",
       social: {
