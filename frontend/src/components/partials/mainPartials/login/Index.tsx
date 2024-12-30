@@ -40,10 +40,12 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-background rounded-lg shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center mb-6">Log In</h1>
+        <div className="bg-white rounded-3xl shadow-xl p-8">
+          <h1 className="text-4xl font-bold text-center mb-8 text-[#6B7280]">
+            Log In
+          </h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -51,11 +53,22 @@ const LoginForm: React.FC = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-[#6B7280] font-medium">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your email" {...field} />
+                      <Input 
+                        placeholder="Enter your email" 
+                        {...field}
+                        className="
+                          bg-white
+                          border-gray-200
+                          focus:border-[#B17457]
+                          focus:ring-[#B17457]/10
+                          text-gray-800
+                          placeholder-gray-400
+                          rounded-xl"
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -64,22 +77,38 @@ const LoginForm: React.FC = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-[#6B7280] font-medium">Password</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="Enter your password"
                         {...field}
+                        className="
+                          bg-white
+                          border-gray-200
+                          focus:border-[#B17457]
+                          focus:ring-[#B17457]/10
+                          text-gray-800
+                          placeholder-gray-400
+                          rounded-xl"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
               <Button
                 type="submit"
-                className="w-full"
                 disabled={isLoading}
+                className="
+                  w-full 
+                  bg-gradient-to-r from-[#B17457] to-blue-600
+                  hover:opacity-90
+                  text-white 
+                  transition-opacity 
+                  duration-200
+                  rounded-xl
+                  py-6"
               >
                 {isLoading ? (
                   <>
@@ -92,17 +121,23 @@ const LoginForm: React.FC = () => {
               </Button>
             </form>
           </Form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <a href="/register" className="text-primary hover:underline">
-              Sign up
-            </a>
-          </p>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            <a href="/forgot-password" className="text-primary hover:underline">
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-[#6B7280]">
+              Don't have an account?{" "}
+              <a 
+                href="/register" 
+                className="text-blue-600 hover:text-blue-700"
+              >
+                Sign up
+              </a>
+            </p>
+            <a 
+              href="/forgot-password" 
+              className="text-[#B17457] hover:text-[#B17457]/80 block"
+            >
               Forgot password?
             </a>
-          </p>
+          </div>
         </div>
       </div>
     </div>

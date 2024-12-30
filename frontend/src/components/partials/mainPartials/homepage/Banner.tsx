@@ -15,47 +15,44 @@ const Banner = () => {
   ];
 
   return (
-    <section className="py-10 relative bg-gray-100">
+    <section className="py-6 md:py-10 relative overflow-hidden">
       {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-10 w-24 h-24 bg-blue-400 rounded-full opacity-30 blur-xl"></div>
-      <div className="absolute bottom-0 right-20 w-48 h-48 bg-pink-400 rounded-full opacity-30 blur-xl"></div>
+      <div className="absolute top-0 left-4 md:left-10 w-16 md:w-24 h-16 md:h-24 bg-blue-400 rounded-full opacity-30 blur-xl"></div>
+      <div className="absolute bottom-0 right-8 md:right-20 w-32 md:w-48 h-32 md:h-48 bg-pink-400 rounded-full opacity-30 blur-xl"></div>
 
-      <div className="container mx-auto max-w-[1280px] px-4 sm:px-6 relative z-10">
+      <div className="container mx-auto max-w-[1280px] px-4 relative z-10">
         {/* Title */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 md:mb-12">
+          <div className="max-w-2xl">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[#4A4947]">
               Informasi
             </h2>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 text-sm md:text-base">
               Dapatkan informasi terkini dan temukan berbagai pilihan destinasi menarik yang telah kami siapkan untuk pengalaman perjalanan Anda.
             </p>
           </div>
         </div>
 
         {/* Carousel */}
-        <Carousel className="w-full mt-16 lg:mt-8 relative">
-          {/* Navigation Buttons */}
-          <div className="absolute z-20 -top-8 left-50 right-20 lg:-top-12 lg:left-200 lg:right-20 flex justify-between px-4">
-            <CarouselPrevious className="bg-gray-200 text-gray-800 p-5 rounded-full hover:bg-gray-800 hover:text-gray-100" />
-            <CarouselNext className="bg-gray-200 text-gray-800 p-5 rounded-full hover:bg-gray-800 hover:text-gray-100" />
-          </div>
-
-          {/* Carousel Content */}
-          <CarouselContent className="flex space-x-6">
-            {banners.map((banner) => (
-              <CarouselItem key={banner.id} className="flex-shrink-0 w-full">
-                <div className="w-full aspect-[16/9]">
-                  <img
-                    src={banner.src}
-                    alt={banner.alt}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
+        <div className="relative">
+          <Carousel className="w-full">
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {banners.map((banner) => (
+                <CarouselItem key={banner.id} className="pl-2 md:pl-4">
+                  <div className="relative aspect-[16/9] w-full">
+                    <img
+                      src={banner.src}
+                      alt={banner.alt}
+                      className="w-full h-full object-cover rounded-lg md:rounded-xl"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="absolute left-4 top-1/2 transform -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 bg-white/80 hover:bg-white text-gray-800 hover:text-gray-900 border-0" />
+            <CarouselNext className="absolute right-4 top-1/2 transform -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 bg-white/80 hover:bg-white text-gray-800 hover:text-gray-900 border-0" />
+          </Carousel>
+        </div>
       </div>
     </section>
   );

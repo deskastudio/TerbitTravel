@@ -1,24 +1,37 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import MaintenanceModal from "./MaintananceModal";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
+interface NavLink {
+  name: string;
+  path: PathType;
+}
+
+type PathType = "/" | "/tour-package" | "/destination" | "/profile" | "/article" | "/login" | "/register";
+
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State untuk menu mobile
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // State untuk status login (ubah sesuai logika autentikasi Anda)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
 
-  // Daftar navigasi
-  const navLinks = [
+  const handleAuthClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsModalOpen(true);
+    closeMenu();
+  };
+
+  const navLinks: NavLink[] = [
     { name: "Beranda", path: "/" },
     { name: "Paket Wisata", path: "/tour-package" },
     { name: "Destinasi", path: "/destination" },
@@ -26,152 +39,228 @@ const Header = () => {
     { name: "Artikel", path: "/article" },
   ];
 
+  const isActivePath = (path: PathType): boolean => {
+    if (path === "/" && location.pathname !== "/") {
+      return false;
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <header className="bg-gray-100 shadow-md py-4 fixed w-full z-50">
-      <div className="container mx-auto flex items-center justify-between px-4">
-        {/* Logo */}
-        <div className="flex items-center space-x-2">
-          <img
-            src="/Logo/TerbitTravel_Logo.svg"
-            alt="Logo"
-            className="w-[50px] h-auto"
-          />
-          <span className="text-xl font-bold text-primary">
-            Travedia Terbit Semesta
-          </span>
-        </div>
+    <>
+      <header className="bg-white shadow-md py-4 fixed w-full z-40">
+        <div className="container mx-auto flex items-center justify-between px-4">
+          {/* Logo */}
+          <div className="flex items-center space-x-2 lg:space-x-4">
+            <img
+              src="/Logo/TerbitTravel_Logo.svg"
+              alt="Logo"
+              className="w-[40px] md:w-[45px] lg:w-[50px] h-auto"
+            />
+            <span className="font-bold text-base sm:text-lg lg:text-xl bg-clip-text text-transparent bg-gradient-to-r from-amber-900 via-red-500 to-yellow-500">
+              Travedia Terbit Semesta
+            </span>
+          </div>
 
-        {/* Navigation Links */}
-        <nav className="hidden md:flex space-x-8">
-          {navLinks.map((link, index) => (
-            <Link
-              key={index}
-              to={link.path}
-              className="text-gray-700 hover:text-primary font-medium transition"
-            >
-              {link.name}
-            </Link>
-          ))}
-        </nav>
-
-        {/* Action Buttons or Avatar */}
-        <div className="hidden md:flex space-x-4">
-          {isLoggedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Avatar>
-                  <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" />
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Link to="/user-profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    setIsLoggedIn(false); // Simulasikan logout
-                  }}
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button variant="outline" className="px-6">
-                  Masuk
-                </Button>
+          {/* Desktop/Tablet Navigation */}
+          <nav className="hidden lg:flex space-x-8">
+            {navLinks.map((link, index) => (
+              <Link
+                key={index}
+                to={link.path}
+                className={`font-medium relative group transition-colors duration-300
+                  ${isActivePath(link.path) 
+                    ? 'text-amber-800' 
+                    : 'text-gray-600 hover:text-amber-800'}`}
+              >
+                {link.name}
+                <span 
+                  className={`absolute bottom-[-4px] left-0 w-full h-[2px] 
+                    bg-[#B17457] transition-transform duration-300 origin-left
+                    ${isActivePath(link.path) 
+                      ? 'scale-x-100' 
+                      : 'scale-x-0 group-hover:scale-x-100'}`}
+                ></span>
               </Link>
-              <Link to="/register">
-                <Button variant="default" className="px-6">
-                  Daftar
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
+            ))}
+          </nav>
 
-        {/* Mobile Menu Button */}
-        <div className="md:hidden">
-          <Button
-            variant="ghost"
-            onClick={toggleMenu}
-            className="text-gray-700 hover:text-primary transition-transform duration-300 text-2xl"
-          >
-            ☰
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      <div
-        className={`absolute top-0 left-0 w-full h-screen bg-gray-100 shadow-md z-40 transform transition-transform duration-300 ${
-          isMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        {/* Close Button */}
-        <button
-          onClick={closeMenu}
-          className="absolute top-4 right-4 text-gray-700 hover:text-primary text-2xl font-bold transition"
-        >
-          ✕
-        </button>
-
-        <div className="flex flex-col items-center justify-center h-full space-y-6">
-          {navLinks.map((link, index) => (
-            <Link
-              key={index}
-              to={link.path}
-              onClick={closeMenu}
-              className="text-gray-700 hover:text-primary text-xl font-medium transition"
-            >
-              {link.name}
-            </Link>
-          ))}
-          {isLoggedIn ? (
-            <>
+          {/* Desktop/Tablet Actions */}
+          <div className="hidden lg:flex items-center space-x-4">
+            {isLoggedIn ? (
               <DropdownMenu>
                 <DropdownMenuTrigger>
-                  <Avatar>
-                    <AvatarImage src="/path-to-avatar.jpg" alt="User Avatar" />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
+                  {/* Avatar component would go here */}
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="center">
-                  <DropdownMenuItem>
-                    <Link to="/profile">Profile</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />     
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setIsLoggedIn(false); // Simulasikan logout
-                    }}
-                  >
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsLoggedIn(false)}>
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </>
-          ) : (
-            <>
-              <Link to="/login" onClick={closeMenu}>
-                <Button variant="outline" className="px-6">
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  className="border-amber-700 text-amber-700 hover:bg-[#B17457]/10"
+                  onClick={handleAuthClick}
+                >
                   Masuk
                 </Button>
-              </Link>
-              <Link to="/register" onClick={closeMenu}>
-                <Button variant="default" className="px-6">
+                <Button 
+                  className="bg-amber-700 text-white hover:bg-amber-800"
+                  onClick={handleAuthClick}
+                >
                   Daftar
                 </Button>
-              </Link>
-            </>
-          )}
+              </>
+            )}
+          </div>
+
+          {/* Mobile/Tablet Menu Toggle */}
+          <div className="lg:hidden">
+            <button 
+              onClick={toggleMenu}
+              className="text-gray-600 hover:text-amber-800 focus:outline-none p-2"
+              type="button"
+              aria-label="Toggle menu"
+            >
+              <svg 
+                className="w-6 h-6" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M4 6h16M4 12h16M4 18h16" 
+                />
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile/Tablet Menu */}
+          <div
+            className={`fixed inset-0 z-50 
+              ${isMenuOpen ? 'visible' : 'invisible'} 
+              transition-all duration-500`}
+          >
+            {/* Overlay with Blur Effect */}
+            <div 
+              className={`absolute inset-0 bg-black/40 backdrop-blur-sm 
+                transition-opacity duration-500 
+                ${isMenuOpen ? 'opacity-100' : 'opacity-0'}`}
+              onClick={closeMenu}
+            ></div>
+
+            {/* Sliding Menu Panel */}
+            <div 
+              className={`absolute right-0 top-0 w-[85%] max-w-md h-full 
+                bg-white shadow-2xl 
+                transform transition-transform duration-500 ease-in-out 
+                ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'} 
+                flex flex-col`}
+            >
+              {/* Close Button */}
+              <div className="p-6 flex justify-end">
+                <button 
+                  onClick={closeMenu}
+                  className="text-gray-600 hover:text-[#B17457] 
+                    p-2 rounded-full 
+                    transition-colors duration-300 
+                    hover:bg-[#B17457]/10"
+                  type="button"
+                  aria-label="Close menu"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className="h-6 w-6" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M6 18L18 6M6 6l12 12" 
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="flex-grow px-6 space-y-6">
+                {navLinks.map((link, index) => (
+                  <Link
+                    key={index}
+                    to={link.path}
+                    onClick={closeMenu}
+                    className={`block text-lg md:text-xl font-medium relative group py-1
+                      transition-colors duration-200
+                      ${isActivePath(link.path)
+                        ? 'text-amber-800'
+                        : 'text-gray-600 hover:text-[#B17457]'}`}
+                  >
+                    {link.name}
+                    <span 
+                      className={`absolute bottom-0 left-0 w-full h-[2px] 
+                        bg-amber-700 transition-transform duration-300 origin-left
+                        ${isActivePath(link.path)
+                          ? 'scale-x-100'
+                          : 'scale-x-0 group-hover:scale-x-100'}`}
+                    ></span>
+                  </Link>
+                ))}
+              </nav>
+
+              {/* User Actions */}
+              <div className="p-6 border-t border-gray-200">
+                {isLoggedIn ? (
+                  <div className="flex items-center space-x-4">
+                    <Button 
+                      onClick={() => setIsLoggedIn(false)}
+                      className="w-full bg-amber-700 text-white hover:bg-amber-800"
+                    >
+                      Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={handleAuthClick}
+                      className="text-center py-3 
+                        border border-amber-700 text-amber-700
+                        rounded-lg 
+                        hover:bg-[#B17457]/10 
+                        transition-colors duration-300"
+                    >
+                      Masuk
+                    </button>
+                    <button 
+                      onClick={handleAuthClick}
+                      className="text-center py-3 
+                        bg-amber-700 text-white 
+                        rounded-lg 
+                        hover:bg-amber-800 
+                        transition-colors duration-300"
+                    >
+                      Daftar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Maintenance Modal */}
+      {isModalOpen && <MaintenanceModal handleClose={() => setIsModalOpen(false)} />}
+    </>
   );
 };
 

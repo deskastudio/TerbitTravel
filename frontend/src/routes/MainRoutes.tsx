@@ -14,6 +14,7 @@ import PrivacyPolicy from '@/pages/mainPages/privacy-policy/Index';
 import Faq from '@/pages/mainPages/faq/Index'
 import UserProfile from '@/pages/mainPages/user-profile/Index';
 import Booking from '@/pages/mainPages/form-pemesanan/Index';
+import BookingPage from '@/components/partials/mainPartials/form-pemesanan/Index';
 
 function MainRoutes() {
   return (
@@ -32,6 +33,7 @@ function MainRoutes() {
       <Route path="/faq" element={<Faq/>} />
       <Route path="/user-profile" element={<UserProfile/>} />
       <Route path="/booking" element={<Booking/>} />
+      <Route path="/booking/:id" element={<BookingPage />} /> {/* Booking page */}
 
       {/* crud ecample */}
       <Route path="/crud-example" element={<CrudExample />} />

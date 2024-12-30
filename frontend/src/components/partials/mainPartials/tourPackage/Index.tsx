@@ -1,229 +1,62 @@
-import { useState, useEffect } from "react"
-import { useLocation, Link } from "react-router-dom"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { DataTablePagination } from "./data-table-pagination"
-
-type TourPackage = {
-  id: string
-  name: string
-  destination: string
-  duration: string
-  price: number
-  description: string
-  availability: "Available" | "Limited" | "Sold Out"
-  category: "Popular" | "Promo" | "Flash Sale"
-}
-
-const allTourPackages: TourPackage[] = [
-  {
-    id: "1",
-    name: "Paris Getaway",
-    destination: "Paris, France",
-    duration: "7 days",
-    price: 1299,
-    description: "Experience the magic of Paris with this 7-day tour package.",
-    availability: "Available",
-    category: "Popular",
-  },
-  {
-    id: "2",
-    name: "Tokyo Adventure",
-    destination: "Tokyo, Japan",
-    duration: "10 days",
-    price: 2499,
-    description: "Immerse yourself in Japanese culture with this 10-day Tokyo adventure.",
-    availability: "Limited",
-    category: "Promo",
-  },
-  {
-    id: "3",
-    name: "New York City Explorer",
-    destination: "New York, USA",
-    duration: "5 days",
-    price: 999,
-    description: "Discover the Big Apple with this action-packed 5-day tour.",
-    availability: "Available",
-    category: "Flash Sale",
-  },
-  {
-    id: "4",
-    name: "Rome & Vatican Tour",
-    destination: "Rome, Italy",
-    duration: "6 days",
-    price: 1199,
-    description: "Explore the Eternal City and Vatican with this 6-day Italian adventure.",
-    availability: "Sold Out",
-    category: "Popular",
-  },
-  {
-    id: "5",
-    name: "Bali Beach Retreat",
-    destination: "Bali, Indonesia",
-    duration: "8 days",
-    price: 1599,
-    description: "Relax on beautiful beaches and explore Balinese culture in this 8-day package.",
-    availability: "Available",
-    category: "Promo",
-  },
-  // Add more tour packages here...
-]
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Construction } from 'lucide-react'
 
 export default function TourPackagesPage() {
-  const [packages, setPackages] = useState<TourPackage[]>(allTourPackages)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [activeTab, setActiveTab] = useState("all")
-  const packagesPerPage = 6
-  const location = useLocation()
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search)
-    const destination = searchParams.get('destination')
-    const date = searchParams.get('date')
-    const travelers = searchParams.get('travelers')
-
-    let filteredPackages = allTourPackages
-
-    if (destination) {
-      filteredPackages = filteredPackages.filter(pkg =>
-        pkg.destination.toLowerCase().includes(destination.toLowerCase())
-      )
-    }
-
-    // Add complex filtering logic if needed
-    console.log('Selected date:', date)
-    console.log('Number of travelers:', travelers)
-
-    setPackages(filteredPackages)
-  }, [location.search])
-
-  const filterPackages = (packages: TourPackage[]) => {
-    return packages.filter(pkg =>
-      pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.destination.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }
-
-  const sortPackages = (packages: TourPackage[]) => {
-    return [...packages].sort((a, b) => {
-      if (sortOrder === "asc") {
-        return a.name.localeCompare(b.name)
-      } else {
-        return b.name.localeCompare(a.name)
-      }
-    })
-  }
-
-  const getPagedPackages = (packages: TourPackage[]) => {
-    const startIndex = (currentPage - 1) * packagesPerPage
-    return packages.slice(startIndex, startIndex + packagesPerPage)
-  }
-
-  const filteredPackages = filterPackages(packages)
-  const sortedPackages = sortPackages(filteredPackages)
-  const pagedPackages = getPagedPackages(sortedPackages)
-
-  const totalPages = Math.ceil(filteredPackages.length / packagesPerPage)
+  const [searchTerm, setSearchTerm] = useState("")
 
   return (
-    <div className="space-y-6 mx-2">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Paket Wisata</h1>
-        <p className="text-xl text-gray-600">Discover the world's most breathtaking locations and unforgettable experiences</p>
+    <div className="container mx-auto px-4 space-y-6">
+      <div className="text-center">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#4A4947] px-2">
+          Jelajahi Paket Wisata Kami
+        </h1>
+        <p className="text-gray-500 mt-3 md:mt-4 text-sm md:text-base px-4">
+          Temukan berbagai paket wisata dan persiapkan petualangan Anda berikutnya!
+        </p>
       </div>
-      <div className="flex justify-between items-center">
+
+      <div className="flex justify-center px-4">
         <Input
           type="text"
-          placeholder="Search packages..."
+          placeholder="Cari paket wisata..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm bg-white"
+          className="w-full max-w-xl bg-white"
         />
-        <Select value={sortOrder} onValueChange={(value: "asc" | "desc") => setSortOrder(value)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="asc">A-Z</SelectItem>
-            <SelectItem value="desc">Z-A</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all">All Packages</TabsTrigger>
-          <TabsTrigger value="popular">Popular</TabsTrigger>
-          <TabsTrigger value="promo">Promo</TabsTrigger>
-          <TabsTrigger value="flash-sale">Flash Sale</TabsTrigger>
-        </TabsList>
-        <TabsContent value="all">
-          <PackageGrid packages={pagedPackages} />
-        </TabsContent>
-        <TabsContent value="popular">
-          <PackageGrid packages={pagedPackages.filter(pkg => pkg.category === "Popular")} />
-        </TabsContent>
-        <TabsContent value="promo">
-          <PackageGrid packages={pagedPackages.filter(pkg => pkg.category === "Promo")} />
-        </TabsContent>
-        <TabsContent value="flash-sale">
-          <PackageGrid packages={pagedPackages.filter(pkg => pkg.category === "Flash Sale")} />
-        </TabsContent>
-      </Tabs>
+      <div className="w-full overflow-x-auto px-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-full">
+          <TabsList className="flex justify-start md:justify-center bg-transparent p-1">
+            <TabsTrigger value="all" className="px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base whitespace-nowrap">
+              Semua
+            </TabsTrigger>
+            <TabsTrigger value="popular" className="px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base whitespace-nowrap">
+              Populer
+            </TabsTrigger>
+            <TabsTrigger value="promo" className="px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base whitespace-nowrap">
+              Promo
+            </TabsTrigger>
+            <TabsTrigger value="flash-sale" className="px-3 md:px-4 py-1.5 md:py-2 text-sm md:text-base whitespace-nowrap">
+              Flash Sale
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
-      <DataTablePagination
-        table={{
-          getState: () => ({ pagination: { pageIndex: currentPage - 1, pageSize: packagesPerPage } }),
-          setPageIndex: (index: number) => setCurrentPage(index + 1),
-          getPageCount: () => totalPages,
-          getCanPreviousPage: () => currentPage > 1,
-          getCanNextPage: () => currentPage < totalPages,
-          previousPage: () => setCurrentPage(prev => Math.max(prev - 1, 1)),
-          nextPage: () => setCurrentPage(prev => Math.min(prev + 1, totalPages)),
-        }}
-      />
-    </div>
-  )
-}
-
-function PackageGrid({ packages }: { packages: TourPackage[] }) {
-  return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {packages.map((pkg) => (
-        <Card key={pkg.id}>
-          <CardHeader>
-            <CardTitle>{pkg.name}</CardTitle>
-            <CardDescription>{pkg.destination}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>{pkg.description}</p>
-            <div className="mt-4 flex justify-between items-center">
-              <span className="text-lg font-semibold">${pkg.price}</span>
-              <Badge variant={pkg.availability === "Available" ? "default" : pkg.availability === "Limited" ? "secondary" : "destructive"}>
-                {pkg.availability}
-              </Badge>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <span className="text-sm text-muted-foreground">{pkg.duration}</span>
-            <Button variant="outline" asChild>
-              <Link to={`/tour-packages/${pkg.id}`}>View Details</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
+      <div className="flex flex-col items-center justify-center p-6 md:p-8 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg shadow-lg mx-auto">
+        <Construction className="w-12 h-12 md:w-16 md:h-16 text-blue-500 mb-3 md:mb-4" />
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2 text-center">
+          Sedang Dalam Pengembangan
+        </h2>
+        <p className="text-gray-600 text-center text-sm md:text-base max-w-md">
+          Kami sedang bekerja keras untuk menyiapkan paket wisata yang luar biasa untuk Anda. 
+          Silakan kembali lagi nanti untuk melihat penawaran terbaru kami!
+        </p>
+      </div>
     </div>
   )
 }

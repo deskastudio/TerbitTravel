@@ -59,3 +59,47 @@ export const passwordSchema = z.object({
 
 export type ProfileFormValues = z.infer<typeof profileSchema>
 export type PasswordFormValues = z.infer<typeof passwordSchema>
+
+export const tourPackageSchema = z.object({
+  name: z.string().min(3, "Nama paket harus memiliki minimal 3 karakter"),
+  description: z.string().min(10, "Deskripsi harus memiliki minimal 10 karakter"),
+  includes: z.array(z.string().nonempty("Item tidak boleh kosong")).min(1, "Tambahkan minimal 1 item"),
+  excludes: z.array(z.string().nonempty("Item tidak boleh kosong")),
+  schedules: z
+    .array(
+      z.object({
+        startDate: z.string().nonempty("Tanggal mulai harus diisi"),
+        endDate: z.string().nonempty("Tanggal pulang harus diisi"),
+      })
+    )
+    .min(1, "Tambahkan minimal 1 jadwal perjalanan"),
+  price: z.number().min(0, "Harga harus berupa angka dan tidak boleh negatif"),
+  duration: z.string().nonempty("Durasi harus diisi"),
+  destination: z.string().nonempty("Pilih destinasi"),
+  hotel: z.string().nonempty("Pilih hotel"),
+  fleet: z.string().nonempty("Pilih transportasi"),
+  consume: z.enum(
+    ["breakfast", "full_board", "none"], 
+    { 
+      errorMap: () => ({ message: "Pilih opsi konsumsi" })
+    }
+  ),
+  status: z.enum(
+    [
+      "available",
+      "booked",
+      "in_progress",
+      "completed",
+      "cancelled",
+      "pending_review",
+      "archived",
+      "draft",
+    ],
+    { 
+      errorMap: () => ({ message: "Pilih status yang valid" })
+    }
+  ),
+});
+
+// Tipe TypeScript untuk form menggunakan Zod
+export type TourPackage = z.infer<typeof tourPackageSchema>;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, CheckCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
@@ -38,10 +38,13 @@ const ForgotPasswordForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-background rounded-lg shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center mb-6">Forgot Password</h1>
+        <div className="bg-white rounded-3xl shadow-xl p-8">
+          <h1 className="text-4xl font-bold text-center mb-8 text-[#6B7280]">
+            Forgot Password
+          </h1>
+          
           {!isSubmitted ? (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -50,15 +53,38 @@ const ForgotPasswordForm: React.FC = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-[#6B7280] font-medium">Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your email" {...field} />
+                        <Input 
+                          placeholder="Enter your email" 
+                          {...field}
+                          className="
+                            bg-white
+                            border-gray-200
+                            focus:border-[#B17457]
+                            focus:ring-[#B17457]/10
+                            text-gray-800
+                            placeholder-gray-400
+                            rounded-xl"
+                        />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="
+                    w-full 
+                    bg-gradient-to-r from-[#B17457] to-blue-600
+                    hover:opacity-90
+                    text-white 
+                    transition-opacity 
+                    duration-200
+                    rounded-xl
+                    py-6"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -75,38 +101,29 @@ const ForgotPasswordForm: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="text-center"
+              className="text-center py-8"
             >
-              <div className="mb-4 text-green-500">
-                <svg
-                  className="w-16 h-16 mx-auto"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+              <div className="mb-6">
+                <CheckCircle className="w-16 h-16 mx-auto text-[#B17457]" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Check your email</h2>
-              <p className="text-muted-foreground">
+              <h2 className="text-2xl font-semibold mb-3 text-[#6B7280]">
+                Check your email
+              </h2>
+              <p className="text-gray-500 mb-8">
                 We've sent a password reset link to your email address.
               </p>
             </motion.div>
           )}
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Remember your password?
-          </p>
-          <div className="flex justify-center mt-2">
+
+          <div className="mt-6 text-center space-y-4">
+            <p className="text-[#6B7280]">
+              Remember your password?
+            </p>
             <Link
               to="/login"
-              className="text-primary hover:underline inline-flex items-center text-sm"
+              className="text-blue-600 hover:text-blue-700 inline-flex items-center justify-center gap-2 font-medium"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="h-4 w-4" />
               Back to Login
             </Link>
           </div>

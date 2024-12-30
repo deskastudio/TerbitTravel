@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from "@/hooks/use-toast" // Import Toast dari ShadCN
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { bookingFormSchema, BookingFormValues } from '@/lib/schemas'
 
 const BookingPage = () => {
-  const navigate = useNavigate()
+  const location = useLocation();
+  const { tourPackage } = location.state;
+  const navigate = useNavigate();
+  
   const form = useForm<BookingFormValues>({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
@@ -18,14 +21,14 @@ const BookingPage = () => {
       email: '',
       telephone: '',
       agency: '',
-      tourPackage: '',
+      tourPackage: tourPackage?.name || '',
       dateRange: '',
       numberOfParticipants: 1,
-      busCapacity: 0,
-      price: 0,
+      busCapacity: tourPackage?.busCapacity || 0,
+      price: tourPackage?.price || 0,
       noKtp: '',
     },
-  })
+  });
 
   const onSubmit = (data: BookingFormValues) => {
     console.log(data)

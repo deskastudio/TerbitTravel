@@ -1,31 +1,4 @@
-"use client"
-
-import { useState } from "react"
-import { CaretSortIcon, ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons"
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table"
-
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -33,296 +6,194 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import TableTourPackage from "@/components/partials/adminPartials/tourPackage/data-table"
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { MoreHorizontal, Pencil, Trash, Eye, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const data: TourPackage[] = [
-  {
-    id: "1",
-    destination: "Paris",
-    duration: "7 days",
-    price: 1299,
-    rating: 4.5,
-    availability: "Available",
-  },
-  {
-    id: "2",
-    destination: "Tokyo",
-    duration: "10 days",
-    price: 2499,
-    rating: 4.8,
-    availability: "Limited",
-  },
-  {
-    id: "3",
-    destination: "New York",
-    duration: "5 days",
-    price: 999,
-    rating: 4.2,
-    availability: "Available",
-  },
-  {
-    id: "4",
-    destination: "Rome",
-    duration: "6 days",
-    price: 1199,
-    rating: 4.6,
-    availability: "Sold Out",
-  },
-  {
-    id: "5",
-    destination: "Bali",
-    duration: "8 days",
-    price: 1599,
-    rating: 4.7,
-    availability: "Available",
-  },
-  {
-    id: "6",
-    destination: "London",
-    duration: "6 days",
-    price: 1399,
-    rating: 4.4,
-    availability: "Limited",
-  },
-  {
-    id: "7",
-    destination: "Sydney",
-    duration: "9 days",
-    price: 2199,
-    rating: 4.6,
-    availability: "Available",
-  },
-  {
-    id: "8",
-    destination: "Barcelona",
-    duration: "5 days",
-    price: 1099,
-    rating: 4.3,
-    availability: "Available",
-  },
-  {
-    id: "9",
-    destination: "Dubai",
-    duration: "7 days",
-    price: 1799,
-    rating: 4.5,
-    availability: "Limited",
-  },
-  {
-    id: "10",
-    destination: "Cancun",
-    duration: "6 days",
-    price: 1299,
-    rating: 4.4,
-    availability: "Available",
-  },
-]
+type TourPackage = {
+  id: string;
+  name: string;
+  destination: string;
+  price: number;
+  duration: string;
+  status: string;
+};
 
-export type TourPackage = {
-  id: string
-  destination: string
-  duration: string
-  price: number
-  rating: number
-  availability: "Available" | "Limited" | "Sold Out"
-}
+const tourPackages: TourPackage[] = [
+  { id: "1", name: "Bali Adventure", destination: "Bali", price: 1000000, duration: "3 days", status: "available" },
+  { id: "2", name: "Jakarta City Tour", destination: "Jakarta", price: 500000, duration: "1 day", status: "booked" },
+  { id: "3", name: "Yogyakarta Cultural Experience", destination: "Yogyakarta", price: 750000, duration: "2 days", status: "available" },
+  { id: "4", name: "Lombok Beach Getaway", destination: "Lombok", price: 1200000, duration: "4 days", status: "in_progress" },
+  { id: "5", name: "Bandung Highland Tour", destination: "Bandung", price: 600000, duration: "2 days", status: "completed" },
+];
 
-export const columns: ColumnDef<TourPackage>[] = [
-  {
-    accessorKey: "destination",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Destination
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => <div className="capitalize">{row.getValue("destination")}</div>,
-  },
-  {
-    accessorKey: "duration",
-    header: "Duration",
-    cell: ({ row }) => <div>{row.getValue("duration")}</div>,
-  },
-  {
-    accessorKey: "price",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Price
-          <CaretSortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      )
-    },
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("price"))
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount)
- 
-      return <div className="font-medium">{formatted}</div>
-    },
-  },
-  {
-    accessorKey: "rating",
-    header: "Rating",
-    cell: ({ row }) => {
-      return <div className="font-medium">{row.getValue("rating")}/5</div>
-    },
-  },
-  {
-    accessorKey: "availability",
-    header: "Availability",
-    cell: ({ row }) => {
-      const availability = row.getValue("availability") as string
-      return (
-        <div className={`font-medium ${availability === "Available" ? "text-green-600" : availability === "Limited" ? "text-yellow-600" : "text-red-600"}`}>
-          {availability}
-        </div>
-      )
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const tourPackage = row.original
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(tourPackage.id)}
-            >
-              Copy package ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View package details</DropdownMenuItem>
-            <DropdownMenuItem>Book this package</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
+const TourPackagePage = () => {
+  const [packages, setPackages] = useState(tourPackages);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [editingStatus, setEditingStatus] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-const TourPackagesPage = () => {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = useState({})
+  const filteredPackages = packages
+    .filter(
+      (pkg) =>
+        pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pkg.destination.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter((pkg) => (statusFilter === "all" ? true : pkg.status === statusFilter));
 
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  })
+  const deletePackage = (id: string) => {
+    setPackages(packages.filter((pkg) => pkg.id !== id));
+  };
+
+  const updatePackageStatus = (id: string, newStatus: string) => {
+    setPackages(
+      packages.map((pkg) => (pkg.id === id ? { ...pkg, status: newStatus } : pkg))
+    );
+    setEditingStatus(null);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusClasses = {
+      available: "bg-green-100 text-green-800",
+      booked: "bg-blue-100 text-blue-800",
+      in_progress: "bg-yellow-100 text-yellow-800",
+      completed: "bg-gray-100 text-gray-800",
+    };
+    return (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+          statusClasses[status as keyof typeof statusClasses]
+        }`}
+      >
+        {status}
+      </span>
+    );
+  };
 
   return (
-    <>
-      <TourPackagesFilterBar table={table} />
+    <div className="space-y-4">
+      <div className="flex justify-between">
+        <div className="flex items-center space-x-2">
+          <Input
+            placeholder="Search packages..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <Search className="h-4 w-4 text-gray-500" />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="available">Available</SelectItem>
+            <SelectItem value="booked">Booked</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
+            <TableRow>
+              <TableHead className="w-[200px]">Name</TableHead>
+              <TableHead>Destination</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+            {filteredPackages.map((pkg) => (
+              <TableRow key={pkg.id}>
+                <TableCell className="font-medium">{pkg.name}</TableCell>
+                <TableCell>{pkg.destination}</TableCell>
+                <TableCell>
+                  {pkg.price.toLocaleString("id-ID", {
+                    style: "currency",
+                    currency: "IDR",
+                  })}
+                </TableCell>
+                <TableCell>{pkg.duration}</TableCell>
+                <TableCell>
+                  {editingStatus === pkg.id ? (
+                    <Select
+                      value={pkg.status}
+                      onValueChange={(newStatus) =>
+                        updatePackageStatus(pkg.id, newStatus)
+                      }
+                    >
+                      <SelectTrigger className="w-[130px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="available">Available</SelectItem>
+                        <SelectItem value="booked">Booked</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    getStatusBadge(pkg.status)
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => navigate(`/tour-packages/${pkg.id}`)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/tour-packages/${pkg.id}/edit`)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setEditingStatus(pkg.id)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Change Status
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => deletePackage(pkg.id)}>
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>
-      <div className="py-4">
-        <TableTourPackage table={table} />
-      </div>
-    </>
-  )
-}
+    </div>
+  );
+};
 
-const TourPackagesFilterBar = ({ table }: { table: ReturnType<typeof useReactTable<TourPackage>> }) => (
-  <div className="flex items-center py-4">
-    <Input
-      placeholder="Filter destinations..."
-      value={(table.getColumn("destination")?.getFilterValue() as string) ?? ""}
-      onChange={(event) =>
-        table.getColumn("destination")?.setFilterValue(event.target.value)
-      }
-      className="max-w-sm"
-    />
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="ml-auto">
-          Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {table
-          .getAllColumns()
-          .filter((column) => column.getCanHide())
-          .map((column) => (
-            <DropdownMenuCheckboxItem
-              key={column.id}
-              className="capitalize"
-              checked={column.getIsVisible()}
-              onCheckedChange={(value) => column.toggleVisibility(!!value)}
-            >
-              {column.id}
-            </DropdownMenuCheckboxItem>
-          ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  </div>
-)
-
-export default TourPackagesPage
+export default TourPackagePage;

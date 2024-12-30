@@ -57,10 +57,12 @@ const RegisterForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-background rounded-lg shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center mb-6">Sign Up</h1>
+        <div className="bg-white rounded-3xl shadow-xl p-8">
+          <h1 className="text-4xl font-bold text-center mb-8 text-[#6B7280]">
+            Sign Up
+          </h1>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -68,11 +70,22 @@ const RegisterForm: React.FC = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel className="text-[#6B7280] font-medium">Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your name" {...field} />
+                      <Input 
+                        placeholder="Enter your name" 
+                        {...field}
+                        className="
+                          bg-white
+                          border-gray-200
+                          focus:border-[#B17457]
+                          focus:ring-[#B17457]/10
+                          text-gray-800
+                          placeholder-gray-400
+                          rounded-xl"
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -81,11 +94,22 @@ const RegisterForm: React.FC = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-[#6B7280] font-medium">Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your email" {...field} />
+                      <Input 
+                        placeholder="Enter your email" 
+                        {...field}
+                        className="
+                          bg-white
+                          border-gray-200
+                          focus:border-[#B17457]
+                          focus:ring-[#B17457]/10
+                          text-gray-800
+                          placeholder-gray-400
+                          rounded-xl"
+                      />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -94,19 +118,30 @@ const RegisterForm: React.FC = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className="text-[#6B7280] font-medium">Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="Enter your password"
                           {...field}
+                          className="
+                            bg-white
+                            border-gray-200
+                            focus:border-[#B17457]
+                            focus:ring-[#B17457]/10
+                            text-gray-800
+                            placeholder-gray-400
+                            rounded-xl"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          className="absolute right-0 top-0 h-full px-3 py-2 
+                            hover:bg-transparent 
+                            text-gray-400
+                            hover:text-[#B17457]"
                           onClick={() => setShowPassword((prev) => !prev)}
                         >
                           {showPassword ? (
@@ -117,7 +152,7 @@ const RegisterForm: React.FC = () => {
                         </Button>
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -126,19 +161,30 @@ const RegisterForm: React.FC = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel className="text-[#6B7280] font-medium">Confirm Password</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="Confirm your password"
                           {...field}
+                          className="
+                            bg-white
+                            border-gray-200
+                            focus:border-[#B17457]
+                            focus:ring-[#B17457]/10
+                            text-gray-800
+                            placeholder-gray-400
+                            rounded-xl"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          className="absolute right-0 top-0 h-full px-3 py-2 
+                            hover:bg-transparent 
+                            text-gray-400
+                            hover:text-[#B17457]"
                           onClick={() => setShowConfirmPassword((prev) => !prev)}
                         >
                           {showConfirmPassword ? (
@@ -149,18 +195,32 @@ const RegisterForm: React.FC = () => {
                         </Button>
                       </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full">
+              <Button
+                type="submit"
+                className="
+                  w-full 
+                  bg-gradient-to-r from-[#B17457] to-blue-600
+                  hover:opacity-90
+                  text-white 
+                  transition-opacity 
+                  duration-200
+                  rounded-xl
+                  py-6"
+              >
                 Register
               </Button>
             </form>
           </Form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          <p className="mt-6 text-center text-[#6B7280]">
             Already have an account?{" "}
-            <a href="/login" className="text-primary hover:underline">
+            <a 
+              href="/login" 
+              className="text-blue-600 hover:text-blue-700"
+            >
               Log in
             </a>
           </p>
