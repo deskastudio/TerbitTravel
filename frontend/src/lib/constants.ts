@@ -1,8 +1,8 @@
 export const TEAM_MEMBERS = [
     {
       id: '1',
-      name: "Dias Yusdiansyah",
-      role: "Director of human resource management and development",                
+      name: "Achmad Sobari",
+      role: "Chief Executive Afficer",
       image: "./Profile/Tim/human1.svg",
       bio: "-",
       social: {
@@ -13,14 +13,14 @@ export const TEAM_MEMBERS = [
     },
     {
       id: '2',
-      name: "Achmad Sobari",
-      role: "Founder",
+      name: "Dias Yusdiansyah",
+      role: "Director of human resource management and development",                
       image: "./Profile/Tim/human1.svg",
       bio: "-",
       social: {
         linkedin: "#",
         twitter: "#",
-        email: "alex@company.com"
+        email: "#"
       }
     },
     {
