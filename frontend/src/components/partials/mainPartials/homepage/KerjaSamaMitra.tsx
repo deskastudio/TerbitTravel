@@ -6,42 +6,42 @@ const BUS_PARTNERS = [
   {
     id: 1,
     logo: '../kerja-sama/bluestar.png',
-    alt: 'PO Sinar Jaya'
+    alt: 'Bluestar'
   },
   {
     id: 2,
     logo: '../kerja-sama/drwtrans.png',
-    alt: 'PO Rosalia Indah'
+    alt: 'Drw Trans'
   },
   {
     id: 3,
     logo: '../kerja-sama/heksa.png',
-    alt: 'PO Haryanto'
+    alt: 'Heksa Insurance'
   },
   {
     id: 4,
     logo: '../kerja-sama/josal.png',
-    alt: 'PO Pahala Kencana'
+    alt: 'Josal'
   },
   {
     id: 5,
     logo: '../kerja-sama/mitrarahayu.png',
-    alt: 'PO Kramat Djati'
+    alt: 'Mitra Rahayu'
   },
   {
     id: 6,
     logo: '../kerja-sama/pandawa.png',
-    alt: 'PO Harapan Jaya'
+    alt: 'Pandawa'
   },
   {
     id: 7,
     logo: '../kerja-sama/rm.png',
-    alt: 'PO Gunung Harta'
+    alt: 'RM'
   },
   {
     id: 8,
     logo: '../kerja-sama/tam.png',
-    alt: 'PO Lorena'
+    alt: 'TAM'
   },
 ]
 
