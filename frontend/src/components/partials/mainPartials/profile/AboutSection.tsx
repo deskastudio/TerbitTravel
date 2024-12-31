@@ -61,7 +61,7 @@ const AboutSection: React.FC = () => {
           className="text-center mb-16"
         >
           <h2 className="text-4xl font-bold mb-4 text-[#4A4947]">
-            Tentang Terbit Travel
+            Tentang Travedia
           </h2>
           <p className="text-gray-500 mt-4">
             Temukan lebih banyak tentang layanan dan keunggulan kami dalam memberikan solusi terbaik untuk Anda.

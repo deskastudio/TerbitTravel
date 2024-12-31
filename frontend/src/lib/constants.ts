@@ -2,7 +2,7 @@ export const TEAM_MEMBERS = [
     {
       id: '1',
       name: "Achmad Sobari",
-      role: "Chief Executive Afficer",
+      role: "Chief Executive Officer",
       image: "./Profile/Tim/human1.svg",
       bio: "-",
       social: {
@@ -14,7 +14,7 @@ export const TEAM_MEMBERS = [
     {
       id: '2',
       name: "Dias Yusdiansyah",
-      role: "Director of human resource management and development",                
+      role: "Director of Human Resource Management and Development",                
       image: "./Profile/Tim/human1.svg",
       bio: "-",
       social: {
