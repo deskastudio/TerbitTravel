@@ -53,7 +53,7 @@ const Header = () => {
           {/* Logo */}
           <div className="flex items-center space-x-2 lg:space-x-4">
             <img
-              src="./Logo/favicon.ico"
+              src="/Logo/TerbitTravel_Logo.svg"
               alt="Logo"
               className="w-[40px] md:w-[45px] lg:w-[50px] h-auto"
             />
