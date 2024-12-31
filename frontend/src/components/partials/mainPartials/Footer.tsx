@@ -147,7 +147,7 @@ const Footer = () => {
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <img
-                src="/Logo/TerbitTravel_Logo.svg"
+                src="./Logo/favicon.ico"
                 alt="Logo"
                 className="w-[50px] h-auto"
               />
