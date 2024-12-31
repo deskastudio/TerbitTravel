@@ -27,6 +27,7 @@ function MainRoutes() {
       {/* <Route path="/tour-packages/:id" element={<TourPackageDetails />} /> */}
       <Route path="/destination" element={<Destination />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="*" element={<div>404 Page Not Found</div>} />
       {/* <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-condition" element={<TermsConditionsPage />} />

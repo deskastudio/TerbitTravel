@@ -5,10 +5,8 @@ import MainRoutes from './routes/MainRoutes';
 function App() {
   return (
     <Router>
-      <div>
         {/* <AdminRoutes /> */}
         <MainRoutes />
-      </div>
     </Router>
   );
 }
