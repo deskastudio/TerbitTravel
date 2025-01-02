@@ -4,7 +4,7 @@ import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import * as z from "zod"
-import { Loader2, Plus, X, ArrowLeft, ChevronDown } from "lucide-react"
+import { Loader2, Plus, X, ArrowLeft, ChevronDown, PlusCircle } from 'lucide-react'
 import { Link } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AddHotelCategoryModal } from "./add-hotel-category-modal"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
@@ -38,6 +40,7 @@ const hotelSchema = z.object({
     .preprocess((val) => Number(val), z.number().positive({
       message: "Harga harus berupa angka positif.",
     })),
+  category: z.string().min(1, "Pilih kategori untuk hotel ini."),
   facilities: z
     .array(
       z.object({
@@ -65,10 +68,17 @@ const hotelSchema = z.object({
 
 type HotelFormValues = z.infer<typeof hotelSchema>
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function HotelInputPage() {
   const { toast } = useToast()
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [selectedStars, setSelectedStars] = useState<string>("1") // Default value for stars
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
 
   const form = useForm<HotelFormValues>({
     resolver: zodResolver(hotelSchema),
@@ -77,6 +87,7 @@ export default function HotelInputPage() {
       address: "",
       stars: "1",
       price: 0,
+      category: "",
       facilities: [{ name: "" }],
       images: [],
     },
@@ -109,6 +120,10 @@ export default function HotelInputPage() {
     setImageFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const handleAddCategory = (newCategory: Category) => {
+    setCategories([...categories, newCategory])
+  }
+
   return (
     <div className="">
       <Breadcrumb>
@@ -124,11 +139,16 @@ export default function HotelInputPage() {
       </Breadcrumb>
       <div className="flex items-center justify-between mt-2">
         <h1 className="text-3xl font-bold tracking-tight">Hotel Baru</h1>
-        <Link to="/admin-all-hotel">
-          <Button variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Kategori
           </Button>
-        </Link>
+          <Link to="/admin-all-hotel">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+            </Button>
+          </Link>
+        </div>
       </div>
       <Card className="mt-2">
         <CardHeader>
@@ -164,7 +184,7 @@ export default function HotelInputPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="stars"
@@ -210,6 +230,30 @@ export default function HotelInputPage() {
                           {...field}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kategori</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih kategori" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -265,6 +309,7 @@ export default function HotelInputPage() {
                                 type="button"
                                 variant="destructive"
                                 size="icon"
+                                className="absolute -right-2 -top-2"
                                 onClick={() => removeImage(index)}
                               >
                                 <X className="h-4 w-4" />
@@ -303,6 +348,12 @@ export default function HotelInputPage() {
           </Form>
         </CardContent>
       </Card>
+      <AddHotelCategoryModal
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
+        onAddCategory={handleAddCategory}
+      />
     </div>
   )
 }
+

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Loader2, Plus, X, ArrowLeft } from "lucide-react"
+import { Loader2, Plus, X, ArrowLeft, PlusCircle } from 'lucide-react'
 import { Link } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AddArmadaCategoryModal } from "./add-armada-category-modal"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
@@ -40,14 +42,15 @@ const armadaSchema = z.object({
   brand: z.string().min(2, {
     message: "Merek harus memiliki minimal 2 karakter.",
   }),
+  category: z.string().min(1, "Pilih kategori untuk armada ini."),
   images: z
     .array(
       z.object({
         file: z
           .any()
-          .refine((file) => file?.size <= MAX_FILE_SIZE, `Ukuran maksimum gambar adalah 2MB.`)
+          .refine((file) => file instanceof File && file.size <= MAX_FILE_SIZE, `Ukuran maksimum gambar adalah 2MB.`)
           .refine(
-            (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
+            (file) => file instanceof File && ACCEPTED_IMAGE_TYPES.includes(file.type),
             "Hanya format .jpg, .jpeg, .png, dan .webp yang didukung."
           ),
       })
@@ -58,8 +61,15 @@ const armadaSchema = z.object({
 
 type ArmadaFormValues = z.infer<typeof armadaSchema>
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function ArmadaInputPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
   const { toast } = useToast()
 
   const form = useForm<ArmadaFormValues>({
@@ -69,6 +79,7 @@ export default function ArmadaInputPage() {
       capacity: 1,
       price: 0,
       brand: "",
+      category: "",
       images: [],
     },
   })
@@ -95,6 +106,10 @@ export default function ArmadaInputPage() {
     setImageFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const handleAddCategory = (newCategory: Category) => {
+    setCategories([...categories, newCategory])
+  }
+
   return (
     <div className="">
       <Breadcrumb>
@@ -110,11 +125,16 @@ export default function ArmadaInputPage() {
       </Breadcrumb>
       <div className="flex items-center justify-between mt-2">
         <h1 className="text-3xl font-bold tracking-tight">Armada Baru</h1>
-        <Link to="/admin-all-armada">
-          <Button variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Kategori
           </Button>
-        </Link>
+          <Link to="/admin-all-armada">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+            </Button>
+          </Link>
+        </div>
       </div>
       <Card className="mt-2">
         <CardHeader>
@@ -162,7 +182,7 @@ export default function ArmadaInputPage() {
                   )}
                 />
               </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="price"
@@ -190,6 +210,33 @@ export default function ArmadaInputPage() {
                       </FormControl>
                       <FormDescription>
                         Masukkan merek kendaraan armada.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kategori</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Pilih kategori" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Pilih kategori untuk armada ini.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -268,6 +315,12 @@ export default function ArmadaInputPage() {
           </Form>
         </CardContent>
       </Card>
+      <AddArmadaCategoryModal
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
+        onAddCategory={handleAddCategory}
+      />
     </div>
   )
 }
+

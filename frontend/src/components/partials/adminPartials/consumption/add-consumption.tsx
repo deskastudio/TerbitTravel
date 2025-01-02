@@ -1,9 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import * as z from "zod"
-import { Loader2, Plus, X, ArrowLeft } from "lucide-react"
+import { Loader2, Plus, X, ArrowLeft, PlusCircle } from 'lucide-react'
 import { Link } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,8 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AddConsumptionCategoryModal } from "./add-cosumption-category-modal"
 
 const consumptionSchema = z.object({
   name: z.string().min(2, {
@@ -29,6 +32,7 @@ const consumptionSchema = z.object({
     .preprocess((val) => Number(val), z.number().positive({
       message: "Harga harus berupa angka positif.",
     })),
+  category: z.string().min(1, "Pilih kategori untuk konsumsi ini."),
   menu: z
     .array(
       z.object({
@@ -42,13 +46,22 @@ const consumptionSchema = z.object({
 
 type ConsumptionFormValues = z.infer<typeof consumptionSchema>
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 export default function ConsumptionInputPage() {
   const { toast } = useToast()
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
+
   const form = useForm<ConsumptionFormValues>({
     resolver: zodResolver(consumptionSchema),
     defaultValues: {
       name: "",
       price: 0,
+      category: "",
       menu: [{ item: "" }],
     },
   })
@@ -67,6 +80,10 @@ export default function ConsumptionInputPage() {
     // Kirim data ke backend di sini
   }
 
+  const handleAddCategory = (newCategory: Category) => {
+    setCategories([...categories, newCategory])
+  }
+
   return (
     <div className="">
       <Breadcrumb>
@@ -82,11 +99,16 @@ export default function ConsumptionInputPage() {
       </Breadcrumb>
       <div className="flex items-center justify-between mt-2">
         <h1 className="text-3xl font-bold tracking-tight">Konsumsi Baru</h1>
-        <Link to="/admin-all-consumption">
-          <Button variant="outline">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Kategori
           </Button>
-        </Link>
+          <Link to="/admin-all-consumption">
+            <Button variant="outline">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
+            </Button>
+          </Link>
+        </div>
       </div>
       <Card className="mt-2">
         <CardHeader>
@@ -132,6 +154,33 @@ export default function ConsumptionInputPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Kategori</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih kategori" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Pilih kategori untuk konsumsi ini.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div>
                 <FormLabel>Menu</FormLabel>
                 <div className="space-y-4">
@@ -172,6 +221,11 @@ export default function ConsumptionInputPage() {
           </Form>
         </CardContent>
       </Card>
+      <AddConsumptionCategoryModal
+        isOpen={isAddCategoryModalOpen}
+        onClose={() => setIsAddCategoryModalOpen(false)}
+        onAddCategory={handleAddCategory}
+      />
     </div>
   )
 }
