@@ -96,7 +96,7 @@ const TeamTerbitPage: React.FC = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger asChild>
             <Button>{editingMember ? 'Edit Team Member' : 'Add Team Member'}</Button>
           </DialogTrigger>
@@ -105,50 +105,53 @@ const TeamTerbitPage: React.FC = () => {
               <DialogTitle>{editingMember ? 'Edit Team Member' : 'Add New Team Member'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                <Input id="name" {...register('name')} defaultValue={editingMember?.name} />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                  <Input id="name" {...register('name')} defaultValue={editingMember?.name} />
+                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+                </div>
+                <div className="col-span-1">
+                  <label htmlFor="position" className="block text-sm font-medium text-gray-700">Position</label>
+                  <Input id="position" {...register('position')} defaultValue={editingMember?.position} />
+                  {errors.position && <p className="text-red-500 text-sm mt-1">{errors.position.message}</p>}
+                </div>
               </div>
-              <div>
-                <label htmlFor="position" className="block text-sm font-medium text-gray-700">Position</label>
-                <Input id="position" {...register('position')} defaultValue={editingMember?.position} />
-                {errors.position && <p className="text-red-500 text-sm mt-1">{errors.position.message}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-1">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                  <Textarea id="description" {...register('description')} defaultValue={editingMember?.description} rows={3} />
+                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+                </div>
+                <div className="col-span-1">
+                  <label htmlFor="photo" className="block text-sm font-medium text-gray-700">Photo</label>
+                  <Input id="photo" type="file" accept="image/*" {...register('photo')} />
+                  {errors.photo && <p className="text-red-500 text-sm mt-1">{errors.photo.message}</p>}
+                </div>
               </div>
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-                <Textarea id="description" {...register('description')} defaultValue={editingMember?.description} />
-                {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-1">
+                  <label htmlFor="twitter" className="block text-sm font-medium text-gray-700">Twitter</label>
+                  <Input id="twitter" {...register('twitter')} defaultValue={editingMember?.twitter} />
+                  {errors.twitter && <p className="text-red-500 text-sm mt-1">{errors.twitter.message}</p>}
+                </div>
+                <div className="col-span-1">
+                  <label htmlFor="facebook" className="block text-sm font-medium text-gray-700">Facebook</label>
+                  <Input id="facebook" {...register('facebook')} defaultValue={editingMember?.facebook} />
+                  {errors.facebook && <p className="text-red-500 text-sm mt-1">{errors.facebook.message}</p>}
+                </div>
               </div>
-              <div>
-                <label htmlFor="photo" className="block text-sm font-medium text-gray-700">Photo</label>
-                <Input id="photo" type="file" accept="image/*" {...register('photo')} />
-                {errors.photo && <p className="text-red-500 text-sm mt-1">{errors.photo.message}</p>}
-              </div>
-              <div>
-                <label htmlFor="twitter" className="block text-sm font-medium text-gray-700">Twitter</label>
-                <Input id="twitter" {...register('twitter')} defaultValue={editingMember?.twitter} />
-                {errors.twitter && <p className="text-red-500 text-sm mt-1">{errors.twitter.message}</p>}
-              </div>
-              <div>
-                <label htmlFor="facebook" className="block text-sm font-medium text-gray-700">Facebook</label>
-                <Input id="facebook" {...register('facebook')} defaultValue={editingMember?.facebook} />
-                {errors.facebook && <p className="text-red-500 text-sm mt-1">{errors.facebook.message}</p>}
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                <Input id="email" type="email" {...register('email')} defaultValue={editingMember?.email} />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-              </div>
-              <div>
-                <label htmlFor="instagram" className="block text-sm font-medium text-gray-700">Instagram</label>
-                <Input id="instagram" {...register('instagram')} defaultValue={editingMember?.instagram} />
-                {errors.instagram && <p className="text-red-500 text-sm mt-1">{errors.instagram.message}</p>}
-              </div>
-              <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                <Input id="phone" {...register('phone')} defaultValue={editingMember?.phone} />
-                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="col-span-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                  <Input id="email" type="email" {...register('email')} defaultValue={editingMember?.email} />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+                </div>
+                <div className="col-span-1">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
+                  <Input id="phone" {...register('phone')} defaultValue={editingMember?.phone} />
+                  {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>}
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <Controller
@@ -159,13 +162,14 @@ const TeamTerbitPage: React.FC = () => {
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      id="isDisplayed"
                     />
                   )}
                 />
-                <label htmlFor="isDisplayed" className="text-sm font-medium text-gray-700">Display on website</label>
+                <span className="text-sm">Display on Website</span>
               </div>
-              <Button type="submit">{editingMember ? 'Update Team Member' : 'Add Team Member'}</Button>
+              <div className="mt-4 flex justify-end">
+                <Button type="submit">{editingMember ? 'Update' : 'Add'}</Button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>

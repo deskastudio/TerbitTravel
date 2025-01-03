@@ -34,7 +34,7 @@ const AboutTerbitPage: React.FC = () => {
         title: "Company information updated",
         description: "Your changes have been saved successfully.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update company information. Please try again.",

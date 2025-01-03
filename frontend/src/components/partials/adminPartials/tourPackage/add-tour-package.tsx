@@ -43,16 +43,16 @@ const TourPackageAddForm: React.FC = () => {
   const { fields: includeFields, append: appendInclude, remove: removeInclude } =
     useFieldArray({
       control: form.control,
-      name: "includes",
+      name: "schedules",
     });
 
   const { fields: excludeFields, append: appendExclude, remove: removeExclude } =
     useFieldArray({
       control: form.control,
-      name: "excludes",
+      name: "schedules",
     });
 
-  const { fields: scheduleFields, append: appendSchedule, remove: removeSchedule } =
+  const { fields: scheduleFields, append: appendSchedule } =
     useFieldArray({
       control: form.control,
       name: "schedules",
@@ -170,7 +170,7 @@ const TourPackageAddForm: React.FC = () => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendInclude("")}
+                  onClick={() => appendInclude({ startDate: "", endDate: "" })}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Tambah Item
@@ -207,7 +207,7 @@ const TourPackageAddForm: React.FC = () => {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => appendExclude("")}
+                  onClick={() => appendExclude({ startDate: "", endDate: "" })}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Tambah Item

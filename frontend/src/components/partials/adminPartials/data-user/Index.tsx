@@ -203,7 +203,7 @@ const UserManagementPage = () => {
             <DialogHeader>
               <DialogTitle>Edit User</DialogTitle>
             </DialogHeader>
-            <EditUserForm user={editingUser} onSubmit={editUser} />
+            <EditUserForm user={editingUser} onSubmit={(data) => editUser({ ...data, id: editingUser.id })} />
           </DialogContent>
         </Dialog>
       )}

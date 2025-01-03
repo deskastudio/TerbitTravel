@@ -35,8 +35,12 @@ const PartnerTerbitPage: React.FC = () => {
   const onSubmit = async (data: Partner) => {
     try {
       if (editingPartner) {
-        await updatePartner(editingPartner.id, data);
-        toast({ title: "Partner updated", description: "The partner has been updated successfully." });
+        if (editingPartner.id) {
+          await updatePartner(editingPartner.id, data);
+          toast({ title: "Partner updated", description: "The partner has been updated successfully." });
+        } else {
+          throw new Error("Partner ID is not defined");
+        }
       } else {
         await addPartner(data);
         toast({ title: "Partner added", description: "A new partner has been added successfully." });
@@ -45,7 +49,7 @@ const PartnerTerbitPage: React.FC = () => {
       setIsAddModalOpen(false);
       setEditingPartner(null);
       reset();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to save partner. Please try again.",
@@ -64,7 +68,7 @@ const PartnerTerbitPage: React.FC = () => {
       await deletePartner(id);
       fetchPartners();
       toast({ title: "Partner deleted", description: "The partner has been deleted successfully." });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to delete partner. Please try again.",
@@ -122,7 +126,7 @@ const PartnerTerbitPage: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                  <Select onValueChange={(value) => register('status').onChange(value)} defaultValue={editingPartner?.status}>
+                  <Select onValueChange={(value) => register('status').onChange({ target: { value } })} defaultValue={editingPartner?.status}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -170,7 +174,7 @@ const PartnerTerbitPage: React.FC = () => {
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDelete(partner.id)}>
+                      <DropdownMenuItem onClick={() => partner.id && handleDelete(partner.id)}>
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>

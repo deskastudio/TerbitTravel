@@ -24,6 +24,7 @@ const galleryItemSchema = z.object({
   category: categorySchema,
 });
 
+
 type Category = z.infer<typeof categorySchema>;
 type GalleryItem = z.infer<typeof galleryItemSchema>;
 
@@ -45,7 +46,7 @@ const GalleryTerbitPage: React.FC = () => {
     const newItem = {
       ...data,
       id: Date.now().toString(),
-      image: URL.createObjectURL(data.image),
+      image: data.image,
     };
     setGalleryItems([...galleryItems, newItem]);
     setIsAddGalleryModalOpen(false);
@@ -109,7 +110,7 @@ const GalleryTerbitPage: React.FC = () => {
                 </div>
                 <div>
                   <Label htmlFor="category">Category</Label>
-                  <Select onValueChange={(value) => registerGallery('category', { value })}>
+                  <Select onValueChange={(value) => registerGallery('category', { value: { id: value, name: categories.find(category => category.id === value)?.name || 'Unknown' } })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -132,7 +133,7 @@ const GalleryTerbitPage: React.FC = () => {
           <SelectValue placeholder="Filter by category" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={null}>All Categories</SelectItem>
+          <SelectItem value="all">All Categories</SelectItem>
           {categories.map((category) => (
             <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
           ))}
@@ -152,7 +153,7 @@ const GalleryTerbitPage: React.FC = () => {
           {paginatedItems.map((item) => (
             <TableRow key={item.id}>
               <TableCell>
-                <img src={item.image as string} alt={item.name} className="w-16 h-16 object-cover" />
+                <img src={typeof item.image === 'string' ? item.image : ''} alt={item.name} className="w-16 h-16 object-cover" />
               </TableCell>
               <TableCell>{item.name}</TableCell>
               <TableCell>{item.description}</TableCell>
