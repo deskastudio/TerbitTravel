@@ -19,8 +19,13 @@ import AdminAllConsumption from '@/pages/adminPages/consumption/Index';
 import AdminAllHotel from '@/pages/adminPages/hotel/Index';
 import AdminAllArticle from '@/pages/adminPages/article/Index';
 import AdminAddArticle from '@/pages/adminPages/article/add-article';
-
-
+import AdminAllUser from '@/pages/adminPages/data-user/Index';
+import AdminAbout from '@/pages/adminPages/terbit-profile/about-terbit';
+import AdminGallery from '@/pages/adminPages/terbit-profile/gallery-terbit';
+import AdminLicences from '@/pages/adminPages/terbit-profile/licences-terbit';
+import AdminPartner from '@/pages/adminPages/terbit-profile/partner-terbit';
+import AdminTeam from '@/pages/adminPages/terbit-profile/team-terbit';
+import AdminBanner from '@/pages/adminPages/terbit-profile/banner-terbit';
 
 
 function AdminRoutes() {
@@ -34,6 +39,7 @@ function AdminRoutes() {
       <Route path="/admin-all-hotel" element={<AdminAllHotel/>} />
       <Route path="/admin-all-article" element={<AdminAllArticle/>} />
       <Route path="/admin-add-article" element={<AdminAddArticle/>} />
+      <Route path="/admin-all-user" element={<AdminAllUser/>} />
       <Route path="/admin-article" element={<AdminArticle />} />
       <Route path="/admin-add-destination" element={<AddDestination />} />
       <Route path="/admin-add-armada" element={<AddArmada />} />
@@ -46,6 +52,14 @@ function AdminRoutes() {
       <Route path="/admin-add-package-tour" element={<AddTourPackage />} />
       <Route path="/admin-edit-package-tour/:id/edit" element={<EditTourPackage />} />
       <Route path="/admin-detail-package-tour/:id" element={<DetailTourPackage />} />
+
+
+      <Route path="/admin-about" element={<AdminAbout/>} />
+      <Route path="/admin-gallery" element={<AdminGallery/>} />
+      <Route path="/admin-licences" element={<AdminLicences/>} />
+      <Route path="/admin-partner" element={<AdminPartner/>} />
+      <Route path="/admin-team" element={<AdminTeam />} />
+      <Route path="/admin-banner" element={<AdminBanner/>} />
 
     </Routes>
   );

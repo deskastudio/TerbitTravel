@@ -1,17 +1,19 @@
 import React from "react";
 import {
   AudioWaveform,
-  BookOpen,
   Bot,
+  Building2,
+  Car,
   Command,
-  Folder,
-  Forward,
+  Compass,
+  FileText,
   GalleryVerticalEnd,
   Map,
+  MessageSquare,
   PieChart,
-  Settings2,
-  SquareTerminal,
-  Trash2,
+  ShoppingCart,
+  Users,
+  UtensilsCrossed,
 } from "lucide-react";
 
 import NavMain from "../sidebar/nav-main";
@@ -19,6 +21,7 @@ import NavProjects from "../sidebar/nav-project";
 import NavUser from "../sidebar/nav-user";
 import TeamSwitcher from "../sidebar/nav-switcher";
 import NavContent from "../sidebar/nav-content";
+import NavProfile from "../sidebar/nav-profile";
 import {
   Sidebar,
   SidebarContent,
@@ -55,53 +58,64 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
       {
         title: "Destinasi",
         url: "#",
-        icon: Bot,
+        icon: Compass,
         items: [
           { title: "Data Destinasi", url: "/admin-all-destination" },
           { title: "Tambah Destinasi", url: "/admin-add-destination" },
-          { title: "Detail Destinasi", url: "/admin-detail-destination" },
         ],
       },
       {
         title: "Armada",
         url: "#",
-        icon: BookOpen,
+        icon: Car,
         items: [
           { title: "Data Armada", url: "/admin-all-armada" },
           { title: "Tambah Armada", url: "/admin-add-armada" },
-          { title: "Detail Armada", url: "/admin-detail-armada" },
         ],
       },
       {
         title: "Konsumsi",
         url: "#",
-        icon: Settings2,
+        icon: UtensilsCrossed,
         items: [
           { title: "Data Konsumsi", url: "/admin-all-consumption" },
           { title: "Tambah Konsumsi", url: "/admin-add-consumption" },
-          { title: "Detail Konsumsi", url: "/admin-detail-consumption" },
         ],
       },
       {
         title: "Hotel",
         url: "#",
-        icon: BookOpen,
+        icon: Building2,
         items: [
           { title: "Data Hotel", url: "/admin-all-hotel" },
           { title: "Tambah Hotel", url: "/admin-add-hotel" },
-          { title: "Detail Hotel", url: "/admin-detail-hotel" },
+        ],
+      },
+    ],
+    navProfile: [
+      {
+        title: "Profile",
+        url: "#",
+        icon: Bot,
+        items: [
+          { title: "Tentang Terbit", url: "/admin-about" },
+          { title: "Galeri Terbit", url: "/admin-gallery" },
+          { title: "Lisensi Terbit", url: "/admin-licences" },
+          { title: "Partner Terbit", url: "/admin-partner" },
+          { title: "Tim Terbit", url: "/admin-team" },
+          { title: "Banner Terbit", url: "/admin-banner" },
         ],
       },
     ],
     projects: [
-      { name: "Dashboard", url: "/admin-dashboard", icon: SquareTerminal },
-      { name: "Paket Wisata", url: "/admin-all-package-tour", icon: PieChart },
-      { name: "Pemesanan", url: "#", icon: Map },
+      { name: "Dashboard", url: "/admin-dashboard", icon: PieChart },
+      { name: "Paket Wisata", url: "/admin-all-package-tour", icon: Map },
+      { name: "Pemesanan", url: "/admin-all-booking", icon: ShoppingCart },
+      { name: "Data User", url: "/admin-all-user", icon: Users },
     ],
     NavContent: [
-      { name: "Artikel", url: "/admin-all-article", icon: Folder },
-      { name: "Testimoni", url: "#", icon: Forward },
-      { name: "Banner", url: "#", icon: Trash2 },
+      { name: "Artikel", url: "/admin-all-article", icon: FileText },
+      { name: "Testimoni", url: "/admin-all-review", icon: MessageSquare },
     ]
   }), []);
 
@@ -113,6 +127,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
       <SidebarContent>
         <NavProjects projects={data.projects} />
         <NavMain items={data.navMain} />
+        <NavProfile items={data.navProfile} />
         <NavContent Contents={data.NavContent} />
       </SidebarContent>
       <SidebarFooter>
