@@ -26,6 +26,8 @@ import AdminLicences from '@/pages/adminPages/terbit-profile/licences-terbit';
 import AdminPartner from '@/pages/adminPages/terbit-profile/partner-terbit';
 import AdminTeam from '@/pages/adminPages/terbit-profile/team-terbit';
 import AdminBanner from '@/pages/adminPages/terbit-profile/banner-terbit';
+import AdminAllReview from '@/pages/adminPages/review/Index';
+import AdminAllBookings from '@/pages/adminPages/booking/Index';
 
 
 function AdminRoutes() {
@@ -39,6 +41,8 @@ function AdminRoutes() {
       <Route path="/admin-all-hotel" element={<AdminAllHotel/>} />
       <Route path="/admin-all-article" element={<AdminAllArticle/>} />
       <Route path="/admin-add-article" element={<AdminAddArticle/>} />
+      <Route path="/admin-all-review" element={<AdminAllReview/>} />  
+      <Route path="/admin-all-bookings" element={<AdminAllBookings/>} />  
       <Route path="/admin-all-user" element={<AdminAllUser/>} />
       <Route path="/admin-article" element={<AdminArticle />} />
       <Route path="/admin-add-destination" element={<AddDestination />} />
