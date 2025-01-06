@@ -1,4 +1,3 @@
-// controllers/packageController.js
 import mongoose from "mongoose";
 import Package from "../models/package.js";
 
@@ -20,6 +19,7 @@ export const addPackage = async (req, res) => {
       hotel,
       armada,
       consume,
+      kategori, // Tambahkan kategori
     } = req.body;
 
     const newPackage = new Package({
@@ -35,6 +35,7 @@ export const addPackage = async (req, res) => {
       hotel,
       armada,
       consume,
+      kategori, // Menyimpan kategori
     });
 
     await newPackage.save();
@@ -58,7 +59,8 @@ export const getAllPackages = async (req, res) => {
       .populate("destination", "lokasi gambar")
       .populate("hotel", "nama alamat bintang")
       .populate("armada", "nama kapasitas")
-      .populate("consume", "nama lauk harga");
+      .populate("consume", "nama lauk harga")
+      .populate("kategori", "nama"); // Populate kategori
 
     res.json(packages);
   } catch (error) {
@@ -78,7 +80,8 @@ export const getPackageById = async (req, res) => {
       .populate("destination", "lokasi gambar")
       .populate("hotel", "nama alamat bintang")
       .populate("armada", "nama kapasitas")
-      .populate("consume", "nama lauk harga");
+      .populate("consume", "nama lauk harga")
+      .populate("kategori", "nama"); // Populate kategori
 
     if (!foundPackage) {
       return res.status(404).json({ message: "Package not found" });
@@ -110,6 +113,7 @@ export const updatePackage = async (req, res) => {
       hotel,
       armada,
       consume,
+      kategori, // Tambahkan kategori
     } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(packageId)) {
@@ -131,6 +135,7 @@ export const updatePackage = async (req, res) => {
         hotel,
         armada,
         consume,
+        kategori, // Menyimpan kategori
       },
       { new: true }
     );

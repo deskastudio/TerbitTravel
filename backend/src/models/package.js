@@ -1,4 +1,3 @@
-// models/package.js
 import mongoose from "mongoose";
 
 const packageSchema = new mongoose.Schema({
@@ -60,6 +59,11 @@ const packageSchema = new mongoose.Schema({
   consume: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Consume",
+    required: true,
+  },
+  kategori: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PackageCategory", // Relasi ke kategori paket
     required: true,
   },
 });

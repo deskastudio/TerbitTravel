@@ -10,6 +10,7 @@ import {
 } from "../controllers/destinationController.js";
 import { validateDestinationData } from "../middleware/destinationValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import DestinationCategory from "../models/destinationCategory.js";
 
 // Konfigurasi multer untuk menyimpan file gambar di subfolder `uploads/destination`
 const storage = multer.diskStorage({
@@ -55,7 +56,7 @@ router.post(
  * /destination/add:
  *   post:
  *     summary: Add a new destination
- *     description: Add a new destination including name, location, description, and multiple images.
+ *     description: Add a new destination including name, location, description, category (ID), and multiple images.
  *     tags: [Destination]
  *     security:
  *       - BearerAuth: []
@@ -75,6 +76,10 @@ router.post(
  *               deskripsi:
  *                 type: string
  *                 example: "Pantai yang indah dengan pasir putih."
+ *               category:
+ *                 type: string
+ *                 description: ID of the destination category
+ *                 example: "605c72ef1532070f88fefc2"
  *               foto:
  *                 type: array
  *                 items:
@@ -105,7 +110,7 @@ router.put(
  * /destination/update/{id}:
  *   put:
  *     summary: Update an existing destination
- *     description: Update a destination by ID including name, location, description, and images.
+ *     description: Update a destination by ID including name, location, description, category (ID), and images.
  *     tags: [Destination]
  *     security:
  *       - BearerAuth: []
@@ -132,6 +137,10 @@ router.put(
  *               deskripsi:
  *                 type: string
  *                 example: "Pantai dengan ombak tenang dan pemandangan sunset."
+ *               category:
+ *                 type: string
+ *                 description: ID of the destination category
+ *                 example: "605c72ef1532070f88fefc2"
  *               foto:
  *                 type: array
  *                 items:
@@ -201,11 +210,15 @@ router.get("/getAll", authMiddleware, getAllDestinations);
  *       500:
  *         description: Error fetching destinations
  */
+
+// Ambil data destinasi berdasarkan ID
+router.get("/:id", authMiddleware, getDestinationById);
 /**
  * @swagger
  * /destination/{id}:
  *   get:
- *     summary: Ambil data destinasi berdasarkan ID
+ *     summary: Get a destination by ID
+ *     description: Retrieve a destination by its ID.
  *     tags: [Destination]
  *     security:
  *       - BearerAuth: []
@@ -213,17 +226,16 @@ router.get("/getAll", authMiddleware, getAllDestinations);
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID destinasi yang akan diambil
+ *         description: ID of the destination to retrieve
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Data destinasi ditemukan
+ *         description: Destination data found
  *       404:
- *         description: Destinasi tidak ditemukan
+ *         description: Destination not found
  *       500:
- *         description: Kesalahan server
+ *         description: Server error
  */
-router.get("/:id", authMiddleware, getDestinationById);
 
 export default router;
