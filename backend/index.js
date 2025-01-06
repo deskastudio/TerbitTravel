@@ -14,6 +14,11 @@ import profileRoutes from "./src/routes/profileRoutes.js";
 import reviewRoutes from "./src/routes/reviewRoutes.js";
 import packageRoutes from "./src/routes/packageRoutes.js";
 import bannerRoutes from "./src/routes/bannerRoutes.js";
+import galleryRoutes from "./src/routes/galleryRoutes.js";
+import galleryCategoryRoutes from "./src/routes/galleryCategoryRoute.js";
+import packageCategoryRoutes from "./src/routes/packageCategoryRoute.js";
+import destinationCategoryRoutes from "./src/routes/destinationCategoryRoute.js";
+import teamRoutes from "./src/routes/teamRoutes.js";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -39,6 +44,11 @@ app.use("/profiles", profileRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/packages", packageRoutes);
 app.use("/banner", bannerRoutes);
+app.use("/gallery", galleryRoutes);
+app.use("/gallery-category", galleryCategoryRoutes);
+app.use("/package-category", packageCategoryRoutes);
+app.use("/destination-category", destinationCategoryRoutes);
+app.use("/team", teamRoutes);
 
 //swager
 setupSwagger(app);

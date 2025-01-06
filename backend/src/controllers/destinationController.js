@@ -20,6 +20,7 @@ export const addDestination = async (req, res) => {
       lokasi,
       deskripsi,
       foto: fotoPaths,
+      category: req.body.category, // Menambahkan kategori
     });
     await newDestination.save();
     res.status(201).json({
@@ -67,6 +68,7 @@ export const updateDestination = async (req, res) => {
     destination.lokasi = lokasi || destination.lokasi;
     destination.deskripsi = deskripsi || destination.deskripsi;
     destination.foto = fotoPaths.length > 0 ? fotoPaths : destination.foto;
+    destination.category = req.body.category || destination.category; // Update category
 
     await destination.save();
     res
@@ -77,6 +79,44 @@ export const updateDestination = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to update destination", error: error.message });
+  }
+};
+
+// Fetch all destinations with category populated
+export const getAllDestinations = async (req, res) => {
+  try {
+    const destinations = await Destination.find()
+      .populate("category", "title") // Populating category with tittle
+      .sort({ createdAt: -1 });
+    res.status(200).json(destinations);
+  } catch (error) {
+    console.error("Error fetching destinations:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to fetch destinations", error: error.message });
+  }
+};
+
+// Fetch destination by ID with category populated
+export const getDestinationById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const destination = await Destination.findById(id).populate(
+      "category",
+      "title"
+    ); // Populating category with tittle
+    if (!destination) {
+      return res.status(404).json({ message: "Destination not found" });
+    }
+
+    res.status(200).json(destination);
+  } catch (error) {
+    console.error("Error fetching destination by ID:", error);
+    res.status(500).json({
+      message: "Failed to fetch destination",
+      error: error.message,
+    });
   }
 };
 
@@ -115,37 +155,5 @@ export const deleteDestination = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to delete destination", error: error.message });
-  }
-};
-
-// Fetch all destinations
-export const getAllDestinations = async (req, res) => {
-  try {
-    const destinations = await Destination.find().sort({ createdAt: -1 });
-    res.status(200).json(destinations);
-  } catch (error) {
-    console.error("Error fetching destinations:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to fetch destinations", error: error.message });
-  }
-};
-// Ambil data destinasi berdasarkan ID
-export const getDestinationById = async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    const destination = await Destination.findById(id);
-    if (!destination) {
-      return res.status(404).json({ message: "Destination not found" });
-    }
-
-    res.status(200).json(destination);
-  } catch (error) {
-    console.error("Error fetching destination by ID:", error);
-    res.status(500).json({
-      message: "Failed to fetch destination",
-      error: error.message,
-    });
   }
 };

@@ -1,12 +1,18 @@
 import Profile from "../models/profile.js";
 
-// Tambah profil baru
+// Tambah profil baru (hanya jika belum ada)
 export const addProfile = async (req, res) => {
   try {
-    const { nama, deskripsi } = req.body;
-    const gambar = req.files.map((file) => file.path);
+    const existingProfile = await Profile.findOne();
+    if (existingProfile) {
+      return res.status(400).json({
+        message: "Profile already exists. Use update to modify the profile.",
+      });
+    }
 
-    const newProfile = new Profile({ nama, deskripsi, gambar });
+    const { deskripsi, visi, misi } = req.body;
+
+    const newProfile = new Profile({ deskripsi, visi, misi });
     await newProfile.save();
 
     res
@@ -17,26 +23,27 @@ export const addProfile = async (req, res) => {
   }
 };
 
-// Ambil semua profil
-export const getAllProfiles = async (req, res) => {
+// Ambil profil (hanya ada satu)
+export const getProfile = async (req, res) => {
   try {
-    const profiles = await Profile.find();
-    res.status(200).json(profiles);
+    const profile = await Profile.findOne();
+    if (!profile) {
+      return res.status(404).json({ message: "Profile not found" });
+    }
+    res.status(200).json(profile);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch profiles", error });
+    res.status(500).json({ message: "Failed to fetch profile", error });
   }
 };
 
 // Perbarui profil
 export const updateProfile = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { nama, deskripsi } = req.body;
-    const gambar = req.files.map((file) => file.path);
+    const { deskripsi, visi, misi } = req.body;
 
-    const updatedProfile = await Profile.findByIdAndUpdate(
-      id,
-      { nama, deskripsi, gambar },
+    const updatedProfile = await Profile.findOneAndUpdate(
+      {},
+      { deskripsi, visi, misi },
       { new: true }
     );
 
@@ -50,21 +57,5 @@ export const updateProfile = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to update profile", error });
-  }
-};
-
-// Hapus profil
-export const deleteProfile = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const deletedProfile = await Profile.findByIdAndDelete(id);
-
-    if (!deletedProfile) {
-      return res.status(404).json({ message: "Profile not found" });
-    }
-
-    res.status(200).json({ message: "Profile deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete profile", error });
   }
 };

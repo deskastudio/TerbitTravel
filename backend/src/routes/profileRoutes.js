@@ -1,131 +1,114 @@
 import express from "express";
-import multer from "multer";
 import {
   addProfile,
-  getAllProfiles,
   updateProfile,
-  deleteProfile,
+  getProfile,
 } from "../controllers/profileController.js";
-import {
-  validateProfileData,
-  validateFiles,
-} from "../middleware/profileValidator.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
+import { validateProfileData } from "../middleware/profileValidator.js";
 
 const router = express.Router();
 
-// Konfigurasi multer untuk penyimpanan gambar
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "./uploads/profiles");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage });
-
 /**
  * @swagger
+ * components:
+ *   securitySchemes:
+ *     BearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *
  * tags:
  *   - name: Profile
- *     description: API for managing profiles
+ *     description: API for managing profile
  */
 
-// Tambah profil baru
-router.post(
-  "/add",
-  upload.array("gambar", 5),
-  validateFiles,
-  validateProfileData,
-  addProfile
-);
 /**
  * @swagger
- * /profiles/add:
+ * /profile/add:
  *   post:
- *     summary: Add a new profile
- *     description: Add a new profile with name, description, and up to 5 images.
+ *     summary: Add profile (one-time use)
  *     tags: [Profile]
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               nama:
- *                 type: string
- *                 example: "John Doe"
  *               deskripsi:
  *                 type: string
- *                 example: "Software Engineer and Content Creator"
- *               gambar:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
+ *                 description: Description of the profile
+ *                 example: "Company profile description here."
  *     responses:
  *       201:
- *         description: Profile created successfully
+ *         description: Profile added successfully
  *       400:
- *         description: Validation errors
+ *         description: Validation error
  *       500:
- *         description: Failed to create profile
+ *         description: Failed to add profile
  */
+router.post("/add", authMiddleware, validateProfileData, addProfile);
 
-// Ambil semua profil
-router.get("/", getAllProfiles);
 /**
  * @swagger
- * /profiles:
+ * /profile:
  *   get:
- *     summary: Get all profiles
- *     description: Retrieve all stored profiles.
+ *     summary: Get profile
  *     tags: [Profile]
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Successfully fetched profiles
+ *         description: Successfully fetched profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   description: Profile ID
+ *                 deskripsi:
+ *                   type: string
+ *                   description: Description of the profile
+ *                   example: "Company profile description here."
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Profile creation date
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Last update date
+ *       404:
+ *         description: Profile not found
  *       500:
- *         description: Failed to fetch profiles
+ *         description: Failed to fetch profile
  */
+router.get("/", authMiddleware, getProfile);
 
-// Perbarui profil
-router.put(
-  "/update/:id",
-  upload.array("gambar", 5),
-  validateProfileData,
-  updateProfile
-);
 /**
  * @swagger
- * /profiles/update/{id}:
+ * /profile/update:
  *   put:
- *     summary: Update an existing profile
- *     description: Update a profile by its ID with optional new images.
+ *     summary: Update profile
  *     tags: [Profile]
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: Profile ID
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               nama:
- *                 type: string
- *                 example: "Updated Name"
  *               deskripsi:
  *                 type: string
- *                 example: "Updated Description"
- *               gambar:
- *                 type: array
- *                 items:
- *                   type: string
- *                   format: binary
+ *                 description: Updated description of the profile
+ *                 example: "Updated company profile description."
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -134,28 +117,6 @@ router.put(
  *       500:
  *         description: Failed to update profile
  */
-
-// Hapus profil
-router.delete("/delete/:id", deleteProfile);
-/**
- * @swagger
- * /profiles/delete/{id}:
- *   delete:
- *     summary: Delete a profile
- *     description: Delete a profile by its ID.
- *     tags: [Profile]
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: Profile ID
- *     responses:
- *       200:
- *         description: Profile deleted successfully
- *       404:
- *         description: Profile not found
- *       500:
- *         description: Failed to delete profile
- */
+router.put("/update", authMiddleware, validateProfileData, updateProfile);
 
 export default router;
