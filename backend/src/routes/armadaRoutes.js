@@ -6,10 +6,11 @@ import {
   updateArmada,
   deleteArmada,
   getAllArmada,
-  getArmadaById, // Import the new function
+  getArmadaById,
 } from "../controllers/armadaController.js";
 import { validateArmadaData } from "../middleware/armadaValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import { parseKapasitas } from "../middleware/parseKapasitas.js";
 
 // Konfigurasi Multer
 const storage = multer.diskStorage({
@@ -51,9 +52,11 @@ const router = express.Router();
  *                 description: Nama armada
  *                 example: "Armada A"
  *               kapasitas:
- *                 type: number
+ *                 type: array
+ *                 items:
+ *                   type: string
  *                 description: Kapasitas penumpang
- *                 example: 50
+ *
  *               harga:
  *                 type: number
  *                 description: Harga per hari
@@ -81,6 +84,7 @@ router.post(
   checkRole("admin"),
   upload.array("gambar"),
   validateArmadaData,
+  parseKapasitas,
   addArmada
 );
 
@@ -110,7 +114,9 @@ router.post(
  *                 type: string
  *                 description: Nama armada
  *               kapasitas:
- *                 type: number
+ *                 type: array
+ *                 items:
+ *                   type: string
  *                 description: Kapasitas penumpang
  *               harga:
  *                 type: number
@@ -137,6 +143,7 @@ router.put(
   checkRole("admin"),
   upload.array("gambar"),
   validateArmadaData,
+  parseKapasitas,
   updateArmada
 );
 
@@ -190,7 +197,9 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
  *                     type: string
  *                     description: Nama armada
  *                   kapasitas:
- *                     type: number
+ *                     type: array
+ *                     items:
+ *                       type: string
  *                     description: Kapasitas penumpang
  *                   gambar:
  *                     type: array
