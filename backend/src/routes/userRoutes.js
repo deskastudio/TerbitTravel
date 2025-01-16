@@ -112,7 +112,7 @@ router.post("/login", loginUser);
  *       500:
  *         description: Error deleting user
  */
-router.delete("/user/:userId", authMiddleware, deleteUser);
+router.delete("/user/:userId", deleteUser);
 
 /**
  * @swagger
@@ -147,7 +147,7 @@ router.delete("/user/:userId", authMiddleware, deleteUser);
  *       500:
  *         description: Error fetching user data
  */
-router.get("/dataUser", authMiddleware, getAllUsers);
+router.get("/dataUser", getAllUsers);
 
 /**
  * @swagger
@@ -189,7 +189,7 @@ router.get("/dataUser", authMiddleware, getAllUsers);
  *       500:
  *         description: Error fetching user data
  */
-router.get("/:userId", authMiddleware, getUserById);
+router.get("/:userId", getUserById);
 
 /**
  * @swagger
@@ -237,7 +237,6 @@ router.get("/:userId", authMiddleware, getUserById);
 router.put(
   "/update/:userId",
   upload.single("foto"),
-  authMiddleware,
   updateUser
 );
 

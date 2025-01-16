@@ -60,8 +60,8 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: Compass,
         items: [
-          { title: "Data Destinasi", url: "/admin-all-destination" },
-          { title: "Tambah Destinasi", url: "/admin-add-destination" },
+          { title: "Data Destinasi", url: "/admin/destination" },
+          { title: "Tambah Destinasi", url: "/admin/destination/add" },
         ],
       },
       {
@@ -69,8 +69,8 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: Car,
         items: [
-          { title: "Data Armada", url: "/admin-all-armada" },
-          { title: "Tambah Armada", url: "/admin-add-armada" },
+          { title: "Data Armada", url: "/admin/armada" },
+          { title: "Tambah Armada", url: "/admin/armada/add" },
         ],
       },
       {
@@ -78,8 +78,8 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: UtensilsCrossed,
         items: [
-          { title: "Data Konsumsi", url: "/admin-all-consumption" },
-          { title: "Tambah Konsumsi", url: "/admin-add-consumption" },
+          { title: "Data Konsumsi", url: "/admin/consumption" },
+          { title: "Tambah Konsumsi", url: "/admin/consumption/add" },
         ],
       },
       {
@@ -87,8 +87,8 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: Building2,
         items: [
-          { title: "Data Hotel", url: "/admin-all-hotel" },
-          { title: "Tambah Hotel", url: "/admin-add-hotel" },
+          { title: "Data Hotel", url: "/admin/hotel" },
+          { title: "Tambah Hotel", url: "/admin/hotel/add" },
         ],
       },
     ],
@@ -98,24 +98,24 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
         url: "#",
         icon: Bot,
         items: [
-          { title: "Tentang Terbit", url: "/admin-about" },
-          { title: "Galeri Terbit", url: "/admin-gallery" },
-          { title: "Lisensi Terbit", url: "/admin-licences" },
-          { title: "Partner Terbit", url: "/admin-partner" },
-          { title: "Tim Terbit", url: "/admin-team" },
-          { title: "Banner Terbit", url: "/admin-banner" },
+          { title: "Tentang Terbit", url: "/admin/tentang-terbit" },
+          { title: "Galeri Terbit", url: "/admin/galeri-terbit" },
+          { title: "Lisensi Terbit", url: "/admin/lisensi-terbit" },
+          { title: "Partner Terbit", url: "/admin/partner-terbit" },
+          { title: "Tim Terbit", url: "/admin/tim-terbit" },
+          { title: "Banner Terbit", url: "/admin/banner-terbit" },
         ],
       },
     ],
     projects: [
-      { name: "Dashboard", url: "/admin-dashboard", icon: PieChart },
-      { name: "Paket Wisata", url: "/admin-all-package-tour", icon: Map },
-      { name: "Pemesanan", url: "/admin-all-bookings", icon: ShoppingCart },
-      { name: "Data User", url: "/admin-all-user", icon: Users },
+      { name: "Dashboard", url: "/admin/dashboard", icon: PieChart },
+      { name: "Paket Wisata", url: "/admin/paket-wisata", icon: Map },
+      { name: "Pemesanan", url: "/admin/order", icon: ShoppingCart },
+      { name: "Data User", url: "/admin/user", icon: Users },
     ],
     NavContent: [
-      { name: "Artikel", url: "/admin-all-article", icon: FileText },
-      { name: "Testimoni", url: "/admin-all-review", icon: MessageSquare },
+      { name: "Artikel", url: "/admin/artikel", icon: FileText },
+      { name: "Testimoni", url: "/admin/testimoni", icon: MessageSquare },
     ]
   }), []);
 

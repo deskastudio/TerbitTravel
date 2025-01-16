@@ -8,81 +8,98 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Add new hotel
+// hotelController.js
 export const addHotel = async (req, res) => {
-  const { nama, alamat, bintang, harga, fasilitas } = req.body;
-  const gambarPaths = req.files.map((file) => `uploads/hotel/${file.filename}`);
-
   try {
-    const newHotel = new Hotel({
+    const { nama, alamat, bintang, harga, fasilitas } = req.body;
+    const gambarPaths = req.files.map(file => file.path);
+
+    // Pastikan fasilitas adalah array
+    const fasilitasArray = Array.isArray(fasilitas) ? fasilitas : [fasilitas];
+
+    const hotel = new Hotel({
       nama,
       alamat,
-      gambar: gambarPaths,
       bintang,
       harga,
-      fasilitas: fasilitas.split(","),
+      fasilitas: fasilitasArray,
+      gambar: gambarPaths,
     });
-    await newHotel.save();
-    res
-      .status(201)
-      .json({ message: "Hotel added successfully", data: newHotel });
+
+    await hotel.save();
+    res.status(201).json({ message: 'Hotel added successfully', data: hotel });
   } catch (error) {
-    console.error("Error adding hotel:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to add hotel", error: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Failed to add hotel', error: error.message });
   }
 };
 
 // Update existing hotel
 export const updateHotel = async (req, res) => {
-  const { id } = req.params;
-  const { nama, alamat, bintang, harga, fasilitas } = req.body;
-  const gambarPaths =
-    req.files?.map((file) => `uploads/hotel/${file.filename}`) || [];
-
   try {
-    const hotel = await Hotel.findById(id);
-    if (!hotel) {
-      return res.status(404).json({ message: "Hotel not found" });
+    const { id } = req.params;
+    const { nama, alamat, bintang, harga, fasilitas, existingImage } = req.body;
+    
+    // Get current hotel data
+    const currentHotel = await Hotel.findById(id);
+    if (!currentHotel) {
+      return res.status(404).json({
+        success: false,
+        message: "Hotel tidak ditemukan"
+      });
     }
 
-    // Delete old images if new ones are uploaded
-    if (gambarPaths.length > 0) {
-      for (const oldPath of hotel.gambar) {
-        const oldImagePath = path.join(__dirname, "../../", oldPath);
+    // Prepare update data
+    const updateData = {
+      nama,
+      alamat,
+      bintang: Number(bintang),
+      harga: Number(harga),
+      fasilitas: Array.isArray(fasilitas) ? fasilitas : [fasilitas],
+    };
+
+    // Handle image update
+    if (req.files && req.files.length > 0) {
+      // If there's a new image uploaded
+      updateData.gambar = [req.files[0].path]; // Only take the first image
+      
+      // Delete old image if it exists
+      if (currentHotel.gambar && currentHotel.gambar.length > 0) {
         try {
+          const oldImagePath = path.join(__dirname, "../../", currentHotel.gambar[0]);
           if (fs.existsSync(oldImagePath)) {
             await fs.promises.unlink(oldImagePath);
-            console.log(`Old file deleted successfully: ${oldImagePath}`);
           }
         } catch (err) {
-          console.error(`Failed to delete old file ${oldImagePath}:`, err);
+          console.error("Error deleting old image:", err);
         }
       }
+    } else if (existingImage) {
+      // Keep existing image
+      updateData.gambar = [existingImage];
+    } else {
+      // Keep current image if no new image is uploaded
+      updateData.gambar = currentHotel.gambar;
     }
 
-    // Update hotel data with new images if any
+    // Update hotel in database
     const updatedHotel = await Hotel.findByIdAndUpdate(
       id,
-      {
-        nama: nama || hotel.nama,
-        alamat: alamat || hotel.alamat,
-        gambar: gambarPaths.length > 0 ? gambarPaths : hotel.gambar,
-        bintang: bintang || hotel.bintang,
-        harga: harga || hotel.harga,
-        fasilitas: fasilitas ? fasilitas.split(",") : hotel.fasilitas,
-      },
-      { new: true }
+      updateData,
+      { new: true, runValidators: true }
     );
 
-    res
-      .status(200)
-      .json({ message: "Hotel updated successfully", data: updatedHotel });
+    res.json({
+      success: true,
+      message: "Hotel berhasil diupdate",
+      data: updatedHotel
+    });
   } catch (error) {
-    console.error("Error updating hotel:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to update hotel", error: error.message });
+    console.error('Update hotel error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

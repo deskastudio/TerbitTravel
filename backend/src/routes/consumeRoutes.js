@@ -62,7 +62,7 @@ const upload = multer();
  */
 router.post(
   "/add",
-  authMiddleware,
+  // authMiddleware,
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -115,7 +115,7 @@ router.post(
  */
 router.put(
   "/update/:id",
-  authMiddleware,
+  // authMiddleware,
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -145,7 +145,7 @@ router.put(
  *       500:
  *         description: Failed to delete consume
  */
-router.delete("/delete/:id", authMiddleware, deleteConsume);
+router.delete("/delete/:id",  deleteConsume);
 
 /**
  * @swagger
@@ -194,7 +194,7 @@ router.delete("/delete/:id", authMiddleware, deleteConsume);
  *       500:
  *         description: Failed to fetch consumes
  */
-router.get("/get", authMiddleware, getAllConsumes);
+router.get("/get", getAllConsumes);
 
 /**
  * @swagger
@@ -219,6 +219,6 @@ router.get("/get", authMiddleware, getAllConsumes);
  *       500:
  *         description: Kesalahan server
  */
-router.get("/:id", authMiddleware, getConsumeById);
+router.get("/:id", getConsumeById);
 
 export default router;

@@ -1,11 +1,10 @@
-"use client"
-
-import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import * as z from "zod"
-import { Loader2, Plus, X, ArrowLeft, PlusCircle } from 'lucide-react'
-import { Link } from "react-router-dom"
+import { Loader2, Plus, X, ArrowLeft } from 'lucide-react'
+import { Link, useNavigate } from "react-router-dom"
+import { useConsumption } from "@/hooks/use-consumption"
+import { IConsumptionInput } from "@/types/consumption.types"
+import { useToast } from "@/hooks/use-toast"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,22 +17,24 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddConsumptionCategoryModal } from "./add-cosumption-category-modal"
+import { Separator } from "@/components/ui/separator"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 const consumptionSchema = z.object({
-  name: z.string().min(2, {
+  nama: z.string().min(2, {
     message: "Nama harus memiliki minimal 2 karakter.",
   }),
-  price: z
-    .preprocess((val) => Number(val), z.number().positive({
+  harga: z
+    .number({
+      required_error: "Harga harus diisi",
+      invalid_type_error: "Harga harus berupa angka",
+    })
+    .positive({
       message: "Harga harus berupa angka positif.",
-    })),
-  category: z.string().min(1, "Pilih kategori untuk konsumsi ini."),
-  menu: z
+    }),
+  lauk: z
     .array(
       z.object({
         item: z.string().min(2, {
@@ -46,50 +47,57 @@ const consumptionSchema = z.object({
 
 type ConsumptionFormValues = z.infer<typeof consumptionSchema>
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-export default function ConsumptionInputPage() {
+const AddConsumption = () => {
+  const navigate = useNavigate()
   const { toast } = useToast()
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
+  const { createConsumption, isCreating } = useConsumption()
 
   const form = useForm<ConsumptionFormValues>({
     resolver: zodResolver(consumptionSchema),
     defaultValues: {
-      name: "",
-      price: 0,
-      category: "",
-      menu: [{ item: "" }],
+      nama: "",
+      harga: 0,
+      lauk: [{ item: "" }],
     },
   })
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "menu",
+    name: "lauk",
   })
 
-  function onSubmit(data: ConsumptionFormValues) {
-    toast({
-      title: "Konsumsi berhasil ditambahkan!",
-      description: "Detail konsumsi telah berhasil disimpan.",
-    })
-    console.log(data)
-    // Kirim data ke backend di sini
-  }
+  const onSubmit = async (data: ConsumptionFormValues) => {
+    try {
+      const consumptionData: IConsumptionInput = {
+        nama: data.nama,
+        harga: data.harga,
+        lauk: data.lauk.map(item => item.item),
+      }
 
-  const handleAddCategory = (newCategory: Category) => {
-    setCategories([...categories, newCategory])
+      await createConsumption(consumptionData)
+      
+      toast({
+        title: "Sukses",
+        description: "Konsumsi berhasil ditambahkan"
+      })
+
+      navigate('/admin/consumption')
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Gagal menambahkan konsumsi"
+      })
+      console.error('Error creating consumption:', error)
+    }
   }
 
   return (
-    <div className="">
+    <div className="space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Link to="/admin-all-consumption">Konsumsi</Link>
+            <Link to="/admin/consumption">Konsumsi</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -97,20 +105,17 @@ export default function ConsumptionInputPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="flex items-center justify-between mt-2">
+
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Konsumsi Baru</h1>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Kategori
+        <Link to="/admin/consumption">
+          <Button variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
           </Button>
-          <Link to="/admin-all-consumption">
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
-            </Button>
-          </Link>
-        </div>
+        </Link>
       </div>
-      <Card className="mt-2">
+
+      <Card>
         <CardHeader>
           <CardTitle>Detail Konsumsi</CardTitle>
           <CardDescription>Masukkan detail konsumsi baru Anda.</CardDescription>
@@ -118,114 +123,101 @@ export default function ConsumptionInputPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nama Konsumsi</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan nama konsumsi" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      Nama ini akan ditampilkan untuk konsumsi Anda.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Harga</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Masukkan harga konsumsi"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Masukkan harga total konsumsi (contoh: Rp 500.000).
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kategori</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <div className="grid gap-6">
+                <FormField
+                  control={form.control}
+                  name="nama"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nama Konsumsi</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih kategori" />
-                        </SelectTrigger>
+                        <Input placeholder="Masukkan nama konsumsi" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>
-                      Pilih kategori untuk konsumsi ini.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div>
-                <FormLabel>Menu</FormLabel>
-                <div className="space-y-4">
-                  {fields.map((field, index) => (
-                    <div key={field.id} className="flex items-center gap-4">
-                      <Input
-                        placeholder="Masukkan nama menu"
-                        {...form.register(`menu.${index}.item` as const)}
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => remove(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                      <FormDescription>
+                        Nama ini akan ditampilkan untuk konsumsi Anda.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Separator />
+
+                <FormField
+                  control={form.control}
+                  name="harga"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Harga</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Masukkan harga konsumsi"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Masukkan harga total konsumsi (contoh: Rp 500.000).
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Separator />
+
+                <div>
+                  <FormLabel>Menu</FormLabel>
+                  <div className="space-y-4 mt-4">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-4">
+                        <Input
+                          placeholder="Masukkan nama menu"
+                          {...form.register(`lauk.${index}.item` as const)}
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => remove(index)}
+                          disabled={index === 0 && fields.length === 1}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => append({ item: "" })}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tambah Menu
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => append({ item: "" })}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tambahkan Menu
-                </Button>
               </div>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+
+              <Separator />
+
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Menambahkan...
+                  </>
+                ) : (
+                  'Tambah Konsumsi'
                 )}
-                Tambahkan Konsumsi
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
-      <AddConsumptionCategoryModal
-        isOpen={isAddCategoryModalOpen}
-        onClose={() => setIsAddCategoryModalOpen(false)}
-        onAddCategory={handleAddCategory}
-      />
     </div>
   )
 }
+
+export default AddConsumption;

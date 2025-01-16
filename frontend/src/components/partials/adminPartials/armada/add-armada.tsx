@@ -1,11 +1,10 @@
-"use client"
-
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { Loader2, Plus, X, ArrowLeft, PlusCircle } from 'lucide-react'
-import { Link } from "react-router-dom"
+import { Loader2, Plus, X, ArrowLeft } from 'lucide-react'
+import { Link, useNavigate } from "react-router-dom"
+import { useArmada } from "@/hooks/use-armada"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,96 +17,98 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddArmadaCategoryModal } from "./add-armada-category-modal"
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
 
 const armadaSchema = z.object({
-  name: z.string().min(2, {
+  nama: z.string().min(2, {
     message: "Nama armada harus memiliki minimal 2 karakter.",
   }),
-  capacity: z
+  kapasitas: z
     .preprocess((val) => Number(val), z.number().int().min(1, {
       message: "Kapasitas penumpang harus minimal 1.",
     })),
-  price: z
+  harga: z
     .preprocess((val) => Number(val), z.number().positive({
       message: "Harga harus berupa angka positif.",
     })),
-  brand: z.string().min(2, {
+  merek: z.string().min(2, {
     message: "Merek harus memiliki minimal 2 karakter.",
   }),
-  category: z.string().min(1, "Pilih kategori untuk armada ini."),
-  images: z
-    .array(
-      z.object({
-        file: z
-          .any()
-          .refine((file) => file instanceof File && file.size <= MAX_FILE_SIZE, `Ukuran maksimum gambar adalah 2MB.`)
-          .refine(
-            (file) => file instanceof File && ACCEPTED_IMAGE_TYPES.includes(file.type),
-            "Hanya format .jpg, .jpeg, .png, dan .webp yang didukung."
-          ),
-      })
-    )
-    .min(1, "Minimal satu gambar diperlukan.")
-    .max(5, "Maksimal 5 gambar dapat diunggah."),
+  image: z
+    .object({
+      file: z
+        .any()
+        .refine((file) => file instanceof File && file.size <= MAX_FILE_SIZE, `Ukuran maksimum gambar adalah 2MB.`)
+        .refine(
+          (file) => file instanceof File && ACCEPTED_IMAGE_TYPES.includes(file.type),
+          "Hanya format .jpg, .jpeg, .png, dan .webp yang didukung."
+        ),
+    })
+    .optional()
+    .refine((data) => data !== undefined, "Gambar armada wajib diunggah.")
 })
 
 type ArmadaFormValues = z.infer<typeof armadaSchema>
 
-interface Category {
-  id: string;
-  name: string;
-}
-
 export default function ArmadaInputPage() {
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
-  const { toast } = useToast()
+  const navigate = useNavigate();
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const { createArmada, isCreating } = useArmada();
 
   const form = useForm<ArmadaFormValues>({
     resolver: zodResolver(armadaSchema),
     defaultValues: {
-      name: "",
-      capacity: 1,
-      price: 0,
-      brand: "",
-      category: "",
-      images: [],
+      nama: "",
+      kapasitas: 1,
+      harga: 0,
+      merek: "",
     },
   })
 
-  function onSubmit(data: ArmadaFormValues) {
-    toast({
-      title: "Armada berhasil ditambahkan!",
-      description: "Detail armada telah berhasil disimpan.",
-    })
-    console.log(data)
-    // Kirim data ke backend di sini
+  const onSubmit = async (data: ArmadaFormValues) => {
+    try {
+      if (!imageFile) {
+        return;
+      }
+      
+      // Prepare armada data
+      const armadaData = {
+        nama: data.nama,
+        kapasitas: data.kapasitas,
+        harga: data.harga,
+        merek: data.merek
+      };
+
+      await createArmada(armadaData, [imageFile]);
+      navigate('/admin/armada');
+    } catch (error) {
+      console.error('Error creating armada:', error);
+    }
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    const newImages = files.map((file) => ({ file }))
-    form.setValue("images", [...form.getValues("images"), ...newImages])
-    setImageFiles((prev) => [...prev, ...files])
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size <= MAX_FILE_SIZE && ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setImageFile(file)
+        form.setValue("image", { file })
+      } else {
+        form.setError("image", {
+          message: file.size > MAX_FILE_SIZE 
+            ? "Ukuran gambar terlalu besar (maksimum 2MB)" 
+            : "Format file tidak didukung"
+        })
+      }
+    }
   }
 
-  const removeImage = (index: number) => {
-    const newImages = form.getValues("images").filter((_, i) => i !== index)
-    form.setValue("images", newImages)
-    setImageFiles((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const handleAddCategory = (newCategory: Category) => {
-    setCategories([...categories, newCategory])
+  const removeImage = () => {
+    setImageFile(null)
+    form.setValue("image", { file: undefined })
   }
 
   return (
@@ -115,7 +116,7 @@ export default function ArmadaInputPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Link to="/admin-all-armada">Armada</Link>
+            <Link to="/admin/armada">Armada</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -125,16 +126,11 @@ export default function ArmadaInputPage() {
       </Breadcrumb>
       <div className="flex items-center justify-between mt-2">
         <h1 className="text-3xl font-bold tracking-tight">Armada Baru</h1>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Kategori
+        <Link to="/admin/armada">
+          <Button variant="outline">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
           </Button>
-          <Link to="/admin-all-armada">
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
-            </Button>
-          </Link>
-        </div>
+        </Link>
       </div>
       <Card className="mt-2">
         <CardHeader>
@@ -147,7 +143,7 @@ export default function ArmadaInputPage() {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="name"
+                  name="nama"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nama Armada</FormLabel>
@@ -163,7 +159,7 @@ export default function ArmadaInputPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="capacity"
+                  name="kapasitas"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Kapasitas Penumpang</FormLabel>
@@ -172,6 +168,7 @@ export default function ArmadaInputPage() {
                           type="number"
                           placeholder="Masukkan kapasitas penumpang"
                           {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormDescription>
@@ -182,18 +179,24 @@ export default function ArmadaInputPage() {
                   )}
                 />
               </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="price"
+                  name="harga"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Harga</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Masukkan harga armada" {...field} />
+                        <Input
+                          type="number"
+                          placeholder="Masukkan harga armada"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
                       </FormControl>
                       <FormDescription>
-                        Masukkan harga sewa armada (contoh: Rp 500,000).
+                        Masukkan harga sewa armada (contoh: Rp 500.000).
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -201,7 +204,7 @@ export default function ArmadaInputPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="brand"
+                  name="merek"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Merek</FormLabel>
@@ -215,48 +218,22 @@ export default function ArmadaInputPage() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kategori</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih kategori" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Pilih kategori untuk armada ini.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
+
               <FormField
                 control={form.control}
-                name="images"
+                name="image"
                 render={() => (
                   <FormItem>
                     <FormLabel>Gambar Armada</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                          {imageFiles.map((file, index) => (
-                            <div key={index} className="relative">
+                        <div className="flex items-center space-x-4">
+                          {imageFile ? (
+                            <div className="relative">
                               <img
-                                src={URL.createObjectURL(file)}
-                                alt={`Uploaded image ${index + 1}`}
+                                src={URL.createObjectURL(imageFile)}
+                                alt="Preview"
                                 className="h-24 w-24 rounded-md object-cover"
                               />
                               <Button
@@ -264,13 +241,12 @@ export default function ArmadaInputPage() {
                                 variant="destructive"
                                 size="icon"
                                 className="absolute -right-2 -top-2"
-                                onClick={() => removeImage(index)}
+                                onClick={removeImage}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
-                          ))}
-                          {imageFiles.length < 5 && (
+                          ) : (
                             <Button
                               type="button"
                               variant="outline"
@@ -287,40 +263,40 @@ export default function ArmadaInputPage() {
                           accept={ACCEPTED_IMAGE_TYPES.join(",")}
                           onChange={handleImageUpload}
                           className="hidden"
-                          multiple
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById("image-upload")?.click()}
-                        >
-                          Unggah Gambar
-                        </Button>
+                        {!imageFile && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => document.getElementById("image-upload")?.click()}
+                          >
+                            Unggah Gambar
+                          </Button>
+                        )}
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Unggah hingga 5 gambar. Ukuran masing-masing gambar tidak boleh lebih dari 2MB.
+                      Unggah gambar armada. Ukuran maksimum 2MB.
+                      Format yang didukung: JPG, PNG, WebP.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Button type="submit" disabled={isCreating}>
+                {isCreating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Menambahkan...
+                  </>
+                ) : (
+                  'Tambahkan Armada'
                 )}
-                Tambahkan Armada
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
-      <AddArmadaCategoryModal
-        isOpen={isAddCategoryModalOpen}
-        onClose={() => setIsAddCategoryModalOpen(false)}
-        onAddCategory={handleAddCategory}
-      />
     </div>
-  )
+  );
 }
-

@@ -45,8 +45,6 @@ const router = express.Router();
 // Tambah hotel baru
 router.post(
   "/add",
-  authMiddleware,
-  checkRole("admin"),
   upload.array("gambar", 5),
   validateHotelData,
   addHotel
@@ -101,10 +99,7 @@ router.post(
 // Update hotel
 router.put(
   "/update/:id",
-  authMiddleware,
-  checkRole("admin"),
   upload.array("gambar", 5),
-  validateHotelData,
   updateHotel
 );
 /**
@@ -162,7 +157,7 @@ router.put(
  */
 
 // Hapus hotel
-router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteHotel);
+router.delete("/delete/:id", deleteHotel);
 /**
  * @swagger
  * /hotel/delete/{id}:
@@ -191,7 +186,7 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteHotel);
  */
 
 // Ambil semua hotel
-router.get("/getAll", authMiddleware, getAllHotels);
+router.get("/getAll", getAllHotels);
 /**
  * @swagger
  * /hotel/getAll:
@@ -268,5 +263,5 @@ router.get("/getAll", authMiddleware, getAllHotels);
  *       500:
  *         description: Failed to fetch hotel
  */
-router.get("/get/:id", authMiddleware, getHotelById); // Rute baru untuk mendapatkan hotel berdasarkan ID
+router.get("/get/:id", getHotelById); // Rute baru untuk mendapatkan hotel berdasarkan ID
 export default router;

@@ -1,190 +1,148 @@
-import { useState } from 'react';
+//pages/destination/[id].tsx
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, MapPin, Tag } from 'lucide-react';
+import { useDestination } from '@/hooks/use-destination';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
-import { ClockIcon, MapPinIcon, Settings2, UsersIcon } from 'lucide-react';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselNext, 
+  CarouselPrevious 
+} from '@/components/ui/carousel';
+import { getImageUrl } from '@/utils/image-helper';
 
 const DetailDestinationPage = () => {
-  const [activeTab, setActiveTab] = useState('itinerary'); // Menyimpan tab yang aktif
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { useDestinationDetail } = useDestination();
+  const { destination, isLoading } = useDestinationDetail(id || '');
 
-  const tourPackage = {
-    title: "Tokyo Adventure",
-    destination: "Tokyo, Japan",
-    duration: "10 days",
-    availability: "Limited",
-    price: "$2499",
-    itinerary: [
-      "Day 1: Arrival in Tokyo and orientation",
-      "Day 2: Visit to Asakusa and Tokyo Skytree",
-      "Day 3: Day trip to Mt. Fuji",
-      "Day 4: Explore Akihabara and Shibuya",
-      "Day 5: Traditional tea ceremony experience",
-      "Day 6: Tour of Kyoto temples",
-      "Day 7: Nara deer park visit",
-      "Day 8: Osaka castle tour",
-      "Day 9: Shopping in Ginza",
-    ],
-    included: [
-      "Hotel accommodations for 9 nights",
-      "Daily breakfast and dinner",
-      "Transportation during the tour",
-      "English-speaking tour guide",
-    ],
-    notIncluded: [
-      "International airfare",
-      "Lunches and personal expenses",
-      "Travel insurance",
-      "Optional activities",
-    ],
-  };
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
 
-  const images = [
-    '/placeholder.svg?height=400&width=600',
-    '/placeholder.svg?height=400&width=600',
-    '/placeholder.svg?height=400&width=600',
-    '/placeholder.svg?height=400&width=600',
-  ];
-
-  const thumbnails = images.map((image) => image.replace('400', '100').replace('600', '100'));
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'itinerary':
-        return (
-          <ul className="list-disc pl-6 text-gray-700 space-y-2">
-            {tourPackage.itinerary.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        );
-      case 'included':
-        return (
-          <ul className="list-disc pl-6 text-gray-700 space-y-2">
-            {tourPackage.included.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        );
-      case 'notIncluded':
-        return (
-          <ul className="list-disc pl-6 text-gray-700 space-y-2">
-            {tourPackage.notIncluded.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        );
-      default:
-        return null;
-    }
-  };
+  if (!destination) {
+    return <div className="flex items-center justify-center h-screen">Destinasi tidak ditemukan</div>;
+  }
 
   return (
-    <div className="container mx-auto p-4 md:p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left Column - Image Gallery */}
-        <div className="space-y-4">
-          <div className="relative w-full aspect-square border rounded-lg shadow-lg overflow-hidden">
-            <Carousel className="w-full relative">
-              <CarouselContent>
-                {images.map((image, index) => (
-                  <CarouselItem key={index}>
-                    <img
-                      src={image}
-                      alt={`Product image ${index + 1}`}
-                      className="w-full h-full object-cover border border-gray-300 rounded-lg"
-                    />
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="absolute top-40 left-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md cursor-pointer" />
-              <CarouselNext className="absolute top-40 right-4 transform -translate-y-1/2 bg-white p-2 rounded-full shadow-md cursor-pointer" />
-            </Carousel>
-          </div>
-          <div className="flex gap-2 overflow-x-auto py-2">
-            {thumbnails.map((thumb, index) => (
-              <img
-                key={index}
-                src={thumb}
-                alt={`Thumbnail ${index + 1}`}
-                className="rounded-md border-2 border-gray-300 cursor-pointer hover:border-primary transition-all"
-                width={80}
-                height={80}
-              />
-            ))}
-          </div>
-        </div>
+    <div className="container mx-auto py-8">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <Button 
+              variant="link" 
+              onClick={() => navigate("/admin/destination")}
+              className="p-0"
+            >
+              Destinasi
+            </Button>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Detail Destinasi</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-        {/* Right Column - Tour Details */}
-        <div className="space-y-6">
-          <div className="p-4 border rounded-lg shadow-sm bg-white">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{tourPackage.title}</h1>
-            <p className="text-base md:text-lg text-gray-600">{tourPackage.destination}</p>
-            <div className="flex items-center flex-wrap gap-2 mt-4">
-              <Badge className="text-sm flex items-center gap-1">
-                <ClockIcon size={16} />
-                {tourPackage.duration}
-              </Badge>
-              <Badge variant="outline" className="text-sm flex items-center gap-1">
-                <MapPinIcon size={16} />
-                {tourPackage.destination}
-              </Badge>
-              <Badge variant="outline" className="text-sm flex items-center gap-1">
-                <UsersIcon size={16} />
-                Group tour
-              </Badge>
-              <Badge
-                variant={
-                  tourPackage.availability === "Available"
-                    ? "default"
-                    : tourPackage.availability === "Limited"
-                    ? "secondary"
-                    : "destructive"
-                }
-              >
-                {tourPackage.availability}
-              </Badge>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        {/* Image Gallery */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {destination.foto.map((image, index) => (
+                    <CarouselItem key={index}>
+                      <div className="flex aspect-square items-center justify-center p-2">
+                        <img
+                          src={getImageUrl(image)}
+                          alt={`${destination.nama} image ${index + 1}`}
+                          className="w-full h-full object-cover rounded-lg hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://placehold.co/400x400?text=No+Image';
+                          }}
+                          loading="lazy"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {destination.foto.length > 1 && (
+                  <>
+                    <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2" />
+                    <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2" />
+                  </>
+                )}
+              </Carousel>
             </div>
-            <p className="mt-4 text-gray-700">
-              Immerse yourself in Japanese culture with this {tourPackage.duration} Tokyo adventure. Explore the vibrant city, visit historical sites, and savor authentic Japanese cuisine.
-            </p>
-            <div className="mt-6 flex items-center justify-between">
-              <p className="text-xl md:text-2xl font-bold text-gray-900">Price: {tourPackage.price}</p>
-            </div>
-          </div>
-
-          {/* Tabs Section */}
-          <div className="p-4 border rounded-lg shadow-sm bg-white">
-            <div className="flex items-center gap-4 border-b pb-2">
-              {['itinerary', 'included', 'notIncluded'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`text-sm md:text-lg font-semibold pb-2 ${
-                    activeTab === tab
-                      ? "text-primary border-b-2 border-primary"
-                      : "text-gray-600 hover:text-primary"
-                  }`}
+            <div className="flex gap-2 overflow-x-auto py-2 mt-4">
+              {destination.foto.map((image, index) => (
+                <div 
+                  key={index} 
+                  className="flex-shrink-0 relative group cursor-pointer"
                 >
-                  {tab === "itinerary"
-                    ? "Itinerary"
-                    : tab === "included"
-                    ? "What's Included"
-                    : "Not Included"}
-                </button>
+                  <img
+                    src={getImageUrl(image)}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="w-20 h-20 object-cover rounded-md transition-opacity group-hover:opacity-90"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://placehold.co/200x200?text=No+Image';
+                    }}
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity rounded-md" />
+                </div>
               ))}
             </div>
-            <div className="mt-4">{renderTabContent()}</div>
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed bottom-4 right-4 rounded-full bg-gray-700 text-white"
-      >
-        <Settings2 className="h-6 w-6" />
-      </Button>
+        {/* Destination Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">{destination.nama}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                {destination.lokasi}
+              </Badge>
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Tag className="w-4 h-4" />
+                {destination.category.title}
+              </Badge>
+            </div>
+
+            <div className="prose max-w-none">
+              <h3 className="text-lg font-semibold mb-2">Deskripsi</h3>
+              <p className="text-gray-600 whitespace-pre-line">{destination.deskripsi}</p>
+            </div>
+
+            <div className="pt-4 flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/admin/destination/${destination._id}/edit`)}
+              >
+                Edit Destinasi
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(-1)}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Kembali
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
