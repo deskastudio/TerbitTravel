@@ -54,7 +54,5 @@ export const validateArmadaData = [
     }
     next();
   },
-
-  // Memanggil middleware parseKapasitas untuk memastikan kapasitas menjadi angka
   parseKapasitas,
 ];

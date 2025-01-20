@@ -46,6 +46,7 @@ export const updateArmada = async (req, res) => {
   const { nama, kapasitas, harga, merek } = req.body;
   const gambarPaths = req.files?.map((file) => `uploads/armada/${file.filename}`) || [];
 
+
   try {
     const armada = await Armada.findById(id);
     if (!armada) {
