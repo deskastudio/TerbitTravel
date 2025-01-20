@@ -19,6 +19,7 @@ import galleryCategoryRoutes from "./src/routes/galleryCategoryRoute.js";
 import packageCategoryRoutes from "./src/routes/packageCategoryRoute.js";
 import destinationCategoryRoutes from "./src/routes/destinationCategoryRoute.js";
 import teamRoutes from "./src/routes/teamRoutes.js";
+import orderRoutes from "./src/routes/orderRoutes.js";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -49,6 +50,7 @@ app.use("/gallery-category", galleryCategoryRoutes);
 app.use("/package-category", packageCategoryRoutes);
 app.use("/destination-category", destinationCategoryRoutes);
 app.use("/team", teamRoutes);
+app.use("/orders", orderRoutes);
 
 //swager
 setupSwagger(app);
