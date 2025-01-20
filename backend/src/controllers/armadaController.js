@@ -3,13 +3,18 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
-// Perbaikan cara mendapatkan __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Tambah data armada baru
+// Tambah Armada
 export const addArmada = async (req, res) => {
   const { nama, kapasitas, harga, merek } = req.body;
+
+  // Pastikan kapasitas menjadi array string jika berupa string yang dipisahkan koma
+  const kapasitasArray = Array.isArray(kapasitas)
+    ? kapasitas
+    : kapasitas.split(",").map((item) => item.trim());
+
   const gambarPaths = req.files.map(
     (file) => `uploads/armada/${file.filename}`
   );
@@ -17,29 +22,39 @@ export const addArmada = async (req, res) => {
   try {
     const newArmada = new Armada({
       nama,
-      kapasitas,
+      kapasitas: kapasitasArray, // Simpan kapasitas dalam bentuk array string
       gambar: gambarPaths,
       harga,
       merek,
     });
+
     await newArmada.save();
     res
       .status(201)
       .json({ message: "Armada berhasil ditambahkan", data: newArmada });
   } catch (error) {
     console.error("Error adding armada:", error);
-    res.status(500).json({
-      message: "Gagal menambahkan armada",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Gagal menambahkan armada", error: error.message });
   }
 };
 
-// Update data armada yang ada
+// Update Armada
 export const updateArmada = async (req, res) => {
   const { id } = req.params;
   const { nama, kapasitas, harga, merek } = req.body;
   const gambarPaths = req.files?.map((file) => `uploads/armada/${file.filename}`) || [];
+
+  // Pastikan kapasitas menjadi array string jika berupa string yang dipisahkan koma
+  const kapasitasArray = kapasitas
+    ? Array.isArray(kapasitas)
+      ? kapasitas
+      : kapasitas.split(",").map((item) => item.trim())
+    : [];
+
+  const gambarPaths =
+    req.files?.map((file) => `uploads/armada/${file.filename}`) || [];
 
   try {
     const armada = await Armada.findById(id);
@@ -48,8 +63,6 @@ export const updateArmada = async (req, res) => {
     }
 
     let updatedGambar = armada.gambar;
-
-    // Jika ada gambar baru yang diupload
     if (gambarPaths.length > 0) {
       // Hapus gambar lama jika ada gambar baru
       for (const oldPath of armada.gambar) {
@@ -65,12 +78,15 @@ export const updateArmada = async (req, res) => {
       updatedGambar = gambarPaths;
     }
 
-    // Update data armada
+    
     const updatedArmada = await Armada.findByIdAndUpdate(
       id,
       {
         nama: nama || armada.nama,
         kapasitas: kapasitas || armada.kapasitas,
+        kapasitas:
+          kapasitasArray.length > 0 ? kapasitasArray : armada.kapasitas,
+        gambar: gambarPaths.length > 0 ? gambarPaths : armada.gambar,
         harga: harga || armada.harga,
         merek: merek || armada.merek,
         gambar: updatedGambar
@@ -78,20 +94,18 @@ export const updateArmada = async (req, res) => {
       { new: true }
     );
 
-    res.status(200).json({
-      message: "Armada berhasil diupdate",
-      data: updatedArmada,
-    });
+    res
+      .status(200)
+      .json({ message: "Armada berhasil diupdate", data: updatedArmada });
   } catch (error) {
     console.error("Error updating armada:", error);
-    res.status(500).json({
-      message: "Gagal mengupdate armada",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Gagal mengupdate armada", error: error.message });
   }
 };
 
-// Hapus armada berdasarkan ID
+// Hapus Armada
 export const deleteArmada = async (req, res) => {
   const { id } = req.params;
 
@@ -101,17 +115,10 @@ export const deleteArmada = async (req, res) => {
       return res.status(404).json({ message: "Armada tidak ditemukan" });
     }
 
-    // Hapus semua file gambar yang terkait dengan armada ini
+    // Hapus file gambar jika ada
     for (const gambarPath of armada.gambar) {
       const filePath = path.join(__dirname, "../../", gambarPath);
-
       try {
-        const uploadsDir = path.join(__dirname, "../../uploads");
-        if (!filePath.startsWith(uploadsDir)) {
-          console.warn(`Invalid path detected: ${filePath}`);
-          continue;
-        }
-
         if (fs.existsSync(filePath)) {
           await fs.promises.unlink(filePath);
         }
@@ -124,28 +131,26 @@ export const deleteArmada = async (req, res) => {
     res.status(200).json({ message: "Armada berhasil dihapus" });
   } catch (error) {
     console.error("Error deleting armada:", error);
-    res.status(500).json({
-      message: "Gagal menghapus armada",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Gagal menghapus armada", error: error.message });
   }
 };
 
-// Tampilkan semua data armada
+// Ambil Semua Armada
 export const getAllArmada = async (req, res) => {
   try {
     const armadas = await Armada.find().sort({ createdAt: -1 });
     res.status(200).json(armadas);
   } catch (error) {
     console.error("Error fetching armadas:", error);
-    res.status(500).json({
-      message: "Gagal mengambil data armada",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Gagal mengambil data armada", error: error.message });
   }
 };
 
-// Ambil data armada berdasarkan ID
+// Ambil Armada Berdasarkan ID
 export const getArmadaById = async (req, res) => {
   const { id } = req.params;
 
@@ -158,9 +163,8 @@ export const getArmadaById = async (req, res) => {
     res.status(200).json(armada);
   } catch (error) {
     console.error("Error fetching armada by ID:", error);
-    res.status(500).json({
-      message: "Gagal mengambil data armada",
-      error: error.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Gagal mengambil data armada", error: error.message });
   }
 };
