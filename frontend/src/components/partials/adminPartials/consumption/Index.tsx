@@ -156,7 +156,7 @@ const ConsumptionTable = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
-          <Search className="h-4 w-4 text-gray-500" />
+          <Search className="h-4 w-4 text-gray-400" />
         </div>
 
         <Sheet>
