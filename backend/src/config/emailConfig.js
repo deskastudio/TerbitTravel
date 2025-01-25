@@ -1,0 +1,64 @@
+import nodemailer from "nodemailer";
+import { google } from "googleapis";
+
+const OAuth2 = google.auth.OAuth2;
+
+const createTransporter = async () => {
+  try {
+    const oauth2Client = new OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      "https://developers.google.com/oauthplayground"
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+    });
+
+    const accessToken = await oauth2Client.getAccessToken();
+
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.EMAIL_FROM,
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+        accessToken: accessToken.token,
+      },
+    });
+  } catch (error) {
+    console.error("Error creating transporter:", error);
+    throw error;
+  }
+};
+
+export const sendOTPEmail = async (email, otp) => {
+  try {
+    const transporter = await createTransporter();
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: email,
+      subject: "Verifikasi Email Travel App",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2c3e50; text-align: center;">Verifikasi Email Anda</h1>
+          <div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <h2 style="text-align: center; color: #3498db;">${otp}</h2>
+            <p style="text-align: center; color: #7f8c8d;">Kode OTP Anda akan kedaluwarsa dalam 24 jam</p>
+          </div>
+          <p style="color: #34495e;">Gunakan kode OTP di atas untuk memverifikasi email Anda.</p>
+          <p style="color: #7f8c8d; font-size: 12px;">Jika Anda tidak merasa mendaftar di aplikasi kami, abaikan email ini.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log("OTP email sent successfully");
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    throw error;
+  }
+};
