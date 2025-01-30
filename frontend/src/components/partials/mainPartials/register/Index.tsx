@@ -1,233 +1,246 @@
-import * as React from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Eye, EyeOff } from "lucide-react";
+// // src/app/auth/register/page.tsx
+// import * as React from "react";
+// import { zodResolver } from "@hookform/resolvers/zod";
+// import { useForm } from "react-hook-form";
+// import { GoogleLogin } from '@react-oauth/google';
+// import { useNavigate } from 'react-router-dom';
+// import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/hooks/use-toast";
+// import { Button } from "@/components/ui/button";
+// import {
+//  Form,
+//  FormControl,
+//  FormField,
+//  FormItem,
+//  FormLabel,
+//  FormMessage,
+// } from "@/components/ui/form";
+// import { Input } from "@/components/ui/input";
+// import { toast } from "@/hooks/use-toast";
+// import { registerSchema } from '@/schemas/auth.schema';
+// import { authService } from '@/services/auth.service';
 
-const formSchema = z
-  .object({
-    name: z
-      .string()
-      .min(2, { message: "Name must be at least 2 characters." }),
-    email: z.string().email({
-      message: "Please enter a valid email address.",
-    }),
-    password: z
-      .string()
-      .min(8, { message: "Password must be at least 8 characters long." }),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+// const RegisterPage = () => {
+//  const navigate = useNavigate();
+//  const [isLoading, setIsLoading] = React.useState(false);
+//  const [showPassword, setShowPassword] = React.useState(false);
+//  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
-const RegisterForm: React.FC = () => {
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+//  const form = useForm({
+//    resolver: zodResolver(registerSchema),
+//    defaultValues: {
+//      name: "",
+//      email: "",
+//      password: "",
+//      confirmPassword: "",
+//    },
+//  });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
-  });
+//  const onSubmit = async (values) => {
+//    try {
+//      setIsLoading(true);
+//      await authService.register(values);
+//      toast({
+//        title: "Success",
+//        description: "Account created successfully",
+//      });
+//      navigate('/login');
+//    } catch (error) {
+//      toast({
+//        title: "Error",
+//        description: error.message,
+//        variant: "destructive",
+//      });
+//    } finally {
+//      setIsLoading(false);
+//    }
+//  };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
-    toast({
-      title: "Registration Successful",
-      description: `Welcome, ${values.name}!`,
-    });
-  };
+//  const handleGoogleSuccess = async (response) => {
+//    try {
+//      setIsLoading(true);
+//      await authService.googleAuth(response.credential);
+//      toast({
+//        title: "Success",
+//        description: "Logged in with Google successfully",
+//      });
+//      navigate('/dashboard');
+//    } catch (error) {
+//      toast({
+//        title: "Error",
+//        description: error.message,
+//        variant: "destructive",
+//      });
+//    } finally {
+//      setIsLoading(false);
+//    }
+//  };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-3xl shadow-xl p-8">
-          <h1 className="text-4xl font-bold text-center mb-8 text-[#6B7280]">
-            Sign Up
-          </h1>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[#6B7280] font-medium">Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter your name" 
-                        {...field}
-                        className="
-                          bg-white
-                          border-gray-200
-                          focus:border-[#B17457]
-                          focus:ring-[#B17457]/10
-                          text-gray-800
-                          placeholder-gray-400
-                          rounded-xl"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[#6B7280] font-medium">Email</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter your email" 
-                        {...field}
-                        className="
-                          bg-white
-                          border-gray-200
-                          focus:border-[#B17457]
-                          focus:ring-[#B17457]/10
-                          text-gray-800
-                          placeholder-gray-400
-                          rounded-xl"
-                      />
-                    </FormControl>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[#6B7280] font-medium">Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your password"
-                          {...field}
-                          className="
-                            bg-white
-                            border-gray-200
-                            focus:border-[#B17457]
-                            focus:ring-[#B17457]/10
-                            text-gray-800
-                            placeholder-gray-400
-                            rounded-xl"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 
-                            hover:bg-transparent 
-                            text-gray-400
-                            hover:text-[#B17457]"
-                          onClick={() => setShowPassword((prev) => !prev)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[#6B7280] font-medium">Confirm Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm your password"
-                          {...field}
-                          className="
-                            bg-white
-                            border-gray-200
-                            focus:border-[#B17457]
-                            focus:ring-[#B17457]/10
-                            text-gray-800
-                            placeholder-gray-400
-                            rounded-xl"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3 py-2 
-                            hover:bg-transparent 
-                            text-gray-400
-                            hover:text-[#B17457]"
-                          onClick={() => setShowConfirmPassword((prev) => !prev)}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="submit"
-                className="
-                  w-full 
-                  bg-gradient-to-r from-[#B17457] to-blue-600
-                  hover:opacity-90
-                  text-white 
-                  transition-opacity 
-                  duration-200
-                  rounded-xl
-                  py-6"
-              >
-                Register
-              </Button>
-            </form>
-          </Form>
-          <p className="mt-6 text-center text-[#6B7280]">
-            Already have an account?{" "}
-            <a 
-              href="/login" 
-              className="text-blue-600 hover:text-blue-700"
-            >
-              Log in
-            </a>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+//  return (
+//    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+//      <div className="w-full max-w-md">
+//        <div className="bg-white rounded-3xl shadow-xl p-8">
+//          <h1 className="text-4xl font-bold text-center mb-8">Sign Up</h1>
+         
+//          <Form {...form}>
+//            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+//              <FormField
+//                control={form.control}
+//                name="name"
+//                render={({ field }) => (
+//                  <FormItem>
+//                    <FormLabel>Name</FormLabel>
+//                    <FormControl>
+//                      <Input 
+//                        placeholder="Enter your name"
+//                        {...field}
+//                        className="rounded-xl"
+//                      />
+//                    </FormControl>
+//                    <FormMessage />
+//                  </FormItem>
+//                )}
+//              />
 
-export default RegisterForm;
+//              <FormField
+//                control={form.control}
+//                name="email"
+//                render={({ field }) => (
+//                  <FormItem>
+//                    <FormLabel>Email</FormLabel>
+//                    <FormControl>
+//                      <Input 
+//                        placeholder="Enter your email"
+//                        type="email"
+//                        {...field}
+//                        className="rounded-xl"
+//                      />
+//                    </FormControl>
+//                    <FormMessage />
+//                  </FormItem>
+//                )}
+//              />
+
+//              <FormField
+//                control={form.control}
+//                name="password"
+//                render={({ field }) => (
+//                  <FormItem>
+//                    <FormLabel>Password</FormLabel>
+//                    <FormControl>
+//                      <div className="relative">
+//                        <Input
+//                          type={showPassword ? "text" : "password"}
+//                          placeholder="Enter your password"
+//                          {...field}
+//                          className="rounded-xl"
+//                        />
+//                        <Button
+//                          type="button"
+//                          variant="ghost"
+//                          size="sm"
+//                          className="absolute right-0 top-0 h-full"
+//                          onClick={() => setShowPassword(!showPassword)}
+//                        >
+//                          {showPassword ? (
+//                            <EyeOff className="h-4 w-4" />
+//                          ) : (
+//                            <Eye className="h-4 w-4" />
+//                          )}
+//                        </Button>
+//                      </div>
+//                    </FormControl>
+//                    <FormMessage />
+//                  </FormItem>
+//                )}
+//              />
+
+//              <FormField
+//                control={form.control}
+//                name="confirmPassword" 
+//                render={({ field }) => (
+//                  <FormItem>
+//                    <FormLabel>Confirm Password</FormLabel>
+//                    <FormControl>
+//                      <div className="relative">
+//                        <Input
+//                          type={showConfirmPassword ? "text" : "password"}
+//                          placeholder="Confirm your password"
+//                          {...field}
+//                          className="rounded-xl"
+//                        />
+//                        <Button
+//                          type="button"
+//                          variant="ghost"
+//                          size="sm"
+//                          className="absolute right-0 top-0 h-full"
+//                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+//                        >
+//                          {showConfirmPassword ? (
+//                            <EyeOff className="h-4 w-4" />
+//                          ) : (
+//                            <Eye className="h-4 w-4" />
+//                          )}
+//                        </Button>
+//                      </div>
+//                    </FormControl>
+//                    <FormMessage />
+//                  </FormItem>
+//                )}
+//              />
+
+//              <Button
+//                type="submit"
+//                className="w-full rounded-xl"
+//                disabled={isLoading}
+//              >
+//                {isLoading ? (
+//                  <>
+//                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                    Please wait
+//                  </>
+//                ) : (
+//                  "Sign Up"
+//                )}
+//              </Button>
+//            </form>
+//          </Form>
+
+//          <div className="relative my-4">
+//            <div className="absolute inset-0 flex items-center">
+//              <span className="w-full border-t" />
+//            </div>
+//            <div className="relative flex justify-center text-xs uppercase">
+//              <span className="bg-white px-2 text-muted-foreground">
+//                Or continue with
+//              </span>
+//            </div>
+//          </div>
+
+//          <GoogleLogin
+//            onSuccess={handleGoogleSuccess}
+//            onError={() => {
+//              toast({
+//                title: "Error",
+//                description: "Google sign up failed",
+//                variant: "destructive",
+//              });
+//            }}
+//          />
+
+//          <p className="mt-6 text-center text-sm text-muted-foreground">
+//            Already have an account?{" "}
+//            <Link
+//              to="/login"
+//              className="text-primary hover:underline"
+//            >
+//              Log in
+//            </Link>
+//          </p>
+//        </div>
+//      </div>
+//    </div>
+//  );
+// };
+
+// export default RegisterPage;

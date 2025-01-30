@@ -3,21 +3,16 @@ import Package from "../models/package.js"; // Model untuk paket wisata
 
 // Add new package category
 export const addPackageCategory = async (req, res) => {
-  const { title, description } = req.body;
-
   try {
-    const newCategory = new PackageCategory({ title, description });
+    const { title } = req.body;
+    const newCategory = new PackageCategory({ title });
     await newCategory.save();
     res.status(201).json({
-      message: "Package category added successfully",
-      data: newCategory,
+      message: "Category added successfully",
+      data: newCategory
     });
   } catch (error) {
-    console.error("Error adding package category:", error);
-    res.status(500).json({
-      message: "Failed to add package category",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to add category", error: error.message });
   }
 };
 
@@ -79,11 +74,7 @@ export const getAllPackageCategories = async (req, res) => {
     const categories = await PackageCategory.find().sort({ createdAt: -1 });
     res.status(200).json(categories);
   } catch (error) {
-    console.error("Error fetching package categories:", error);
-    res.status(500).json({
-      message: "Failed to fetch package categories",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to fetch categories", error: error.message });
   }
 };
 

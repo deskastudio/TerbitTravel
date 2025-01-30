@@ -96,7 +96,6 @@ const upload = multer(); // Middleware untuk menangani multipart form-data
  */
 router.post(
   "/",
-  authMiddleware,
   upload.none(),
   validatePackageData,
   addPackage
@@ -241,8 +240,6 @@ router.get("/:packageId", getPackageById);
  */
 router.put(
   "/:packageId",
-  authMiddleware,
-  checkRole("admin"),
   upload.none(),
   validatePackageData,
   updatePackage
@@ -271,6 +268,6 @@ router.put(
  *       404:
  *         description: Package not found
  */
-router.delete("/:packageId", authMiddleware, checkRole("admin"), deletePackage);
+router.delete("/:packageId", deletePackage);
 
 export default router;

@@ -1,119 +1,187 @@
-'use client'
+"use client"
 
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Minus, CalendarPlus } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { useForm, useFieldArray } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Plus, Minus, CalendarPlus, Loader2, ArrowLeft, PlusCircle } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { useTourPackage } from "@/hooks/use-tour-package"
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useState } from "react"
+import * as z from "zod"
+
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import type { ITourPackageInput } from "@/types/tour-package.types"
+import { tourPackageSchema } from "@/schemas/tour-package.schema"
 
-import { tourPackageSchema, type TourPackage } from "@/lib/schemas";
-import { destinations, hotels, fleets } from "@/lib/data";
+// Add this new schema for the category form
+const categorySchema = z.object({
+  title: z.string().min(2, "Nama kategori harus memiliki minimal 2 karakter."),
+})
 
-const TourPackageAddForm: React.FC = () => {
-    const form = useForm<TourPackage>({
-        resolver: zodResolver(tourPackageSchema),
-        defaultValues: {
-          includes: [""],
-          excludes: [""],
-          schedules: [{ startDate: "", endDate: "" }],
-          status: "available",
-          duration: "",
-          price: 0,
+type CategoryFormValues = z.infer<typeof categorySchema>
+
+const AddTourPackage = () => {
+  const navigate = useNavigate()
+  const {
+    destinations,
+    hotels,
+    armada,
+    consumptions,
+    createPackage,
+    isLoading,
+    isLoadingDestinations,
+    isLoadingHotels,
+    isLoadingArmada,
+    isLoadingConsumptions,
+    categories,
+    createCategory,
+  } = useTourPackage()
+
+  const isLoadingReferenceData = isLoadingDestinations || isLoadingHotels || isLoadingArmada || isLoadingConsumptions
+
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  const [isSubmittingCategory, setIsSubmittingCategory] = useState(false)
+
+  const form = useForm<ITourPackageInput>({
+    resolver: zodResolver(tourPackageSchema),
+    defaultValues: {
+      nama: "",
+      deskripsi: "",
+      include: [""],
+      exclude: [""],
+      jadwal: [
+        {
+          tanggalAwal: "",
+          tanggalAkhir: "",
+          status: "tersedia",
         },
-      });
+      ],
+      status: "available",
+      durasi: "",
+      harga: 0,
+      destination: "",
+      hotel: "",
+      armada: "",
+      consume: "",
+      kategori: "",
+    },
+  })
 
-  const { fields: includeFields, append: appendInclude, remove: removeInclude } =
-    useFieldArray({
-      control: form.control,
-      name: "schedules",
-    });
+  const categoryForm = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      title: "",
+    },
+  })
 
-  const { fields: excludeFields, append: appendExclude, remove: removeExclude } =
-    useFieldArray({
-      control: form.control,
-      name: "schedules",
-    });
+  const {
+    fields: includeFields,
+    append: appendInclude,
+    remove: removeInclude,
+  } = useFieldArray({
+    control: form.control,
+    name: "include",
+  })
 
-  const { fields: scheduleFields, append: appendSchedule } =
-    useFieldArray({
-      control: form.control,
-      name: "schedules",
-    });
+  const {
+    fields: excludeFields,
+    append: appendExclude,
+    remove: removeExclude,
+  } = useFieldArray({
+    control: form.control,
+    name: "exclude",
+  })
 
-  const onSubmit = async (data: TourPackage) => {
+  const {
+    fields: scheduleFields,
+    append: appendSchedule,
+    remove: removeSchedule,
+  } = useFieldArray({
+    control: form.control,
+    name: "jadwal",
+  })
+
+  const onSubmit = async (data: ITourPackageInput) => {
     try {
-      console.log(data);
-      // Kirim data ke API di sini
+      await createPackage(data)
+      navigate("/admin/paket-wisata")
     } catch (error) {
-      console.error(error);
+      console.error("Error submitting form:", error)
     }
-  };
+  }
+
+  const onSubmitCategory = async (data: CategoryFormValues) => {
+    try {
+      setIsSubmittingCategory(true)
+      await createCategory(data.title)
+      categoryForm.reset()
+      setIsCategoryModalOpen(false)
+    } catch (error) {
+      console.error("Error creating category:", error)
+    } finally {
+      setIsSubmittingCategory(false)
+    }
+  }
+
+  if (isLoadingReferenceData) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Loading reference data...</p>
+      </div>
+    )
+  }
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardContent className="p-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nama Paket</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan nama paket" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <div className="container mx-auto py-8">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <Button variant="link" onClick={() => navigate("/admin/paket-wisata")} className="p-0">
+              Paket Wisata
+            </Button>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Tambah Paket Wisata</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Deskripsi</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Masukkan deskripsi paket"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle>Tambah Paket Wisata Baru</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="duration"
+                  name="nama"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Durasi</FormLabel>
+                      <FormLabel>Nama Paket</FormLabel>
                       <FormControl>
-                        <Input placeholder="Masukkan durasi (contoh: 3 hari 2 malam)" {...field} />
+                        <Input placeholder="Masukkan nama paket" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -122,14 +190,28 @@ const TourPackageAddForm: React.FC = () => {
 
                 <FormField
                   control={form.control}
-                  name="price"
+                  name="durasi"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Durasi</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Contoh: 3 hari 2 malam" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="harga"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Harga</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="Masukkan harga (contoh: 1000000)"
+                          placeholder="Masukkan harga"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
@@ -138,20 +220,29 @@ const TourPackageAddForm: React.FC = () => {
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <div className="space-y-4">
-                <FormLabel>Termasuk</FormLabel>
-                {includeFields.map((field, index) => (
-                  <div key={field.id} className="flex gap-2">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
                     <FormField
                       control={form.control}
-                      name={`includes.${index}`}
+                      name="kategori"
                       render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input placeholder="Tambahkan item termasuk" {...field} />
-                          </FormControl>
+                        <FormItem className="flex-1 mr-4">
+                          <FormLabel>Kategori</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih kategori" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category._id} value={category._id}>
+                                  {category.title}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -159,56 +250,79 @@ const TourPackageAddForm: React.FC = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      size="icon"
-                      onClick={() => removeInclude(index)}
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      className="mt-8"
                     >
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Tambah Kategori
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="deskripsi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Deskripsi</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Masukkan deskripsi paket" className="resize-none h-32" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-4">
+                <FormLabel>Yang Termasuk</FormLabel>
+                {includeFields.map((field, index) => (
+                  <div key={field.id} className="flex gap-2">
+                    <FormField
+                      control={form.control}
+                      name={`include.${index}`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input placeholder="Tambahkan item yang termasuk" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button type="button" variant="outline" size="icon" onClick={() => removeInclude(index)}>
                       <Minus className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendInclude({ startDate: "", endDate: "" })}
-                >
+                <Button type="button" variant="outline" size="sm" onClick={() => appendInclude("")}>
                   <Plus className="h-4 w-4 mr-2" />
                   Tambah Item
                 </Button>
               </div>
 
               <div className="space-y-4">
-                <FormLabel>Tidak Termasuk</FormLabel>
+                <FormLabel>Yang Tidak Termasuk</FormLabel>
                 {excludeFields.map((field, index) => (
                   <div key={field.id} className="flex gap-2">
                     <FormField
                       control={form.control}
-                      name={`excludes.${index}`}
+                      name={`exclude.${index}`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormControl>
-                            <Input placeholder="Tambahkan item tidak termasuk" {...field} />
+                            <Input placeholder="Tambahkan item yang tidak termasuk" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => removeExclude(index)}
-                    >
+                    <Button type="button" variant="outline" size="icon" onClick={() => removeExclude(index)}>
                       <Minus className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => appendExclude({ startDate: "", endDate: "" })}
-                >
+                <Button type="button" variant="outline" size="sm" onClick={() => appendExclude("")}>
                   <Plus className="h-4 w-4 mr-2" />
                   Tambah Item
                 </Button>
@@ -217,10 +331,10 @@ const TourPackageAddForm: React.FC = () => {
               <div className="space-y-4">
                 <FormLabel>Jadwal</FormLabel>
                 {scheduleFields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-2 gap-4">
+                  <div key={field.id} className="grid md:grid-cols-2 gap-4 border p-4 rounded-lg relative">
                     <FormField
                       control={form.control}
-                      name={`schedules.${index}.startDate`}
+                      name={`jadwal.${index}.tanggalAwal`}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Tanggal Mulai</FormLabel>
@@ -233,10 +347,10 @@ const TourPackageAddForm: React.FC = () => {
                     />
                     <FormField
                       control={form.control}
-                      name={`schedules.${index}.endDate`}
+                      name={`jadwal.${index}.tanggalAkhir`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tanggal Pulang</FormLabel>
+                          <FormLabel>Tanggal Selesai</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -244,6 +358,15 @@ const TourPackageAddForm: React.FC = () => {
                         </FormItem>
                       )}
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="absolute -top-2 -right-2"
+                      onClick={() => removeSchedule(index)}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
                 <Button
@@ -251,7 +374,11 @@ const TourPackageAddForm: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    appendSchedule({ startDate: "", endDate: "" })
+                    appendSchedule({
+                      tanggalAwal: "",
+                      tanggalAkhir: "",
+                      status: "tersedia",
+                    })
                   }
                 >
                   <CalendarPlus className="h-4 w-4 mr-2" />
@@ -259,14 +386,13 @@ const TourPackageAddForm: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Destinasi, Hotel, Transportasi, dan Konsumsi */}
               <FormField
                 control={form.control}
                 name="destination"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Destinasi</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih destinasi" />
@@ -274,8 +400,8 @@ const TourPackageAddForm: React.FC = () => {
                       </FormControl>
                       <SelectContent>
                         {destinations.map((destination) => (
-                          <SelectItem key={destination.id} value={destination.name}>
-                            {destination.name}
+                          <SelectItem key={destination._id} value={destination._id}>
+                            {destination.nama} - {destination.lokasi}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -291,7 +417,7 @@ const TourPackageAddForm: React.FC = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Hotel</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih hotel" />
@@ -299,8 +425,8 @@ const TourPackageAddForm: React.FC = () => {
                       </FormControl>
                       <SelectContent>
                         {hotels.map((hotel) => (
-                          <SelectItem key={hotel.id} value={hotel.name}>
-                            {hotel.name}
+                          <SelectItem key={hotel._id} value={hotel._id}>
+                            {hotel.nama} - {hotel.bintang} Bintang
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -312,20 +438,20 @@ const TourPackageAddForm: React.FC = () => {
 
               <FormField
                 control={form.control}
-                name="fleet"
+                name="armada"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Transportasi</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih transportasi" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {fleets.map((fleet) => (
-                          <SelectItem key={fleet.id} value={fleet.name}>
-                            {fleet.name}
+                        {armada.map((item) => (
+                          <SelectItem key={item._id} value={item._id}>
+                            {item.nama} - Kapasitas: {item.kapasitas}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -341,16 +467,18 @@ const TourPackageAddForm: React.FC = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Konsumsi</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih konsumsi" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="breakfast">Sarapan</SelectItem>
-                        <SelectItem value="full_board">Penuh</SelectItem>
-                        <SelectItem value="none">Tidak Ada</SelectItem>
+                        {consumptions.map((item) => (
+                          <SelectItem key={item._id} value={item._id}>
+                            {item.nama}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -364,7 +492,7 @@ const TourPackageAddForm: React.FC = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih status" />
@@ -385,19 +513,64 @@ const TourPackageAddForm: React.FC = () => {
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="flex justify-end gap-4">
-              <Button type="button" variant="outline">
-                Batal
-              </Button>
-              <Button type="submit">Buat Paket</Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
-  );
-};
+              <div className="flex justify-end space-x-4">
+                <Button type="button" variant="outline" onClick={() => navigate(-1)} disabled={isLoading}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Kembali
+                </Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Tambah Paket Wisata
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
-export default TourPackageAddForm;
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tambah Kategori Baru</DialogTitle>
+            <DialogDescription>Masukkan nama untuk kategori paket wisata baru.</DialogDescription>
+          </DialogHeader>
+          <Form {...categoryForm}>
+            <form onSubmit={categoryForm.handleSubmit(onSubmitCategory)} className="space-y-4">
+              <FormField
+                control={categoryForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama Kategori</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan nama kategori" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  disabled={isSubmittingCategory}
+                >
+                  Batal
+                </Button>
+                <Button type="submit" disabled={isSubmittingCategory}>
+                  {isSubmittingCategory && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Tambah Kategori
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+export default AddTourPackage;
+

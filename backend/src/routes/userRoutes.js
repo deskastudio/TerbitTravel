@@ -1,6 +1,13 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import passport from "passport";
+import {
+  registerLimiter,
+  loginLimiter,
+  otpLimiter,
+} from "../middleware/rateLimiter.js";
+import { authMiddleware } from "../middleware/authMiddleware.js";
 import {
   registerUser,
   loginUser,
@@ -8,12 +15,14 @@ import {
   getAllUsers,
   getUserById,
   updateUser,
+  verifyOTP,
+  resendOTP,
+  googleCallback,
+  lengkapiProfil, // Add this
 } from "../controllers/userController.js";
-import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Konfigurasi multer untuk file upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "./uploads/user");
@@ -22,7 +31,15 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + path.extname(file.originalname));
   },
 });
+
 const upload = multer({ storage });
+
+/**
+ * @swagger
+ * tags:
+ *   name: User
+ *   description: User management and authentication
+ */
 
 /**
  * @swagger
@@ -36,13 +53,21 @@ const upload = multer({ storage });
  *         multipart/form-data:
  *           schema:
  *             type: object
+ *             required:
+ *               - nama
+ *               - email
+ *               - password
+ *               - alamat
+ *               - noTelp
  *             properties:
  *               nama:
  *                 type: string
  *               email:
  *                 type: string
+ *                 format: email
  *               password:
  *                 type: string
+ *                 minLength: 6
  *               alamat:
  *                 type: string
  *               noTelp:
@@ -54,19 +79,15 @@ const upload = multer({ storage });
  *                 format: binary
  *     responses:
  *       201:
- *         description: User registered successfully
- *       400:
- *         description: All fields are required
- *       500:
- *         description: Error registering user
+ *         description: User registered successfully. Please check email for OTP.
  */
-router.post("/register", upload.single("foto"), registerUser);
+router.post("/register", registerLimiter, upload.single("foto"), registerUser);
 
 /**
  * @swagger
- * /user/login:
+ * /user/verify-otp:
  *   post:
- *     summary: User login
+ *     summary: Verify OTP
  *     tags: [User]
  *     requestBody:
  *       required: true
@@ -74,6 +95,58 @@ router.post("/register", upload.single("foto"), registerUser);
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *             properties:
+ *               email:
+ *                 type: string
+ *               otp:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ */
+router.post("/verify-otp", otpLimiter, verifyOTP);
+
+/**
+ * @swagger
+ * /user/resend-otp:
+ *   post:
+ *     summary: Resend OTP
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OTP resent successfully
+ */
+router.post("/resend-otp", otpLimiter, resendOTP);
+
+/**
+ * @swagger
+ * /user/login:
+ *   post:
+ *     summary: User login with email and password
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
  *             properties:
  *               email:
  *                 type: string
@@ -81,38 +154,48 @@ router.post("/register", upload.single("foto"), registerUser);
  *                 type: string
  *     responses:
  *       200:
- *         description: Successful login
- *       400:
- *         description: Invalid credentials
- *       500:
- *         description: Server error
+ *         description: Login successful
  */
-router.post("/login", loginUser);
+router.post("/login", loginLimiter, loginUser);
 
 /**
  * @swagger
- * /user/user/{userId}:
- *   delete:
- *     summary: Delete a user by ID
+ * /user/auth/google:
+ *   get:
+ *     summary: Google OAuth login
  *     tags: [User]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: userId
- *         schema:
- *           type: string
- *         required: true
- *         description: ID of the user to delete
  *     responses:
- *       200:
- *         description: User deleted successfully
- *       404:
- *         description: User not found
- *       500:
- *         description: Error deleting user
+ *       302:
+ *         description: Redirects to Google login
  */
+<<<<<<< HEAD
 router.delete("/user/:userId", deleteUser);
+=======
+router.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["email", "profile"],
+  })
+);
+
+/**
+ * @swagger
+ * /user/auth/google/callback:
+ *   get:
+ *     summary: Google OAuth callback
+ *     tags: [User]
+ *     responses:
+ *       302:
+ *         description: Redirects to frontend with token
+ */
+router.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/auth/failure",
+  }),
+  googleCallback
+);
+>>>>>>> dcd716e5398108571f2b886e16a4e7301e103798
 
 /**
  * @swagger
@@ -124,28 +207,7 @@ router.delete("/user/:userId", deleteUser);
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: A list of users
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   nama:
- *                     type: string
- *                   email:
- *                     type: string
- *                   alamat:
- *                     type: string
- *                   noTelp:
- *                     type: string
- *                   instansi:
- *                     type: string
- *                   foto:
- *                     type: string
- *       500:
- *         description: Error fetching user data
+ *         description: List of users retrieved successfully
  */
 router.get("/dataUser", getAllUsers);
 
@@ -153,41 +215,19 @@ router.get("/dataUser", getAllUsers);
  * @swagger
  * /user/{userId}:
  *   get:
- *     summary: Get a user by ID
+ *     summary: Get user by ID
  *     tags: [User]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: ID of the user to retrieve
  *     responses:
  *       200:
  *         description: User data retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 nama:
- *                   type: string
- *                 email:
- *                   type: string
- *                 alamat:
- *                   type: string
- *                 noTelp:
- *                   type: string
- *                 instansi:
- *                   type: string
- *                 foto:
- *                   type: string
- *       404:
- *         description: User not found
- *       500:
- *         description: Error fetching user data
  */
 router.get("/:userId", getUserById);
 
@@ -195,19 +235,17 @@ router.get("/:userId", getUserById);
  * @swagger
  * /user/update/{userId}:
  *   put:
- *     summary: Update a user's data
+ *     summary: Update user data
  *     tags: [User]
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: userId
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
- *         description: ID of the user to update
  *     requestBody:
- *       required: true
  *       content:
  *         multipart/form-data:
  *           schema:
@@ -229,15 +267,69 @@ router.get("/:userId", getUserById);
  *     responses:
  *       200:
  *         description: User updated successfully
- *       404:
- *         description: User not found
- *       500:
- *         description: Error updating user
  */
 router.put(
   "/update/:userId",
+<<<<<<< HEAD
+=======
+  authMiddleware,
+>>>>>>> dcd716e5398108571f2b886e16a4e7301e103798
   upload.single("foto"),
   updateUser
 );
+
+/**
+ * @swagger
+ * /user/{userId}:
+ *   delete:
+ *     summary: Delete user
+ *     tags: [User]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ */
+router.delete("/:userId", authMiddleware, deleteUser);
+
+/**
+ * * @swagger
+ * /user/lengkapi-profil/{userId}:
+ *   post:
+ *     summary: Complete user profile after Google OAuth
+ *     tags: [User]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - alamat
+ *               - noTelp
+ *             properties:
+ *               alamat:
+ *                 type: string
+ *               noTelp:
+ *                 type: string
+ *               instansi:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile completed successfully
+ */
+router.post("/lengkapi-profil/:userId", authMiddleware, lengkapiProfil);
 
 export default router;

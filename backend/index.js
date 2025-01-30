@@ -53,7 +53,7 @@ app.use("/consume", consumeRoutes);
 app.use("/blog", blogRoutes);
 app.use("/profiles", profileRoutes);
 app.use("/reviews", reviewRoutes);
-app.use("/packages", packageRoutes);
+app.use("/package", packageRoutes);
 app.use("/banner", bannerRoutes);
 app.use("/gallery", galleryRoutes);
 app.use("/gallery-category", galleryCategoryRoutes);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate  } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MaintenanceModal from "./MaintananceModal";
 import {
@@ -25,10 +25,14 @@ const Header = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const closeMenu = () => setIsMenuOpen(false);
 
-  const handleAuthClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsModalOpen(true);
-    closeMenu();
+  const navigate = useNavigate();
+
+  const handleLoginClick = () => {
+    navigate("/login"); // Navigate to login
+  };
+
+  const handleRegisterClick = () => {
+    navigate("/register"); // Navigate to register
   };
 
   const navLinks: NavLink[] = [
@@ -103,13 +107,13 @@ const Header = () => {
                 <Button 
                   variant="outline" 
                   className="border-amber-700 text-amber-700 hover:bg-[#B17457]/10"
-                  onClick={handleAuthClick}
+                  onClick={handleLoginClick}
                 >
                   Masuk
                 </Button>
                 <Button 
                   className="bg-amber-700 text-white hover:bg-amber-800"
-                  onClick={handleAuthClick}
+                  onClick={handleRegisterClick}
                 >
                   Daftar
                 </Button>
@@ -231,7 +235,7 @@ const Header = () => {
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
                     <button 
-                      onClick={handleAuthClick}
+                      onClick={handleLoginClick}
                       className="text-center py-3 
                         border border-amber-700 text-amber-700
                         rounded-lg 
@@ -241,7 +245,7 @@ const Header = () => {
                       Masuk
                     </button>
                     <button 
-                      onClick={handleAuthClick}
+                      onClick={handleRegisterClick}
                       className="text-center py-3 
                         bg-amber-700 text-white 
                         rounded-lg 

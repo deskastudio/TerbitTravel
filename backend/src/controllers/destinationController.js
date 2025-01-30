@@ -36,11 +36,12 @@ export const addDestination = async (req, res) => {
 };
 
 // Update existing destination
+// Update existing destination
 export const updateDestination = async (req, res) => {
   const { id } = req.params;
   const { nama, lokasi, deskripsi } = req.body;
-  const fotoPaths =
-    req.files?.map((file) => `uploads/destination/${file.filename}`) || [];
+  // Foto baru (jika ada)
+  const fotoPaths = req.files?.map((file) => `uploads/destination/${file.filename}`) || [];
 
   try {
     const destination = await Destination.findById(id);
@@ -48,32 +49,29 @@ export const updateDestination = async (req, res) => {
       return res.status(404).json({ message: "Destination not found" });
     }
 
-    // Delete old images if new ones are uploaded
-    if (fotoPaths.length > 0) {
-      for (const oldPath of destination.foto) {
-        const oldImagePath = path.join(__dirname, "../../", oldPath);
-        try {
-          if (fs.existsSync(oldImagePath)) {
-            await fs.promises.unlink(oldImagePath);
-            console.log(`Old file deleted successfully: ${oldImagePath}`);
-          }
-        } catch (err) {
-          console.error(`Failed to delete old file ${oldImagePath}:`, err);
-        }
-      }
+    // --[ PERIKSA BATASAN MAKS 5 ]--
+    if (destination.foto.length + fotoPaths.length > 5) {
+      return res.status(400).json({
+        message: "Maksimal 5 gambar diperbolehkan untuk destinasi ini.",
+      });
     }
 
-    // Update destination data with new images if any
+    // --[ TAMBAHKAN FOTO BARU TANPA MENGHAPUS LAMA ]--
+    if (fotoPaths.length > 0) {
+      destination.foto = [...destination.foto, ...fotoPaths];
+    }
+
+    // Update data lain
     destination.nama = nama || destination.nama;
     destination.lokasi = lokasi || destination.lokasi;
     destination.deskripsi = deskripsi || destination.deskripsi;
-    destination.foto = fotoPaths.length > 0 ? fotoPaths : destination.foto;
-    destination.category = req.body.category || destination.category; // Update category
+    destination.category = req.body.category || destination.category;
 
     await destination.save();
-    res
-      .status(200)
-      .json({ message: "Destination updated successfully", data: destination });
+    res.status(200).json({
+      message: "Destination updated successfully",
+      data: destination,
+    });
   } catch (error) {
     console.error("Error updating destination:", error);
     res
@@ -81,6 +79,7 @@ export const updateDestination = async (req, res) => {
       .json({ message: "Failed to update destination", error: error.message });
   }
 };
+
 
 // Fetch all destinations with category populated
 export const getAllDestinations = async (req, res) => {

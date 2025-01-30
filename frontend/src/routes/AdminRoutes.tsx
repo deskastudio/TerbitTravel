@@ -1,6 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
-import AdminDashboard from '../pages/adminPages/dashboard/Index';
-import AdminAllPackageTour from '../pages/adminPages/tourPackage/Index';
+
+import AdminDashboard from '@/pages/adminPages/dashboard/Index';
+import AdminAllPackageTour from '@/pages/adminPages/tourPackage/Index';
+import AddPackageTour from '@/pages/adminPages/tourPackage/add-tour-package';
 import AddDestination from '@/pages/adminPages/destination/add-destination';
 import AddArmada from '@/pages/adminPages/armada/add-armada';
 import AddConsumption from '@/pages/adminPages/consumption/add-consumption';
@@ -28,6 +30,8 @@ import EditConsumption from '@/pages/adminPages/consumption/edit-consumption';
 import DetailArmada from '@/pages/adminPages/armada/detail-armada';
 import EditArmada from '@/pages/adminPages/armada/edit-armada';
 import EditDestination from '@/pages/adminPages/destination/edit-destination';
+import DetailPackageTour from '@/pages/adminPages/tourPackage/detail-tour-package';
+import EditPackageTour from '@/pages/adminPages/tourPackage/edit-tour-package';
 
 
 function AdminRoutes() {
@@ -36,9 +40,9 @@ function AdminRoutes() {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
 
       <Route path="/admin/paket-wisata" element={<AdminAllPackageTour />} />
-      {/* <Route path="/admin/paket-wisata/add" element={<AddPackageTour />} />
+      <Route path="/admin/paket-wisata/add" element={<AddPackageTour />} />
       <Route path="/admin/paket-wisata/:id" element={<DetailPackageTour />} />
-      <Route path="/admin/paket-wisata/:id/edit" element={<EditPackageTour />} /> */}
+      <Route path="/admin/paket-wisata/:id/edit" element={<EditPackageTour />} />
 
       <Route path="/admin/hotel" element={<AdminAllHotel/>} />
       <Route path="/admin/hotel/add" element={<AddHotel />} />

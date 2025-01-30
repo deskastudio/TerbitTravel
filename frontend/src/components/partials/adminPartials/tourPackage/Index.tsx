@@ -1,12 +1,20 @@
-'use client'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate here
+import {
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Eye,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  FilterX,
+  Loader2,
+} from "lucide-react";
+import { useTourPackage } from "@/hooks/use-tour-package";
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -14,21 +22,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,257 +30,434 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { toast } from "@/hooks/use-toast"
-import { MoreHorizontal, Pencil, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
-const tourPackageSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1, "Name is required"),
-  destination: z.string().min(1, "Destination is required"),
-  price: z.number().min(0, "Price must be a positive number"),
-  duration: z.string().min(1, "Duration is required"),
-  status: z.enum(['available', 'booked', 'in_progress', 'completed']),
-})
-
-type TourPackage = z.infer<typeof tourPackageSchema>
-
-const tourPackages: TourPackage[] = [
-  { id: "1", name: "Bali Adventure", destination: "Bali", price: 1000000, duration: "3 days", status: "available" },
-  { id: "2", name: "Jakarta City Tour", destination: "Jakarta", price: 500000, duration: "1 day", status: "booked" },
-  { id: "3", name: "Yogyakarta Cultural Experience", destination: "Yogyakarta", price: 750000, duration: "2 days", status: "available" },
-  { id: "4", name: "Lombok Beach Getaway", destination: "Lombok", price: 1200000, duration: "4 days", status: "in_progress" },
-  { id: "5", name: "Bandung Highland Tour", destination: "Bandung", price: 600000, duration: "2 days", status: "completed" },
-]
+const ITEMS_PER_PAGE = 10;
+const PRICE_RANGES = [
+  { label: "Semua Harga", value: "all" },
+  { label: "< Rp 500.000", value: "0-500000" },
+  { label: "Rp 500.000 - Rp 1.000.000", value: "500000-1000000" },
+  { label: "Rp 1.000.000 - Rp 2.000.000", value: "1000000-2000000" },
+  { label: "> Rp 2.000.000", value: "2000000-above" },
+];
 
 const TourPackagePage = () => {
-  const [packages, setPackages] = useState<TourPackage[]>(tourPackages)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [editingPackage, setEditingPackage] = useState<TourPackage | null>(null)
-  const itemsPerPage = 5
+  const navigate = useNavigate(); // Define navigate here
+  const {
+    packages,
+    destinations,
+    isLoadingPackages,
+    deleteTourPackage, 
+    isDeleting,
+    refreshTourPackages,
+  } = useTourPackage();
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<TourPackage>({
-    resolver: zodResolver(tourPackageSchema),
-  })
+  // State Management
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedDestination, setSelectedDestination] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedPriceRange, setSelectedPriceRange] = useState<string>("all");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  const [isFilterActive, setIsFilterActive] = useState(false);
 
-  const onSubmit = (data: TourPackage) => {
-    if (editingPackage) {
-      setPackages(packages.map(p => p.id === editingPackage.id ? { ...data, id: editingPackage.id } : p))
-      toast({ title: "Tour package updated", description: "The tour package has been updated successfully." })
-    } else {
-      const newPackage = { ...data, id: Date.now().toString() }
-      setPackages([...packages, newPackage])
-      toast({ title: "Tour package added", description: "A new tour package has been added successfully." })
-    }
-    setIsAddModalOpen(false)
-    setEditingPackage(null)
-    reset()
-  }
+  // Format functions
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
 
-  const handleEdit = (pkg: TourPackage) => {
-    setEditingPackage(pkg)
-    setIsAddModalOpen(true)
-  }
+  // Filter functions
+  const isInPriceRange = (price: number, range: string) => {
+    if (range === "all") return true;
+    const [min, max] = range.split("-").map(Number);
+    if (range === "2000000-above") return price > 2000000;
+    return price >= min && price <= max;
+  };
 
-  const handleDelete = (id: string) => {
-    setPackages(packages.filter(pkg => pkg.id !== id))
-    toast({ title: "Tour package deleted", description: "The tour package has been deleted successfully." })
-  }
+   // Filtered and paginated data
+   const filteredPackages = (packages || []).filter((pkg) => {
+    const matchesSearch = pkg.nama?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         pkg.deskripsi?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDestination = selectedDestination === "all" || 
+                              pkg.destination?._id === selectedDestination;
+    const matchesStatus = selectedStatus === "all" || pkg.status === selectedStatus;
+    const matchesPriceRange = isInPriceRange(pkg.harga, selectedPriceRange);
+ 
+    return matchesSearch && matchesDestination && matchesStatus && matchesPriceRange;
+  });
+ 
+  const totalPages = Math.ceil(filteredPackages.length / ITEMS_PER_PAGE);
+  const paginatedPackages = filteredPackages.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
-  const filteredPackages = packages
-    .filter(pkg => 
-      pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.destination.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(pkg => statusFilter === 'all' ? true : pkg.status === statusFilter)
+  useEffect(() => {
+    console.log("Packages:", packages);
+    console.log("Filtered packages:", filteredPackages);
+  }, [packages]); 
 
-  const paginatedPackages = filteredPackages.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // Check if filters are active
+  useEffect(() => {
+    setIsFilterActive(
+      selectedDestination !== "all" ||
+      selectedStatus !== "all" ||
+      selectedPriceRange !== "all"
+    );
+  }, [selectedDestination, selectedStatus, selectedPriceRange]);
 
-  const totalPages = Math.ceil(filteredPackages.length / itemsPerPage)
-
-  const getStatusBadge = (status: string) => {
-    const statusClasses = {
+  // Status badge variant
+  const getStatusBadgeVariant = (status: string) => {
+    const variants: Record<string, string> = {
       available: "bg-green-100 text-green-800",
       booked: "bg-blue-100 text-blue-800",
       in_progress: "bg-yellow-100 text-yellow-800",
       completed: "bg-gray-100 text-gray-800",
+      cancelled: "bg-red-100 text-red-800",
+    };
+    return variants[status] || "bg-gray-100 text-gray-800";
+  };
+
+  // Handle delete
+  const handleDelete = async () => {
+    if (selectedPackageId) {
+      try {
+        await deleteTourPackage(selectedPackageId);
+        setIsDeleteDialogOpen(false);
+        refreshTourPackages();
+      } catch (error) {
+        console.error("Error deleting package:", error);
+      }
     }
+  };
+
+  // Reset filters
+  const resetFilters = () => {
+    setSelectedDestination("all");
+    setSelectedStatus("all");
+    setSelectedPriceRange("all");
+    setSearchTerm("");
+    setCurrentPage(1);
+  };
+
+  if (isLoadingPackages) {
     return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-          statusClasses[status as keyof typeof statusClasses]
-        }`}
-      >
-        {status}
-      </span>
-    )
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto py-10">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Tour Packages</h1>
-        <Button onClick={() => setIsAddModalOpen(true)}>Add Tour Package</Button>
+        <h1 className="text-3xl font-bold tracking-tight">Paket Tour</h1>
+        <Button onClick={() => navigate("/admin/paket-wisata/add")}>
+          <Plus className="mr-2 h-4 w-4" /> Tambah Paket
+        </Button>
       </div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex-1 max-w-sm">
+
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center flex-1 space-x-2">
           <Input
-            placeholder="Search tour packages..."
+            placeholder="Cari paket tour..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
+            className="max-w-sm"
           />
+          <Search className="h-4 w-4 text-gray-500" />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="available">Available</SelectItem>
-            <SelectItem value="booked">Booked</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Filter
+              {isFilterActive && (
+                <span className="h-2 w-2 rounded-full bg-blue-600" />
+              )}
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Filter Paket</SheetTitle>
+            </SheetHeader>
+            <div className="py-4 space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Destinasi</label>
+                <Select
+                  value={selectedDestination}
+                  onValueChange={setSelectedDestination}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih destinasi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Destinasi</SelectItem>
+                    {destinations.map((destination) => (
+                      <SelectItem key={destination._id} value={destination._id}>
+                        {destination.nama}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="available">Tersedia</SelectItem>
+                    <SelectItem value="booked">Dipesan</SelectItem>
+                    <SelectItem value="in_progress">Dalam Perjalanan</SelectItem>
+                    <SelectItem value="completed">Selesai</SelectItem>
+                    <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Rentang Harga</label>
+                <Select
+                  value={selectedPriceRange}
+                  onValueChange={setSelectedPriceRange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih rentang harga" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRICE_RANGES.map((range) => (
+                      <SelectItem key={range.value} value={range.value}>
+                        {range.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <SheetFooter>
+              <Button
+                variant="outline"
+                onClick={resetFilters}
+                className="w-full flex items-center gap-2"
+              >
+                <FilterX className="h-4 w-4" />
+                Reset Filter
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Destination</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Duration</TableHead>
+              <TableHead>Nama Paket</TableHead>
+              <TableHead>Destinasi</TableHead>
+              <TableHead>Durasi</TableHead>
+              <TableHead>Harga</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedPackages.map((pkg) => (
-              <TableRow key={pkg.id}>
-                <TableCell className="font-medium">{pkg.name}</TableCell>
-                <TableCell>{pkg.destination}</TableCell>
-                <TableCell>
-                  {pkg.price.toLocaleString("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                  })}
-                </TableCell>
-                <TableCell>{pkg.duration}</TableCell>
-                <TableCell>{getStatusBadge(pkg.status)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => console.log('View details', pkg.id)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(pkg)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleDelete(pkg.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {!packages?.length ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">
+                  Tidak ada data paket
                 </TableCell>
               </TableRow>
-            ))}
+            ) : !filteredPackages.length ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">
+                  Tidak ada data paket yang sesuai dengan filter
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedPackages.map((pkg) => (
+                <TableRow key={pkg._id}>
+                  <TableCell className="font-medium">{pkg.nama || '-'}</TableCell>
+                  <TableCell>{pkg.destination?.nama || '-'}</TableCell>
+                  <TableCell>{pkg.durasi || '-'}</TableCell>
+                  <TableCell>{pkg.harga ? formatPrice(pkg.harga) : '-'}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusBadgeVariant(pkg.status)}`}>
+                      {pkg.status || 'N/A'} 
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Buka menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => navigate(`/admin/paket-wisata/${pkg._id}`)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Lihat Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            navigate(`/admin/paket-wisata/${pkg._id}/edit`)
+                          }
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => {
+                            setSelectedPackageId(pkg._id);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Previous
-        </Button>
-        <div className="flex-1 text-center text-sm text-muted-foreground">
-          Page {currentPage} of {totalPages}
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setCurrentPage(page)}
+                        isActive={page === currentPage}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                }
+                if (
+                  (page === currentPage - 2 && page > 2) ||
+                  (page === currentPage + 2 && page < totalPages - 1)
+                ) {
+                  return (
+                    <PaginationItem key={page}>
+                      <span className="px-4 py-2">...</span>
+                    </PaginationItem>
+                  );
+                }
+                return null;
+              })}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingPackage ? 'Edit Tour Package' : 'Add New Tour Package'}</DialogTitle>
-            <DialogDescription>
-              {editingPackage ? 'Edit the tour package details below.' : 'Add a new tour package by filling out the form below.'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" {...register('name')} defaultValue={editingPackage?.name} />
-              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="destination">Destination</Label>
-              <Input id="destination" {...register('destination')} defaultValue={editingPackage?.destination} />
-              {errors.destination && <p className="text-red-500 text-sm mt-1">{errors.destination.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="price">Price</Label>
-              <Input 
-                id="price" 
-                type="number" 
-                {...register('price', { valueAsNumber: true })} 
-                defaultValue={editingPackage?.price} 
-              />
-              {errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="duration">Duration</Label>
-              <Input id="duration" {...register('duration')} defaultValue={editingPackage?.duration} />
-              {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select onValueChange={(value) => register('status').onChange({ target: { value } })} defaultValue={editingPackage?.status}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="available">Available</SelectItem>
-                  <SelectItem value="booked">Booked</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
-            </div>
-            <Button type="submit">{editingPackage ? 'Update Tour Package' : 'Add Tour Package'}</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus paket tour ini? 
+              Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                'Hapus'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
-  )
-}
+  );
+};
 
 export default TourPackagePage;

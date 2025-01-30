@@ -4,49 +4,35 @@ import Package from "../models/package.js";
 /**
  * Menambah paket baru
  */
+// packageController.js 
 export const addPackage = async (req, res) => {
   try {
     const {
-      nama,
-      deskripsi,
-      include,
-      exclude,
-      harga,
-      status,
-      durasi,
-      jadwal,
-      destination,
-      hotel,
-      armada,
-      consume,
-      kategori, // Tambahkan kategori
+      nama, deskripsi, include, exclude, harga, status,
+      durasi, jadwal, destination, hotel, armada, consume, kategori
     } = req.body;
 
+    // Validate required fields
+    if (!nama || !deskripsi || !harga || !durasi || 
+        !destination || !hotel || !armada || !consume || !kategori) {
+      return res.status(400).json({ 
+        message: "Semua field wajib diisi"
+      });
+    }
+
     const newPackage = new Package({
-      nama,
-      deskripsi,
-      include,
-      exclude,
-      harga,
-      status,
-      durasi,
-      jadwal,
-      destination,
-      hotel,
-      armada,
-      consume,
-      kategori, // Menyimpan kategori
+      nama, deskripsi, include, exclude, harga, status,
+      durasi, jadwal, destination, hotel, armada, consume, kategori
     });
 
     await newPackage.save();
-
-    res.status(201).json({
-      message: "Package added successfully",
-      package: newPackage,
-    });
+    res.status(201).json(newPackage);
   } catch (error) {
-    console.error("Error adding package:", error);
-    res.status(500).json({ message: "Error adding package", error });
+    console.error('Server error:', error);
+    res.status(500).json({ 
+      message: "Error adding package",
+      error: error.message 
+    });
   }
 };
 
@@ -56,18 +42,19 @@ export const addPackage = async (req, res) => {
 export const getAllPackages = async (req, res) => {
   try {
     const packages = await Package.find()
-      .populate("destination", "lokasi gambar")
-      .populate("hotel", "nama alamat bintang")
+      .populate("destination", "nama lokasi")  
+      .populate("hotel", "nama bintang")
       .populate("armada", "nama kapasitas")
-      .populate("consume", "nama lauk harga")
-      .populate("kategori", "nama"); // Populate kategori
-
+      .populate("consume", "nama")
+      .populate("kategori", "title");
+ 
+    console.log('Found packages:', packages);
     res.json(packages);
   } catch (error) {
-    console.error("Error fetching packages:", error);
+    console.error('Error:', error);
     res.status(500).json({ message: "Error fetching packages", error });
-  }
-};
+  }  
+ };
 
 /**
  * Mengambil paket berdasarkan ID
