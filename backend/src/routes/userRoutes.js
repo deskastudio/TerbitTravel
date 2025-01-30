@@ -168,9 +168,6 @@ router.post("/login", loginLimiter, loginUser);
  *       302:
  *         description: Redirects to Google login
  */
-<<<<<<< HEAD
-router.delete("/user/:userId", deleteUser);
-=======
 router.get(
   "/auth/google",
   passport.authenticate("google", {
@@ -195,7 +192,7 @@ router.get(
   }),
   googleCallback
 );
->>>>>>> dcd716e5398108571f2b886e16a4e7301e103798
+
 
 /**
  * @swagger
@@ -270,10 +267,6 @@ router.get("/:userId", getUserById);
  */
 router.put(
   "/update/:userId",
-<<<<<<< HEAD
-=======
-  authMiddleware,
->>>>>>> dcd716e5398108571f2b886e16a4e7301e103798
   upload.single("foto"),
   updateUser
 );
