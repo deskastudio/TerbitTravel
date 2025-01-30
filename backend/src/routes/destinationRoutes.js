@@ -45,8 +45,6 @@ const router = express.Router();
 // Tambah destinasi
 router.post(
   "/add",
-  authMiddleware,
-  checkRole("admin"),
   upload.array("foto"),
   validateDestinationData,
   addDestination
@@ -99,8 +97,6 @@ router.post(
 // Update destinasi
 router.put(
   "/update/:id",
-  authMiddleware,
-  checkRole("admin"),
   upload.array("foto"),
   validateDestinationData,
   updateDestination
@@ -162,8 +158,6 @@ router.put(
 // Hapus destinasi
 router.delete(
   "/delete/:id",
-  authMiddleware,
-  checkRole("admin"),
   deleteDestination
 );
 /**
@@ -194,7 +188,7 @@ router.delete(
  */
 
 // Ambil semua data destinasi
-router.get("/getAll", authMiddleware, getAllDestinations);
+router.get("/getAll", getAllDestinations);
 /**
  * @swagger
  * /destination/getAll:
@@ -212,7 +206,7 @@ router.get("/getAll", authMiddleware, getAllDestinations);
  */
 
 // Ambil data destinasi berdasarkan ID
-router.get("/:id", authMiddleware, getDestinationById);
+router.get("/:id", getDestinationById);
 /**
  * @swagger
  * /destination/{id}:

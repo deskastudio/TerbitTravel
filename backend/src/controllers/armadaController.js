@@ -44,16 +44,8 @@ export const addArmada = async (req, res) => {
 export const updateArmada = async (req, res) => {
   const { id } = req.params;
   const { nama, kapasitas, harga, merek } = req.body;
+  const gambarPaths = req.files?.map((file) => `uploads/armada/${file.filename}`) || [];
 
-  // Pastikan kapasitas menjadi array string jika berupa string yang dipisahkan koma
-  const kapasitasArray = kapasitas
-    ? Array.isArray(kapasitas)
-      ? kapasitas
-      : kapasitas.split(",").map((item) => item.trim())
-    : [];
-
-  const gambarPaths =
-    req.files?.map((file) => `uploads/armada/${file.filename}`) || [];
 
   try {
     const armada = await Armada.findById(id);
@@ -61,8 +53,9 @@ export const updateArmada = async (req, res) => {
       return res.status(404).json({ message: "Armada tidak ditemukan" });
     }
 
-    // Hapus gambar lama jika ada gambar baru
+    let updatedGambar = armada.gambar;
     if (gambarPaths.length > 0) {
+      // Hapus gambar lama jika ada gambar baru
       for (const oldPath of armada.gambar) {
         const oldImagePath = path.join(__dirname, "../../", oldPath);
         try {
@@ -73,17 +66,16 @@ export const updateArmada = async (req, res) => {
           console.error(`Gagal menghapus file lama ${oldImagePath}:`, err);
         }
       }
+      updatedGambar = gambarPaths;
     }
 
     const updatedArmada = await Armada.findByIdAndUpdate(
       id,
       {
         nama: nama || armada.nama,
-        kapasitas:
-          kapasitasArray.length > 0 ? kapasitasArray : armada.kapasitas,
-        gambar: gambarPaths.length > 0 ? gambarPaths : armada.gambar,
         harga: harga || armada.harga,
         merek: merek || armada.merek,
+        gambar: updatedGambar
       },
       { new: true }
     );

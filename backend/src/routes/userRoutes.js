@@ -205,7 +205,7 @@ router.get(
  *       200:
  *         description: List of users retrieved successfully
  */
-router.get("/dataUser", authMiddleware, getAllUsers);
+router.get("/dataUser", getAllUsers);
 
 /**
  * @swagger
@@ -225,7 +225,7 @@ router.get("/dataUser", authMiddleware, getAllUsers);
  *       200:
  *         description: User data retrieved successfully
  */
-router.get("/:userId", authMiddleware, getUserById);
+router.get("/:userId", getUserById);
 
 /**
  * @swagger
@@ -266,7 +266,6 @@ router.get("/:userId", authMiddleware, getUserById);
  */
 router.put(
   "/update/:userId",
-  authMiddleware,
   upload.single("foto"),
   updateUser
 );

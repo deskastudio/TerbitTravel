@@ -36,7 +36,7 @@ const router = express.Router();
  *       500:
  *         description: Failed to add destination category
  */
-router.post("/add", authMiddleware, validateCategory, addDestinationCategory);
+router.post("/add", validateCategory, addDestinationCategory);
 
 /**
  * @swagger
@@ -74,7 +74,6 @@ router.post("/add", authMiddleware, validateCategory, addDestinationCategory);
  */
 router.put(
   "/update/:id",
-  authMiddleware,
   validateCategory,
   updateDestinationCategory
 );
@@ -102,7 +101,7 @@ router.put(
  *       500:
  *         description: Failed to delete destination category
  */
-router.delete("/delete/:id", authMiddleware, deleteDestinationCategory);
+router.delete("/delete/:id", deleteDestinationCategory);
 
 /**
  * @swagger
@@ -141,7 +140,7 @@ router.delete("/delete/:id", authMiddleware, deleteDestinationCategory);
  *       500:
  *         description: Failed to fetch destination categories
  */
-router.get("/get", authMiddleware, getAllDestinationCategories);
+router.get("/get", getAllDestinationCategories);
 
 /**
  * @swagger
@@ -166,6 +165,6 @@ router.get("/get", authMiddleware, getAllDestinationCategories);
  *       500:
  *         description: Failed to fetch destination category
  */
-router.get("/:id", authMiddleware, getDestinationCategoryById);
+router.get("/:id", getDestinationCategoryById);
 
 export default router;

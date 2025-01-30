@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Select,
@@ -23,48 +24,128 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MoreHorizontal, Pencil, Trash, Eye, Search } from 'lucide-react';
-import { useNavigate } from "react-router-dom";
-
-type Armada = {
-  id: string;
-  name: string;
-  capacity: number;
-  price: number;
-  brand: string;
-  category: string;
-};
-
-const armadaData: Armada[] = [
-  { id: "1", name: "Bus A", capacity: 40, price: 1000000, brand: "Mercedes", category: "Bus" },
-  { id: "2", name: "Van B", capacity: 12, price: 500000, brand: "Toyota", category: "Van" },
-  { id: "3", name: "Car C", capacity: 4, price: 300000, brand: "Honda", category: "Car" },
-  { id: "4", name: "Minibus D", capacity: 20, price: 750000, brand: "Isuzu", category: "Minibus" },
-  { id: "5", name: "SUV E", capacity: 7, price: 600000, brand: "Mitsubishi", category: "SUV" },
-  // Add more items for pagination demonstration
-  { id: "6", name: "Bus F", capacity: 35, price: 950000, brand: "Volvo", category: "Bus" },
-  { id: "7", name: "Van G", capacity: 15, price: 550000, brand: "Hyundai", category: "Van" },
-  { id: "8", name: "Car H", capacity: 5, price: 350000, brand: "Toyota", category: "Car" },
-  { id: "9", name: "Minibus I", capacity: 25, price: 800000, brand: "Mercedes", category: "Minibus" },
-  { id: "10", name: "SUV J", capacity: 8, price: 650000, brand: "Ford", category: "SUV" },
-];
+import { Slider } from "@/components/ui/slider";
+import { 
+  Sheet,
+  SheetContent, 
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet";
+import { 
+  MoreHorizontal, 
+  Pencil, 
+  Trash, 
+  Eye, 
+  Search, 
+  Loader2, 
+  Plus,
+  FilterX,
+  SlidersHorizontal 
+} from 'lucide-react';
+import { useNavigate, Link } from "react-router-dom";
+import { useArmada } from "@/hooks/use-armada";
+import { IArmada } from "@/types/armada.types";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 
 const ArmadaTable = () => {
-  const [armadas, setArmadas] = useState(armadaData);
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
-  const navigate = useNavigate();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedArmadaId, setSelectedArmadaId] = useState<string>("");
+  
+  // Filter states
+  const [selectedKapasitas, setSelectedKapasitas] = useState<string>("all");
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000000]);
+  const [selectedMerek, setSelectedMerek] = useState<string>("all");
+  const [isFilterActive, setIsFilterActive] = useState(false);
 
-  const categories = ["all", ...new Set(armadas.map(armada => armada.category))];
+  const {
+    armadas,
+    isLoadingArmadas,
+    deleteArmada,
+    isDeleting
+  } = useArmada();
 
-  const filteredArmadas = armadas.filter(
-    (armada) =>
-      (armada.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-       armada.brand.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (categoryFilter === "all" || armada.category === categoryFilter)
-  );
+  // Memoized unique values and ranges
+  const {
+    uniqueKapasitas,
+    uniqueMerek,
+    minPrice,
+    maxPrice
+  } = useMemo(() => {
+    if (!armadas?.length) {
+      return {
+        uniqueKapasitas: [],
+        uniqueMerek: [],
+        minPrice: 0,
+        maxPrice: 1000000000
+      };
+    }
+
+    return {
+      uniqueKapasitas: Array.from(new Set(armadas.map(a => a.kapasitas))).sort((a, b) => a - b),
+      uniqueMerek: Array.from(new Set(armadas.map(a => a.merek))).sort(),
+      minPrice: Math.min(...armadas.map(a => a.harga)),
+      maxPrice: Math.max(...armadas.map(a => a.harga))
+    };
+  }, [armadas]);
+
+  // Initialize price range when data is loaded
+  useEffect(() => {
+    if (armadas?.length > 0) {
+      setPriceRange([minPrice, maxPrice]);
+    }
+  }, [armadas?.length, minPrice, maxPrice]);
+
+  const filteredArmadas = useMemo(() => {
+    return armadas?.filter((armada) => {
+      const matchesSearch = 
+        armada.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        armada.merek.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesKapasitas = 
+        selectedKapasitas === "all" ||
+        armada.kapasitas.toString() === selectedKapasitas;
+
+      const matchesMerek =
+        selectedMerek === "all" ||
+        armada.merek === selectedMerek;
+
+      const matchesPrice = 
+        armada.harga >= priceRange[0] && armada.harga <= priceRange[1];
+
+      return matchesSearch && matchesKapasitas && matchesMerek && matchesPrice;
+    }) || [];
+  }, [armadas, searchTerm, selectedKapasitas, selectedMerek, priceRange]);
+
+  useEffect(() => {
+    setIsFilterActive(
+      selectedKapasitas !== "all" ||
+      selectedMerek !== "all" ||
+      priceRange[0] !== minPrice ||
+      priceRange[1] !== maxPrice
+    );
+  }, [selectedKapasitas, selectedMerek, priceRange, minPrice, maxPrice]);
+
+  const resetFilters = () => {
+    setSelectedKapasitas("all");
+    setSelectedMerek("all");
+    setPriceRange([minPrice, maxPrice]);
+    setIsFilterActive(false);
+  };
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -72,90 +153,215 @@ const ArmadaTable = () => {
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-  const deleteArmada = (id: string) => {
-    setArmadas(armadas.filter((armada) => armada.id !== id));
+  const handleDeleteClick = (id: string) => {
+    setSelectedArmadaId(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (selectedArmadaId) {
+      await deleteArmada(selectedArmadaId);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  if (isLoadingArmadas) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const formatPrice = (value: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      maximumFractionDigits: 0,
+    }).format(value);
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between">
-        <div className="flex items-center space-x-2">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold tracking-tight">Daftar Armada</h1>
+        <Link to="/admin/armada/add">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Tambah Armada
+          </Button>
+        </Link>
+      </div>
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center space-x-2 flex-1">
           <Input
-            placeholder="Search armadas..."
+            placeholder="Cari armada..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
           <Search className="h-4 w-4 text-gray-500" />
         </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by category" />
-          </SelectTrigger>
-          <SelectContent>
-            {categories.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              Filter
+              {isFilterActive && <span className="h-2 w-2 rounded-full bg-blue-600"></span>}
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Filter Armada</SheetTitle>
+            </SheetHeader>
+            <div className="py-4 space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Kapasitas Penumpang</label>
+                <Select 
+                  value={selectedKapasitas} 
+                  onValueChange={setSelectedKapasitas}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kapasitas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Kapasitas</SelectItem>
+                    {uniqueKapasitas.map((kapasitas) => (
+                      <SelectItem key={kapasitas} value={kapasitas.toString()}>
+                        {kapasitas} Orang
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Merek</label>
+                <Select 
+                  value={selectedMerek} 
+                  onValueChange={setSelectedMerek}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih merek" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Merek</SelectItem>
+                    {uniqueMerek.map((merek) => (
+                      <SelectItem key={merek} value={merek}>
+                        {merek}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-sm font-medium">Rentang Harga</label>
+                <Slider
+                  min={minPrice}
+                  max={maxPrice}
+                  step={100000}
+                  value={priceRange}
+                  onValueChange={(value: number[]) => setPriceRange(value as [number, number])}
+                  className="py-4"
+                />
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>{formatPrice(priceRange[0])}</span>
+                  <span>{formatPrice(priceRange[1])}</span>
+                </div>
+              </div>
+            </div>
+            <SheetFooter>
+              <Button 
+                variant="outline" 
+                onClick={resetFilters}
+                className="w-full flex items-center gap-2"
+              >
+                <FilterX className="h-4 w-4" />
+                Reset Filter
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[200px]">Name</TableHead>
-              <TableHead>Capacity</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Brand</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Gambar</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Kapasitas</TableHead>
+              <TableHead>Harga</TableHead>
+              <TableHead>Merek</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentItems.map((armada) => (
-              <TableRow key={armada.id}>
-                <TableCell className="font-medium">{armada.name}</TableCell>
-                <TableCell>{armada.capacity}</TableCell>
-                <TableCell>
-                  {armada.price.toLocaleString("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                  })}
-                </TableCell>
-                <TableCell>{armada.brand}</TableCell>
-                <TableCell>{armada.category}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => navigate(`/armadas/${armada.id}`)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate(`/armadas/${armada.id}/edit`)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => deleteArmada(armada.id)}>
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {currentItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">
+                  Tidak ada data armada yang sesuai dengan filter
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              currentItems.map((armada: IArmada) => (
+                <TableRow key={armada._id}>
+                  <TableCell>
+                    {armada.gambar && armada.gambar.length > 0 && (
+                      <img
+                        src={`http://localhost:5000/${armada.gambar[0]}`}
+                        alt={armada.nama}
+                        className="h-16 w-16 object-cover rounded-md"
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell className="font-medium">{armada.nama}</TableCell>
+                  <TableCell>{armada.kapasitas} orang</TableCell>
+                  <TableCell>
+                    {armada.harga.toLocaleString("id-ID", {
+                      style: "currency",
+                      currency: "IDR",
+                    })}
+                  </TableCell>
+                  <TableCell>{armada.merek}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Buka menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate(`/admin/armada/${armada._id}`)}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Lihat detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/admin/armada/${armada._id}/edit`)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteClick(armada._id)}
+                          className="text-red-600"
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
+
       <div className="flex justify-center space-x-2">
         {Array.from({ length: Math.ceil(filteredArmadas.length / itemsPerPage) }, (_, i) => (
           <Button
@@ -167,9 +373,32 @@ const ArmadaTable = () => {
           </Button>
         ))}
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Data armada akan dihapus secara permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                'Hapus'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
 
 export default ArmadaTable;
-

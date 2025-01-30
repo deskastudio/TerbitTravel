@@ -1,13 +1,13 @@
-"use client"
+//pages/destination/add.tsx
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { Loader2, Plus, X, ArrowLeft, PlusCircle } from 'lucide-react';
+import { useDestination } from "@/hooks/use-destination";
 
-import { useState } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { Loader2, Plus, X, ArrowLeft, PlusCircle } from 'lucide-react'
-import { Link } from "react-router-dom" // Import dari react-router-dom
-
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -16,101 +16,173 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddDestinationCategoryModal } from "./add-destination-category-modal"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 const destinationSchema = z.object({
-  name: z.string().min(2, {
+  nama: z.string().min(2, {
     message: "Nama destinasi harus memiliki minimal 2 karakter.",
   }),
-  location: z.string().min(5, {
+  lokasi: z.string().min(5, {
     message: "Lokasi harus memiliki minimal 5 karakter.",
   }),
-  description: z.string().min(10, {
+  deskripsi: z.string().min(10, {
     message: "Deskripsi harus memiliki minimal 10 karakter.",
   }),
-  images: z
-    .array(
-      z.object({
-        file: z
-          .any()
-          .refine((file) => file instanceof File && file.size <= MAX_FILE_SIZE, `Ukuran maksimum gambar adalah 2MB.`)
-          .refine(
-            (file) => file instanceof File && ACCEPTED_IMAGE_TYPES.includes(file.type),
-            "Hanya format .jpg, .jpeg, .png, dan .webp yang didukung."
-          ),
-      })
-    )
-    .min(1, "Minimal satu gambar diperlukan.")
-    .max(5, "Maksimal 5 gambar dapat diunggah."),
   category: z.string().min(1, "Pilih kategori untuk destinasi ini."),
-})
+  foto: z
+    .array(z.instanceof(File))
+    .min(1, "Minimal satu gambar diperlukan.")
+    .max(5, "Maksimal 5 gambar dapat diunggah.")
+    .refine(
+      (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
+      "Ukuran maksimum gambar adalah 2MB."
+    )
+    .refine(
+      (files) =>
+        files.every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
+      "Hanya format .jpg, .jpeg, .png dan .webp yang didukung."
+    ),
+});
 
-type DestinationFormValues = z.infer<typeof destinationSchema>
+const categorySchema = z.object({
+  title: z.string().min(2, "Nama kategori harus memiliki minimal 2 karakter."),
+});
 
-interface Category {
-  id: string;
-  name: string;
-}
+type DestinationFormValues = z.infer<typeof destinationSchema>;
+type CategoryFormValues = z.infer<typeof categorySchema>;
 
-export default function DestinationInputPage() {
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
-  const { toast } = useToast()
+export default function AddDestinationPage() {
+  const navigate = useNavigate();
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isSubmittingCategory, setIsSubmittingCategory] = useState(false);
+  const { createDestination, categories, isCreating, createCategory } = useDestination();
 
-  const form = useForm<DestinationFormValues>({
+  const destinationForm = useForm<DestinationFormValues>({
     resolver: zodResolver(destinationSchema),
     defaultValues: {
-      name: "",
-      location: "",
-      description: "",
-      images: [],
+      nama: "",
+      lokasi: "",
+      deskripsi: "",
       category: "",
+      foto: [],
     },
-  })
+  });
 
-  function onSubmit(data: DestinationFormValues) {
-    toast({
-      title: "Destinasi berhasil ditambahkan!",
-      description: "Detail destinasi telah berhasil disimpan.",
-    })
-    console.log(data)
-    // Di sini Anda biasanya akan mengirim data ke backend
-  }
+  const categoryForm = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      title: "",
+    },
+  });
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    const newImages = files.map((file) => ({ file }))
-    form.setValue("images", [...form.getValues("images"), ...newImages])
-    setImageFiles((prev) => [...prev, ...files])
-  }
+    const files = Array.from(e.target.files || []);
+    if (files.length + previewUrls.length > 5) {
+      destinationForm.setError("foto", {
+        message: "Maksimal 5 gambar dapat diunggah.",
+      });
+      return;
+    }
+
+    // Validate file sizes and types
+    const invalidFiles = files.filter(
+      file => file.size > MAX_FILE_SIZE || !ACCEPTED_IMAGE_TYPES.includes(file.type)
+    );
+
+    if (invalidFiles.length > 0) {
+      destinationForm.setError("foto", {
+        message: "Beberapa file tidak memenuhi persyaratan ukuran atau format yang diizinkan.",
+      });
+      return;
+    }
+
+    const newPreviewUrls = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((prev) => [...prev, ...newPreviewUrls]);
+    const currentFoto = destinationForm.getValues("foto");
+    destinationForm.setValue("foto", [...currentFoto, ...files], { shouldValidate: true });
+  };
 
   const removeImage = (index: number) => {
-    const newImages = form.getValues("images").filter((_, i) => i !== index)
-    form.setValue("images", newImages)
-    setImageFiles((prev) => prev.filter((_, i) => i !== index))
-  }
+    URL.revokeObjectURL(previewUrls[index]); // Cleanup URL object
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    const currentFoto = destinationForm.getValues("foto");
+    destinationForm.setValue(
+      "foto",
+      currentFoto.filter((_, i) => i !== index),
+      { shouldValidate: true }
+    );
+  };
 
-  const handleAddCategory = (newCategory: Category) => {
-    setCategories([...categories, newCategory])
-  }
+  const onSubmit = async (data: DestinationFormValues) => {
+    try {
+      await createDestination({
+        nama: data.nama,
+        lokasi: data.lokasi,
+        deskripsi: data.deskripsi,
+        category: data.category
+      }, data.foto);
+      // Cleanup preview URLs before navigating
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+      navigate("/admin/destination");
+    } catch (error) {
+      console.error("Error creating destination:", error);
+    }
+  };
+
+  const onSubmitCategory = async (data: CategoryFormValues) => {
+    try {
+      setIsSubmittingCategory(true);
+      await createCategory(data.title);
+      categoryForm.reset();
+      setIsCategoryModalOpen(false);
+    } catch (error) {
+      console.error("Error creating category:", error);
+    } finally {
+      setIsSubmittingCategory(false);
+    }
+  };
+  // Cleanup preview URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [previewUrls]);
 
   return (
-    <div className="">
+    <div className="container mx-auto py-8">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Link to="/admin-all-destination">Destinasi</Link>
+            <Button 
+              variant="link" 
+              onClick={() => navigate("/admin/destination")}
+              className="p-0"
+            >
+              Destinasi
+            </Button>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -118,186 +190,218 @@ export default function DestinationInputPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="flex items-center justify-between mt-2">
-        <h1 className="text-3xl font-bold tracking-tight">Destinasi Baru</h1>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Kategori
-          </Button>
-          <Link to="/admin-all-destination">
-            <Button variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
-            </Button>
-          </Link>
-        </div>
-      </div>
-      <Card className="mt-2">
+
+      <Card className="mt-4">
         <CardHeader>
-          <CardTitle>Detail Destinasi</CardTitle>
-          <CardDescription>Masukkan detail destinasi baru Anda.</CardDescription>
+          <CardTitle>Tambah Destinasi Baru</CardTitle>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <Form {...destinationForm}>
+            <form onSubmit={destinationForm.handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <FormField
-                  control={form.control}
-                  name="name"
+                  control={destinationForm.control}
+                  name="nama"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nama Destinasi</FormLabel>
                       <FormControl>
                         <Input placeholder="Masukkan nama destinasi" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Nama ini akan ditampilkan untuk destinasi Anda.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
-                  control={form.control}
-                  name="location"
+                  control={destinationForm.control}
+                  name="lokasi"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Lokasi</FormLabel>
                       <FormControl>
                         <Input placeholder="Masukkan lokasi destinasi" {...field} />
                       </FormControl>
-                      <FormDescription>
-                        Masukkan lokasi spesifik dari destinasi ini.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kategori</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih kategori" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Pilih kategori untuk destinasi ini.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <FormField
+                    control={destinationForm.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem className="flex-1 mr-4">
+                        <FormLabel>Kategori</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih kategori destinasi" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category._id} value={category._id}>
+                                {category.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCategoryModalOpen(true)}
+                    className="mt-8"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Tambah Kategori
+                  </Button>
+                </div>
+              </div>
+
               <FormField
-                control={form.control}
-                name="description"
+                control={destinationForm.control}
+                name="deskripsi"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Deskripsi</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Masukkan deskripsi destinasi"
-                        className="resize-none"
+                        className="resize-none h-32"
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Berikan deskripsi lengkap tentang destinasi ini.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
-                control={form.control}
-                name="images"
+                control={destinationForm.control}
+                name="foto"
                 render={() => (
                   <FormItem>
-                    <FormLabel>Gambar Destinasi</FormLabel>
+                    <FormLabel>Foto Destinasi</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                          {imageFiles.map((file, index) => (
+                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                          {previewUrls.map((url, index) => (
                             <div key={index} className="relative">
                               <img
-                                src={URL.createObjectURL(file)}
-                                alt={`Uploaded image ${index + 1}`}
-                                className="h-24 w-24 rounded-md object-cover"
+                                src={url}
+                                alt={`Preview ${index + 1}`}
+                                className="h-24 w-24 object-cover rounded-lg"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://placehold.co/200x200?text=Error+Loading+Image';
+                                }}
                               />
                               <Button
                                 type="button"
                                 variant="destructive"
                                 size="icon"
-                                className="absolute -right-2 -top-2"
+                                className="absolute -right-2 -top-2 h-6 w-6"
                                 onClick={() => removeImage(index)}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
                           ))}
-                          {imageFiles.length < 5 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="h-24 w-24"
-                              onClick={() => document.getElementById("image-upload")?.click()}
+                          {previewUrls.length < 5 && (
+                            <div
+                              className="flex items-center justify-center w-24 h-24 border-2 border-dashed rounded-lg border-gray-300 hover:border-primary cursor-pointer"
+                              onClick={() => document.getElementById('image-upload')?.click()}
                             >
-                              <Plus className="h-6 w-6" />
-                            </Button>
+                              <Plus className="h-6 w-6 text-gray-400" />
+                            </div>
                           )}
                         </div>
-                        <Input
+                        <input
                           id="image-upload"
                           type="file"
-                          accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                          accept={ACCEPTED_IMAGE_TYPES.join(',')}
                           onChange={handleImageUpload}
                           className="hidden"
                           multiple
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById("image-upload")?.click()}
-                        >
-                          Unggah Gambar
-                        </Button>
                       </div>
                     </FormControl>
                     <FormDescription>
-                      Unggah hingga 5 gambar. Ukuran masing-masing gambar tidak boleh lebih dari 2MB.
+                      Unggah minimal 1 dan maksimal 5 gambar (maks. 2MB per gambar)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Tambahkan Destinasi
-              </Button>
+
+              <div className="flex justify-end space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate(-1)}
+                  disabled={isCreating}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Kembali
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Tambah Destinasi
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>
       </Card>
-      <AddDestinationCategoryModal
-        isOpen={isAddCategoryModalOpen}
-        onClose={() => setIsAddCategoryModalOpen(false)}
-        onAddCategory={handleAddCategory}
-      />
-    </div>
-  )
-}
 
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tambah Kategori Baru</DialogTitle>
+            <DialogDescription>
+              Masukkan nama untuk kategori destinasi baru.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...categoryForm}>
+            <form onSubmit={categoryForm.handleSubmit(onSubmitCategory)} className="space-y-4">
+              <FormField
+                control={categoryForm.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama Kategori</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan nama kategori" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  disabled={isSubmittingCategory}
+                >
+                  Batal
+                </Button>
+                <Button type="submit" disabled={isSubmittingCategory}>
+                  {isSubmittingCategory && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Tambah Kategori
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

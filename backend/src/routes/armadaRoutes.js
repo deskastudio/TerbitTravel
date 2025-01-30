@@ -80,8 +80,8 @@ const router = express.Router();
  */
 router.post(
   "/add",
-  authMiddleware,
-  checkRole("admin"),
+  // authMiddleware,
+  // checkRole("admin"),
   upload.array("gambar"),
   validateArmadaData,
   parseKapasitas,
@@ -139,8 +139,8 @@ router.post(
  */
 router.put(
   "/update/:id",
-  authMiddleware,
-  checkRole("admin"),
+  // authMiddleware,
+  // checkRole("admin"),
   upload.array("gambar"),
   validateArmadaData,
   parseKapasitas,
@@ -170,7 +170,7 @@ router.put(
  *       500:
  *         description: Kesalahan server
  */
-router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
+router.delete("/delete/:id", deleteArmada);
 
 /**
  * @swagger
@@ -215,7 +215,7 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
  *       500:
  *         description: Kesalahan server
  */
-router.get("/getAll", authMiddleware, checkRole("admin"), getAllArmada);
+router.get("/getAll", getAllArmada);
 
 /**
  * @swagger
@@ -240,6 +240,6 @@ router.get("/getAll", authMiddleware, checkRole("admin"), getAllArmada);
  *       500:
  *         description: Kesalahan server
  */
-router.get("/:id", authMiddleware, checkRole("admin"), getArmadaById);
+router.get("/:id",  getArmadaById);
 
 export default router;

@@ -4,10 +4,18 @@ import { parseKapasitas } from "./parseKapasitas.js"; // Mengimpor middleware pa
 export const validateArmadaData = [
   // Memastikan ada file gambar
   (req, res, next) => {
-    if (!req.files || req.files.length < 1) {
-      return res
-        .status(400)
-        .json({ message: "At least one image is required" });
+    // Skip image validation for PUT/update requests if no new images
+    if (req.method === 'PUT' && (!req.files || req.files.length === 0)) {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      return next();
+    }
+
+    // For POST/create requests, require at least one image
+    if (req.method === 'POST' && (!req.files || req.files.length < 1)) {
+      return res.status(400).json({ message: "At least one image is required" });
     }
     next();
   },
@@ -46,7 +54,5 @@ export const validateArmadaData = [
     }
     next();
   },
-
-  // Memanggil middleware parseKapasitas untuk memastikan kapasitas menjadi angka
   parseKapasitas,
 ];

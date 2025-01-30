@@ -1,11 +1,10 @@
-"use client"
-
 import { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useFieldArray } from "react-hook-form"
 import * as z from "zod"
-import { Loader2, Plus, X, ArrowLeft, ChevronDown, PlusCircle } from 'lucide-react'
-import { Link } from "react-router-dom"
+import { Loader2, Plus, X, ArrowLeft } from 'lucide-react'
+import { Link, useNavigate } from "react-router-dom"
+import { useHotel } from "@/hooks/use-hotel"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,29 +18,36 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddHotelCategoryModal } from "./add-hotel-category-modal"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2MB
+const MAX_FILE_SIZE = 2 * 1024 * 1024
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
 
 const hotelSchema = z.object({
-  name: z.string().min(2, {
+  nama: z.string().min(2, {
     message: "Nama hotel harus memiliki minimal 2 karakter.",
   }),
-  address: z.string().min(5, {
+  alamat: z.string().min(5, {
     message: "Alamat harus memiliki minimal 5 karakter.",
   }),
-  stars: z.string().regex(/^[1-5]$/, { message: "Bintang harus berupa angka antara 1 hingga 5." }),
-  price: z
-    .preprocess((val) => Number(val), z.number().positive({
-      message: "Harga harus berupa angka positif.",
-    })),
-  category: z.string().min(1, "Pilih kategori untuk hotel ini."),
-  facilities: z
+  bintang: z.number().min(1).max(5),
+  harga: z.number().positive({
+    message: "Harga harus berupa angka positif.",
+  }),
+  fasilitas: z
     .array(
       z.object({
         name: z.string().min(2, {
@@ -51,85 +57,91 @@ const hotelSchema = z.object({
     )
     .min(1, "Minimal satu fasilitas diperlukan."),
   images: z
-    .array(
-      z.object({
-        file: z
-          .any()
-          .refine((file) => file?.size <= MAX_FILE_SIZE, `Ukuran maksimum gambar adalah 2MB.`)
-          .refine(
-            (file) => ACCEPTED_IMAGE_TYPES.includes(file?.type),
-            "Hanya format .jpg, .jpeg, .png, dan .webp yang didukung."
-          ),
-      })
-    )
+    .array(z.instanceof(File))
     .min(1, "Minimal satu gambar diperlukan.")
-    .max(5, "Maksimal 5 gambar dapat diunggah."),
+    .max(5, "Maksimal 5 gambar dapat diunggah.")
+    .refine(
+      (files) => files.every((file) => file.size <= MAX_FILE_SIZE),
+      "Ukuran maksimum gambar adalah 2MB."
+    )
+    .refine(
+      (files) => files.every((file) => ACCEPTED_IMAGE_TYPES.includes(file.type)),
+      "Hanya format .jpg, .jpeg, .png, dan .webp yang didukung."
+    ),
 })
 
 type HotelFormValues = z.infer<typeof hotelSchema>
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-export default function HotelInputPage() {
+export default function AddHotelPage() {
   const { toast } = useToast()
-  const [imageFiles, setImageFiles] = useState<File[]>([])
-  const [selectedStars, setSelectedStars] = useState<string>("1") // Default value for stars
-  const [categories, setCategories] = useState<Category[]>([])
-  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false)
+  const navigate = useNavigate()
+  const { createHotel } = useHotel()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<HotelFormValues>({
     resolver: zodResolver(hotelSchema),
     defaultValues: {
-      name: "",
-      address: "",
-      stars: "1",
-      price: 0,
-      category: "",
-      facilities: [{ name: "" }],
+      nama: "",
+      alamat: "",
+      bintang: 1,
+      harga: 0,
+      fasilitas: [{ name: "" }],
       images: [],
     },
   })
 
   const { fields: facilityFields, append: appendFacility, remove: removeFacility } = useFieldArray({
     control: form.control,
-    name: "facilities",
+    name: "fasilitas",
   })
 
-  function onSubmit(data: HotelFormValues) {
-    toast({
-      title: "Hotel berhasil ditambahkan!",
-      description: "Detail hotel telah berhasil disimpan.",
-    })
-    console.log(data)
-    // Kirim data ke backend di sini
+  async function onSubmit(data: HotelFormValues) {
+    try {
+      setIsSubmitting(true)
+      
+      await createHotel({
+        nama: data.nama,
+        alamat: data.alamat,
+        bintang: data.bintang,
+        harga: data.harga,
+        fasilitas: data.fasilitas.map(f => f.name),
+        gambar: data.images
+      })
+
+      toast({
+        title: "Success",
+        description: "Hotel berhasil ditambahkan!"
+      })
+
+      navigate("/admin/hotel")
+    } catch (error) {
+      console.error('Error:', error)
+      toast({
+        title: "Error",
+        description: "Terjadi kesalahan saat menyimpan data hotel.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const newImages = files.map((file) => ({ file }))
-    form.setValue("images", [...form.getValues("images"), ...newImages])
-    setImageFiles((prev) => [...prev, ...files])
+    form.setValue("images", [...form.getValues("images"), ...files])
   }
 
   const removeImage = (index: number) => {
-    const newImages = form.getValues("images").filter((_, i) => i !== index)
-    form.setValue("images", newImages)
-    setImageFiles((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const handleAddCategory = (newCategory: Category) => {
-    setCategories([...categories, newCategory])
+    const currentImages = form.getValues("images")
+    form.setValue("images", currentImages.filter((_, i) => i !== index))
   }
 
   return (
-    <div className="">
+    <div className="container mx-auto py-6 space-y-4">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Link to="/admin-all-hotel">Hotel</Link>
+            <Link to="/admin/hotel">Hotel</Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -137,20 +149,19 @@ export default function HotelInputPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="flex items-center justify-between mt-2">
+      
+      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Hotel Baru</h1>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={() => setIsAddCategoryModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Tambah Kategori
-          </Button>
-          <Link to="/admin-all-hotel">
+          <Link to="/admin/hotel">
             <Button variant="outline">
               <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
             </Button>
           </Link>
         </div>
       </div>
-      <Card className="mt-2">
+
+      <Card>
         <CardHeader>
           <CardTitle>Detail Hotel</CardTitle>
           <CardDescription>Masukkan detail hotel baru Anda.</CardDescription>
@@ -160,7 +171,7 @@ export default function HotelInputPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="name"
+                name="nama"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nama Hotel</FormLabel>
@@ -173,7 +184,7 @@ export default function HotelInputPage() {
               />
               <FormField
                 control={form.control}
-                name="address"
+                name="alamat"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Alamat</FormLabel>
@@ -184,50 +195,21 @@ export default function HotelInputPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="stars"
+                  name="bintang"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Bintang</FormLabel>
                       <FormControl>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="w-full justify-between">
-                              {selectedStars} <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            {["1", "2", "3", "4", "5"].map((star) => (
-                              <DropdownMenuItem
-                                key={star}
-                                onClick={() => {
-                                  setSelectedStars(star)
-                                  field.onChange(star) // Update form value
-                                }}
-                              >
-                                {star}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Harga</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="Masukkan harga per malam (Rp)"
+                        <Input 
+                          type="number" 
+                          min={1} 
+                          max={5} 
+                          placeholder="1-5" 
                           {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
                         />
                       </FormControl>
                       <FormMessage />
@@ -236,43 +218,50 @@ export default function HotelInputPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="category"
+                  name="harga"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Kategori</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih kategori" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Harga</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Masukkan harga per malam (Rp)"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
+              
               <div>
-                <FormLabel>Fasilitas</FormLabel>
+                <FormLabel className="block mb-4">Fasilitas</FormLabel>
                 <div className="space-y-4">
                   {facilityFields.map((field, index) => (
                     <div key={field.id} className="flex items-center gap-4">
-                      <Input
-                        placeholder="Masukkan nama fasilitas"
-                        {...form.register(`facilities.${index}.name` as const)}
+                      <FormField
+                        control={form.control}
+                        name={`fasilitas.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <Input
+                                placeholder="Masukkan nama fasilitas"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
                       <Button
                         type="button"
                         variant="destructive"
                         size="icon"
                         onClick={() => removeFacility(index)}
+                        disabled={facilityFields.length === 1}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -289,20 +278,21 @@ export default function HotelInputPage() {
                   Tambahkan Fasilitas
                 </Button>
               </div>
+
               <FormField
                 control={form.control}
                 name="images"
-                render={() => (
+                render={({ field }) => (
                   <FormItem>
                     <FormLabel>Gambar Hotel</FormLabel>
                     <FormControl>
                       <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                          {imageFiles.map((file, index) => (
+                          {field.value.map((file, index) => (
                             <div key={index} className="relative">
                               <img
                                 src={URL.createObjectURL(file)}
-                                alt={`Uploaded image ${index + 1}`}
+                                alt={`Preview ${index + 1}`}
                                 className="h-24 w-24 rounded-md object-cover"
                               />
                               <Button
@@ -317,43 +307,44 @@ export default function HotelInputPage() {
                             </div>
                           ))}
                         </div>
-                        <Input
-                          id="image-upload"
-                          type="file"
-                          accept={ACCEPTED_IMAGE_TYPES.join(",")}
-                          onChange={handleImageUpload}
-                          className="hidden"
-                          multiple
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById("image-upload")?.click()}
-                        >
-                          Unggah Gambar
-                        </Button>
+                        <div className="flex items-center gap-4">
+                          <Input
+                            id="image-upload"
+                            type="file"
+                            accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                            onChange={handleImageUpload}
+                            className="cursor-pointer"
+                            multiple
+                            max={5}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          Maksimum 5 gambar. Format yang didukung: JPG, JPEG, PNG, WEBP. Ukuran maksimum: 2MB per gambar.
+                        </p>
                       </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Tambahkan Hotel
-              </Button>
+
+              <div className="flex justify-end space-x-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/hotel')}
+                >
+                  Batal
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Tambahkan Hotel
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>
       </Card>
-      <AddHotelCategoryModal
-        isOpen={isAddCategoryModalOpen}
-        onClose={() => setIsAddCategoryModalOpen(false)}
-        onAddCategory={handleAddCategory}
-      />
     </div>
   )
 }
-

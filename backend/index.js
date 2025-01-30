@@ -20,6 +20,8 @@ import packageCategoryRoutes from "./src/routes/packageCategoryRoute.js";
 import destinationCategoryRoutes from "./src/routes/destinationCategoryRoute.js";
 import teamRoutes from "./src/routes/teamRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
+import cors from "cors";
+
 
 // Load environment variables from .env file
 dotenv.config();
@@ -27,11 +29,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// CORS Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'];
+
 // Middleware
 app.use(express.json());
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 // Routes
-
 app.use("/user", userRoutes);
 app.use("/admin", adminRoutes);
 app.use("/contact", contactRoutes);
@@ -52,16 +62,29 @@ app.use("/destination-category", destinationCategoryRoutes);
 app.use("/team", teamRoutes);
 app.use("/orders", orderRoutes);
 
-//swager
+// Error handling middleware
+app.use((err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    res.status(401).json({ error: 'Invalid token' });
+  } else if (err.name === 'CrossOriginResourceSharingError') {
+    res.status(403).json({ error: 'CORS error' });
+  } else {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+  }
+});
+
+//swagger
 setupSwagger(app);
 
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGODB_URI, {})
-  .then(() => console.log("MongoDB connected"))
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("MongoDB connected successfully"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
 // Server Listening
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
 });

@@ -1,12 +1,5 @@
-'use client'
-
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -14,257 +7,239 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { toast } from "@/hooks/use-toast"
-import { MoreHorizontal, Pencil, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Search, MoreHorizontal, Trash, Eye } from 'lucide-react';
+import { useUser } from "@/hooks/use-user";
 
-const userSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  instansi: z.string().min(1, "Instansi is required"),
-  status: z.enum(['verified', 'unverified', 'incomplete_profile']),
-})
+const ITEMS_PER_PAGE = 10;
 
-type User = z.infer<typeof userSchema>
+const UserTable = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-const initialUsers: User[] = [
-  { id: "1", name: "John Doe", email: "john@example.com", instansi: "ABC Corp", status: "verified" },
-  { id: "2", name: "Jane Smith", email: "jane@example.com", instansi: "XYZ Inc", status: "unverified" },
-  { id: "3", name: "Alice Johnson", email: "alice@example.com", instansi: "123 Ltd", status: "incomplete_profile" },
-]
+  const {
+    users,
+    loading,
+    error,
+    totalPages,
+    currentPage,
+    setCurrentPage,
+    deleteUser,
+    isDeleting
+  } = useUser({
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    search: searchTerm,
+    status: statusFilter === "all" ? undefined : statusFilter
+  });
 
-const DataUserPage = () => {
-  const [users, setUsers] = useState<User[]>(initialUsers)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<User | null>(null)
-  const itemsPerPage = 5
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<User>({
-    resolver: zodResolver(userSchema),
-  })
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
 
-  const onSubmit = (data: User) => {
-    if (editingUser) {
-      setUsers(users.map(u => u.id === editingUser.id ? { ...data, id: editingUser.id } : u))
-      toast({ title: "User updated", description: "The user has been updated successfully." })
-    } else {
-      const newUser = { ...data, id: Date.now().toString() }
-      setUsers([...users, newUser])
-      toast({ title: "User added", description: "A new user has been added successfully." })
+  const handleDeleteClick = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (selectedUserId) {
+      await deleteUser(selectedUserId);
+      setIsDeleteDialogOpen(false);
+      setSelectedUserId(null);
     }
-    setIsAddModalOpen(false)
-    setEditingUser(null)
-    reset()
-  }
+  };
 
-  const handleEdit = (user: User) => {
-    setEditingUser(user)
-    setIsAddModalOpen(true)
-  }
-
-  const handleDelete = (id: string) => {
-    setUsers(users.filter(user => user.id !== id))
-    toast({ title: "User deleted", description: "The user has been deleted successfully." })
-  }
-
-  const filteredUsers = users
-    .filter(user => 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.instansi.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter(user => statusFilter === 'all' ? true : user.status === statusFilter)
-
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
-
-  const getStatusBadge = (status: User['status']) => {
-    const statusClasses = {
-      verified: "bg-green-100 text-green-800",
-      unverified: "bg-yellow-100 text-yellow-800",
-      incomplete_profile: "bg-red-100 text-red-800",
-    }
+  if (loading) {
     return (
-      <span
-        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-          statusClasses[status]
-        }`}
-      >
-        {status.replace('_', ' ')}
-      </span>
-    )
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Users</h1>
-        <Button onClick={() => setIsAddModalOpen(true)}>Add User</Button>
+        <h1 className="text-2xl font-bold">Daftar User</h1>
       </div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex-1 max-w-sm">
-          <Input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-          />
+
+      {/* Filter Section */}
+      <div className="flex gap-4 mb-6">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari user..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-8"
+            />
+          </div>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter} onValueChange={handleStatusFilter}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder="Filter status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">Semua Status</SelectItem>
             <SelectItem value="verified">Verified</SelectItem>
             <SelectItem value="unverified">Unverified</SelectItem>
             <SelectItem value="incomplete_profile">Incomplete Profile</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Instansi</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.instansi}</TableCell>
-                <TableCell>{getStatusBadge(user.status)}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => console.log('View details', user.id)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(user)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleDelete(user.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Previous
-        </Button>
-        <div className="flex-1 text-center text-sm text-muted-foreground">
-          Page {currentPage} of {totalPages}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingUser ? 'Edit User' : 'Add New User'}</DialogTitle>
-            <DialogDescription>
-              {editingUser ? 'Edit the user details below.' : 'Add a new user by filling out the form below.'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" {...register('name')} defaultValue={editingUser?.name} />
-              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register('email')} defaultValue={editingUser?.email} />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="instansi">Instansi</Label>
-              <Input id="instansi" {...register('instansi')} defaultValue={editingUser?.instansi} />
-              {errors.instansi && <p className="text-red-500 text-sm mt-1">{errors.instansi.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select onValueChange={(value) => register('status').onChange({ target: { value } })} defaultValue={editingUser?.status}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="verified">Verified</SelectItem>
-                  <SelectItem value="unverified">Unverified</SelectItem>
-                  <SelectItem value="incomplete_profile">Incomplete Profile</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.status && <p className="text-red-500 text-sm mt-1">{errors.status.message}</p>}
-            </div>
-            <Button type="submit">{editingUser ? 'Update User' : 'Add User'}</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
-}
+      {error ? (
+        <div className="text-center text-red-500 py-4">{error.message}</div>
+      ) : (
+        <>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>No. Telp</TableHead>
+                  <TableHead>Instansi</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-6">
+                      Tidak ada data user
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user._id}>
+                      <TableCell className="font-medium">{user.nama}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.noTelp}</TableCell>
+                      <TableCell>{user.instansi || "-"}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                          user.status === "verified"
+                            ? "bg-green-100 text-green-800"
+                            : user.status === "unverified"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}>
+                          {user.status || "unverified"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => navigate(`/admin/user/${user._id}`)}>
+                              <Eye className="mr-2 h-4 w-4" /> Lihat Detail
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteClick(user._id)}
+                              className="text-red-600"
+                            >
+                              <Trash className="mr-2 h-4 w-4" /> Hapus
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
-export default DataUserPage;
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-4">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus user ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Menghapus...
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
+
+export default UserTable;
