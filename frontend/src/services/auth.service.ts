@@ -11,11 +11,26 @@ const authService = {
 
   // Method untuk login menggunakan form
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await axios.post(`${API_URL}/user/login`, data);
-    if (response.data.data?.token) {
-      this.setAuthData(response.data.data.token, response.data.data.user);
+    try {
+      const response = await axios.post(`${API_URL}/user/login`, data);
+      
+      // Jika login berhasil, simpan data user dan token
+      if (response.data?.token) {
+        this.setAuthData(response.data.token, response.data.user);
+      }
+      
+      return {
+        status: 'success',
+        message: response.data.message || 'Login berhasil',
+        data: response.data
+      };
+    } catch (error: any) {
+      // Handle specific error cases
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error('Terjadi kesalahan saat login');
     }
-    return response.data;
   },
 
   // Method untuk registrasi menggunakan form

@@ -24,16 +24,20 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await authService.login({ email, password });
-      set({ 
-        user: response.data?.user || null,
-        isAuthenticated: true,
-        isLoading: false 
-      });
+      
+      if (response.status === 'success') {
+        set({ 
+          user: response.data?.user,
+          isAuthenticated: true,
+          isLoading: false 
+        });
+        return response;
+      }
+      
+      throw new Error(response.message || 'Login gagal');
     } catch (error: any) {
-      set({ 
-        error: error.response?.data?.message || 'Login failed',
-        isLoading: false 
-      });
+      const errorMessage = error.message || 'Login gagal';
+      set({ error: errorMessage, isLoading: false });
       throw error;
     }
   },
