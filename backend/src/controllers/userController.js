@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import path from "path";
 import fs from "fs";
-import crypto from "crypto";
 import mongoose from "mongoose";
 import { fileURLToPath } from "url";
 import { google } from "googleapis";
@@ -124,7 +123,6 @@ export const lengkapiProfil = async (req, res) => {
   }
 };
 
-// Keep other existing functions (verifyOTP, loginUser, etc.)
 export const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
 
@@ -194,7 +192,6 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// Add this to userController.js
 export const resendOTP = async (req, res) => {
   try {
     const { email } = req.body;
@@ -223,9 +220,6 @@ export const resendOTP = async (req, res) => {
   }
 };
 
-// Keep the rest of the existing functions (getAllUsers, getUserById, updateUser, deleteUser)
-
-// User Management
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find({}, "-password -otp -otpExpires");

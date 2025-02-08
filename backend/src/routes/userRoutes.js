@@ -193,7 +193,6 @@ router.get(
   googleCallback
 );
 
-
 /**
  * @swagger
  * /user/dataUser:
@@ -324,5 +323,7 @@ router.delete("/:userId", authMiddleware, deleteUser);
  *         description: Profile completed successfully
  */
 router.post("/lengkapi-profil/:userId", authMiddleware, lengkapiProfil);
+
+router.post('/user/auth/google/callback', googleCallback);
 
 export default router;
