@@ -71,15 +71,25 @@ const LoginPage = () => {
   const handleGoogleSuccess = async (response: any) => {
     try {
       setIsLoading(true);
-      await googleLogin(response.credential);
+      const result = await googleLogin(response.credential);
       
       toast({
         title: "Berhasil",
         description: "Login dengan Google berhasil",
       });
       
-      navigate('/dashboard');
+      navigate('/');
     } catch (error: any) {
+      if (error.message.includes('Akun tidak ditemukan')) {
+        toast({
+          title: "Error",
+          description: "Akun tidak ditemukan. Silakan register terlebih dahulu.",
+          variant: "destructive",
+        });
+        navigate('/register');
+        return;
+      }
+
       toast({
         title: "Error",
         description: error.message || "Gagal login dengan Google",

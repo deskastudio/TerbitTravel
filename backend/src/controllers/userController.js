@@ -38,12 +38,26 @@ export const registerUser = async (req, res) => {
   }
 
   try {
+    // Cek user yang sudah ada
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "Email sudah terdaftar." });
     }
 
+    // Generate OTP
     const otp = generateOTP();
+    
+    // Kirim email OTP
+    try {
+      await sendOTPEmail(email, otp);
+    } catch (emailError) {
+      console.error('Error sending OTP email:', emailError);
+      return res.status(500).json({ 
+        message: "Gagal mengirim email OTP. Silakan coba lagi." 
+      });
+    }
+
+    // Buat user baru
     const newUser = new User({
       nama,
       email,
@@ -58,13 +72,17 @@ export const registerUser = async (req, res) => {
     });
 
     await newUser.save();
-    await sendOTPEmail(email, otp);
 
     res.status(201).json({
       message: "Registrasi berhasil. Silakan cek email Anda untuk kode OTP.",
+      email: email // Mengembalikan email untuk digunakan di frontend
     });
   } catch (error) {
-    res.status(500).json({ message: "Error dalam registrasi user", error });
+    console.error('Registration error:', error);
+    res.status(500).json({ 
+      message: "Error dalam registrasi user", 
+      error: error.message 
+    });
   }
 };
 
@@ -206,17 +224,32 @@ export const resendOTP = async (req, res) => {
     }
 
     const otp = generateOTP();
+    
+    // Kirim email OTP baru
+    try {
+      await sendOTPEmail(email, otp);
+    } catch (emailError) {
+      console.error('Error sending OTP email:', emailError);
+      return res.status(500).json({ 
+        message: "Gagal mengirim ulang OTP. Silakan coba lagi." 
+      });
+    }
+
+    // Update OTP di database
     user.otp = otp;
     user.otpExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
 
-    await sendOTPEmail(email, otp);
-
     res.status(200).json({
       message: "Kode OTP baru telah dikirim ke email Anda.",
+      email: email
     });
   } catch (error) {
-    res.status(500).json({ message: "Error dalam mengirim ulang OTP", error });
+    console.error('Resend OTP error:', error);
+    res.status(500).json({ 
+      message: "Error dalam mengirim ulang OTP", 
+      error: error.message 
+    });
   }
 };
 

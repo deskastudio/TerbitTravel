@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 
+
 const registerSchema = z.object({
   nama: z.string().min(1, "Nama tidak boleh kosong"),
   email: z.string().min(1, "Email tidak boleh kosong").email("Format email tidak valid"),
@@ -46,7 +47,7 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-  const { register: registerUser, googleLogin } = useAuth();
+  const { register: registerUser, googleRegister } = useAuth();
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -119,22 +120,40 @@ const RegisterPage = () => {
   const handleGoogleSuccess = async (response: any) => {
     try {
       setIsLoading(true);
-      await googleLogin(response.credential);  // Fungsi untuk login menggunakan Google
+      console.log('Google response:', response);
+      
+      const result = await googleRegister(response.credential);
+      console.log('Register result:', result);
+      
       toast({
-        title: "Success",
-        description: "Logged in with Google successfully",
+        title: "Berhasil",
+        description: "Registrasi dengan Google berhasil",
       });
-      navigate('/dashboard');  // Redirect ke halaman dashboard setelah berhasil login
+      
+      navigate('/');
     } catch (error: any) {
+      console.error('Google register error:', error);
+      
+      if (error.message.includes('Email sudah terdaftar')) {
+        toast({
+          title: "Info",
+          description: "Email sudah terdaftar. Silakan login menggunakan Google.",
+          variant: "destructive",
+        });
+        navigate('/login');
+        return;
+      }
+  
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Gagal registrasi dengan Google",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">

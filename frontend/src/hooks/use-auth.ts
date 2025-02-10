@@ -7,9 +7,10 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
-  register: (formData: FormData) => Promise<void>;
+  login: (email: string, password: string) => Promise<any>;
+  googleLogin: (credential: string) => Promise<any>;
+  googleRegister: (credential: string) => Promise<any>;
+  register: (formData: FormData) => Promise<any>;
   logout: () => void;
   clearError: () => void;
 }
@@ -24,20 +25,14 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await authService.login({ email, password });
-      
-      if (response.status === 'success') {
-        set({ 
-          user: response.data?.user,
-          isAuthenticated: true,
-          isLoading: false 
-        });
-        return response;
-      }
-      
-      throw new Error(response.message || 'Login gagal');
+      set({ 
+        user: response.data?.user,
+        isAuthenticated: true,
+        isLoading: false 
+      });
+      return response;
     } catch (error: any) {
-      const errorMessage = error.message || 'Login gagal';
-      set({ error: errorMessage, isLoading: false });
+      set({ error: error.message, isLoading: false });
       throw error;
     }
   },
@@ -47,15 +42,30 @@ export const useAuth = create<AuthState>((set) => ({
       set({ isLoading: true, error: null });
       const response = await authService.googleLogin(credential);
       set({ 
-        user: response.data?.user || null,
+        user: response.data?.user,
         isAuthenticated: true,
         isLoading: false 
       });
+      return response;
     } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  googleRegister: async (credential: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await authService.googleRegister(credential);
       set({ 
-        error: error.response?.data?.message || 'Google login failed',
+        user: response.data?.user,
+        isAuthenticated: true,
         isLoading: false 
       });
+
+      return response;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
       throw error;
     }
   },
@@ -67,17 +77,7 @@ export const useAuth = create<AuthState>((set) => ({
       set({ isLoading: false });
       return response;
     } catch (error: any) {
-      // Jika error message menunjukkan registrasi berhasil, abaikan error
-      if (error.response?.status === 500 && error.response?.data?.message === 'Error dalam registrasi user') {
-        set({ isLoading: false });
-        return {
-          status: 'success',
-          message: 'Registrasi berhasil'
-        };
-      }
-      
-      const errorMessage = error.message || "Terjadi kesalahan saat registrasi";
-      set({ error: errorMessage, isLoading: false });
+      set({ error: error.message, isLoading: false });
       throw error;
     }
   },

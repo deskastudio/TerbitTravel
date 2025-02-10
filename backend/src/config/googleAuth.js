@@ -1,11 +1,21 @@
 import { google } from "googleapis";
-import nodemailer from "nodemailer";
+import dotenv from 'dotenv';
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_CALLBACK_URL
-);
+dotenv.config();
+
+const createOAuth2Client = () => {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_CALLBACK_URL) {
+    throw new Error('Missing required OAuth2 credentials');
+  }
+
+  return new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_CALLBACK_URL
+  );
+};
+
+const oauth2Client = createOAuth2Client();
 
 const scopes = [
   "https://www.googleapis.com/auth/userinfo.email",
@@ -21,35 +31,16 @@ export const getGoogleAuthURL = () => {
 };
 
 export const getGoogleUser = async (code) => {
-  const { tokens } = await oauth2Client.getToken(code);
-  oauth2Client.setCredentials(tokens);
-
-  const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
-  const { data } = await oauth2.userinfo.get();
-
-  return data;
-};
-
-// Setup nodemailer dengan OAuth2
-export const createTransporter = async () => {
   try {
-    const accessToken = await oauth2Client.getAccessToken();
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.EMAIL_FROM,
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken.token,
-      },
-    });
+    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+    const { data } = await oauth2.userinfo.get();
 
-    return transporter;
+    return data;
   } catch (error) {
-    console.error("Error creating transporter:", error);
+    console.error("Error getting Google user:", error);
     throw error;
   }
 };

@@ -1,70 +1,63 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
-const userSchema = new mongoose.Schema(
-  {
-    nama: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      lowercase: true,
-    },
-    password: {
-      type: String,
-      required: true,
-      minlength: 6,
-    },
-    alamat: {
-      type: String,
-      required: function () {
-        return !this.googleId; // Required only for manual registration
-      },
-      trim: true,
-    },
-    noTelp: {
-      type: String,
-      required: function () {
-        return !this.googleId;
-      },
-      trim: true,
-    },
-    instansi: {
-      type: String,
-      trim: true,
-    },
-    foto: {
-      type: String,
-    },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    otp: {
-      type: String,
-    },
-    otpExpires: {
-      type: Date,
-    },
-    googleId: {
-      type: String,
-      sparse: true,
-      unique: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
+const userSchema = new mongoose.Schema({
+  nama: {
+    type: String,
+    required: true,
+    trim: true,
   },
-  {
-    timestamps: true,
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+  },
+  password: {
+    type: String,
+    required: function() {
+      return !this.googleId; // Password hanya required jika bukan user Google
+    },
+    minlength: 6,
+  },
+  alamat: {
+    type: String,
+    required: function() {
+      return !this.googleId; // Alamat opsional untuk user Google
+    },
+    trim: true,
+  },
+  noTelp: {
+    type: String,
+    required: function() {
+      return !this.googleId; // No telp opsional untuk user Google
+    },
+    trim: true,
+  },
+  instansi: {
+    type: String,
+    trim: true,
+  },
+  foto: {
+    type: String,
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true,
+  },
+  role: {
+    type: String,
+    default: 'user'
   }
-);
+}, {
+  timestamps: true
+});
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {

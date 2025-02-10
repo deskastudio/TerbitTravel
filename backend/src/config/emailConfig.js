@@ -1,10 +1,17 @@
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const OAuth2 = google.auth.OAuth2;
 
 const createTransporter = async () => {
   try {
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REFRESH_TOKEN) {
+      throw new Error('Missing required OAuth2 credentials');
+    }
+
     const oauth2Client = new OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
@@ -16,6 +23,9 @@ const createTransporter = async () => {
     });
 
     const accessToken = await oauth2Client.getAccessToken();
+    if (!accessToken?.token) {
+      throw new Error('Failed to get access token');
+    }
 
     return nodemailer.createTransport({
       service: "gmail",
@@ -34,10 +44,13 @@ const createTransporter = async () => {
   }
 };
 
+// Di emailConfig.js
 export const sendOTPEmail = async (email, otp) => {
   try {
+    console.log('Creating email transporter...');
     const transporter = await createTransporter();
-
+    
+    console.log('Sending email to:', email);
     const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
@@ -55,8 +68,8 @@ export const sendOTPEmail = async (email, otp) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log("OTP email sent successfully");
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info.messageId);
   } catch (error) {
     console.error("Error sending OTP email:", error);
     throw error;
