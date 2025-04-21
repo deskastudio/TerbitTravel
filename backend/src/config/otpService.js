@@ -33,6 +33,8 @@ export const sendOTP = async (email) => {
   }
 };
 
+//test
+
 // Fungsi untuk memverifikasi OTP
 export const verifyOTP = async (email, otp) => {
   try {
