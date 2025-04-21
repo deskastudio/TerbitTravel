@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { google } from "googleapis";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -8,8 +8,12 @@ const OAuth2 = google.auth.OAuth2;
 
 const createTransporter = async () => {
   try {
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REFRESH_TOKEN) {
-      throw new Error('Missing required OAuth2 credentials');
+    if (
+      !process.env.GOOGLE_CLIENT_ID ||
+      !process.env.GOOGLE_CLIENT_SECRET ||
+      !process.env.GOOGLE_REFRESH_TOKEN
+    ) {
+      throw new Error("Missing required OAuth2 credentials");
     }
 
     const oauth2Client = new OAuth2(
@@ -23,8 +27,16 @@ const createTransporter = async () => {
     });
 
     const accessToken = await oauth2Client.getAccessToken();
+
+    // 🔍 DEBUG LOGGING
+    console.log("📥 [OAuth2 Debug]");
+    console.log("Client ID:", process.env.GOOGLE_CLIENT_ID);
+    console.log("Email from:", process.env.EMAIL_FROM);
+    console.log("Refresh token starts with:", process.env.GOOGLE_REFRESH_TOKEN?.slice(0, 10));
+    console.log("Access token:", accessToken?.token);
+
     if (!accessToken?.token) {
-      throw new Error('Failed to get access token');
+      throw new Error("Failed to get access token");
     }
 
     return nodemailer.createTransport({
@@ -39,20 +51,18 @@ const createTransporter = async () => {
       },
     });
   } catch (error) {
-    console.error("Error creating transporter:", error);
+    console.error("❌ Error creating transporter:", error);
     throw error;
   }
 };
 
-// Di emailConfig.js
 export const sendOTPEmail = async (email, otp) => {
   try {
-    console.log('Creating email transporter...');
+    console.log("📨 Sending email to:", email);
     const transporter = await createTransporter();
-    
-    console.log('Sending email to:', email);
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from: `Terbit Travel <${process.env.EMAIL_FROM}>`,
       to: email,
       subject: "Verifikasi Email Travel App",
       html: `
@@ -69,9 +79,9 @@ export const sendOTPEmail = async (email, otp) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', info.messageId);
+    console.log("✅ Email sent successfully:", info.messageId);
   } catch (error) {
-    console.error("Error sending OTP email:", error);
+    console.error("❌ Error sending OTP email:", error);
     throw error;
   }
 };

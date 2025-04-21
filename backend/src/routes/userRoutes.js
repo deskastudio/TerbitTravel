@@ -227,7 +227,8 @@ router.post("/auth/google/login", async (req, res) => {
  *       201:
  *         description: User registered successfully. Please check email for OTP.
  */
-router.post("/register", registerLimiter, upload.single("foto"), registerUser);
+router.post("/register", registerLimiter, upload.none(), registerUser);
+
 
 /**
  * @swagger

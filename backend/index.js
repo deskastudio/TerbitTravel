@@ -23,6 +23,8 @@ import orderRoutes from "./src/routes/orderRoutes.js";
 import cors from "cors";
 import passport from './src/config/passportConfig.js'
 import session from "express-session";
+import otpRoutes from './src/routes/otpRoutes.js'; // Jika index.js ada di root
+
 
 
 // Load environment variables from .env file
@@ -77,6 +79,7 @@ app.use("/package-category", packageCategoryRoutes);
 app.use("/destination-category", destinationCategoryRoutes);
 app.use("/team", teamRoutes);
 app.use("/orders", orderRoutes);
+app.use('/api/otp', otpRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
