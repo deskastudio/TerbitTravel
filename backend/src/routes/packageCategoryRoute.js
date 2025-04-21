@@ -36,7 +36,7 @@ const router = express.Router();
  *       500:
  *         description: Failed to add package category
  */
-router.post("/add", authMiddleware, validateCategory, addPackageCategory);
+router.post("/add", addPackageCategory);
 
 /**
  * @swagger
@@ -74,8 +74,6 @@ router.post("/add", authMiddleware, validateCategory, addPackageCategory);
  */
 router.put(
   "/update/:id",
-  authMiddleware,
-  validateCategory,
   updatePackageCategory
 );
 
@@ -102,7 +100,7 @@ router.put(
  *       500:
  *         description: Failed to delete package category
  */
-router.delete("/delete/:id", authMiddleware, deletePackageCategory);
+router.delete("/delete/:id", deletePackageCategory);
 
 /**
  * @swagger
@@ -141,7 +139,7 @@ router.delete("/delete/:id", authMiddleware, deletePackageCategory);
  *       500:
  *         description: Failed to fetch package categories
  */
-router.get("/get", authMiddleware, getAllPackageCategories);
+router.get("/getAll", getAllPackageCategories);
 
 /**
  * @swagger
@@ -166,6 +164,6 @@ router.get("/get", authMiddleware, getAllPackageCategories);
  *       500:
  *         description: Failed to fetch package category
  */
-router.get("/:id", authMiddleware, getPackageCategoryById);
+router.get("/:id", getPackageCategoryById);
 
 export default router;

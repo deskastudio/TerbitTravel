@@ -1,63 +1,91 @@
 import { create } from 'zustand';
-import axios from '@/lib/axios';
+import { User } from '@/types/auth.types';
+import authService from '@/services/auth.service';
 
-interface AuthStore {
-  token: string | null;
-  user: { id: string; email: string } | null;
+interface AuthState {
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  error: string | null;
+  login: (email: string, password: string) => Promise<any>;
+  googleLogin: (credential: string) => Promise<any>;
+  googleRegister: (credential: string) => Promise<any>;
+  register: (formData: FormData) => Promise<any>;
   logout: () => void;
-  checkAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
-export const useAuth = create<AuthStore>((set) => ({
-  token: localStorage.getItem('token'),
-  user: null,
-  isAuthenticated: !!localStorage.getItem('token'),
-  isLoading: true,
+export const useAuth = create<AuthState>((set) => ({
+  user: authService.getCurrentUser(),
+  isAuthenticated: authService.isAuthenticated(),
+  isLoading: false,
+  error: null,
 
   login: async (email: string, password: string) => {
     try {
-      const response = await axios.post('/auth/login', {
-        email,
-        password,
+      set({ isLoading: true, error: null });
+      const response = await authService.login({ email, password });
+      set({ 
+        user: response.data?.user,
+        isAuthenticated: true,
+        isLoading: false 
+      });
+      return response;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  googleLogin: async (credential: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await authService.googleLogin(credential);
+      set({ 
+        user: response.data?.user,
+        isAuthenticated: true,
+        isLoading: false 
+      });
+      return response;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  googleRegister: async (credential: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await authService.googleRegister(credential);
+      set({ 
+        user: response.data?.user,
+        isAuthenticated: true,
+        isLoading: false 
       });
 
-      const { token, user } = response.data;
+      return response;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
 
-      localStorage.setItem('token', token);
-      set({ token, user, isAuthenticated: true });
-    } catch (error) {
-      console.error('Login failed:', error);
+  register: async (formData: FormData) => {
+    try {
+      set({ isLoading: true, error: null });
+      const response = await authService.register(formData);
+      set({ isLoading: false });
+      return response;
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
       throw error;
     }
   },
 
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    set({ token: null, user: null, isAuthenticated: false });
+    authService.logout();
+    set({ user: null, isAuthenticated: false });
   },
 
-  checkAuth: async () => {
-    try {
-      set({ isLoading: true });
-      const token = localStorage.getItem('token');
-
-      if (!token) {
-        set({ isAuthenticated: false });
-        return;
-      }
-
-      const response = await axios.get('/auth/me');
-      set({ user: response.data, isAuthenticated: true });
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-      set({ token: null, user: null, isAuthenticated: false });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
+  clearError: () => set({ error: null })
 }));

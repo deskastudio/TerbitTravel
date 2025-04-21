@@ -20,6 +20,9 @@ import {
   googleCallback,
   lengkapiProfil, // Add this
 } from "../controllers/userController.js";
+import { OAuth2Client } from 'google-auth-library';
+import User from "../models/user.js";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
@@ -33,6 +36,149 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+// Inisialisasi OAuth2Client
+const client = new OAuth2Client({
+  clientId: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET
+});
+
+// Endpoint untuk Google Register
+router.post("/auth/google/register", async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      return res.status(400).json({ 
+        status: 'error',
+        message: 'No credential provided' 
+      });
+    }
+
+    // Verifikasi token
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      throw new Error('Failed to verify Google token');
+    }
+
+    const { name, email, picture, sub: googleId } = payload;
+
+    // Cek apakah user sudah ada
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { googleId }] 
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        status: 'error',
+        message: 'Email sudah terdaftar. Silakan login menggunakan Google.'
+      });
+    }
+
+    // Buat user baru
+    const user = await User.create({
+      nama: name,
+      email,
+      foto: picture,
+      googleId,
+      isVerified: true,
+      password: Math.random().toString(36).slice(-8)
+    });
+
+    // Generate token
+    const token = jwt.sign(
+      { id: user._id, role: "user" },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Registrasi dengan Google berhasil',
+      data: {
+        token,
+        user: {
+          id: user._id,
+          nama: user.nama,
+          email: user.email,
+          foto: user.foto,
+          role: user.role
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Google register error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message || 'Gagal melakukan registrasi dengan Google'
+    });
+  }
+});
+
+// Google Login
+router.post("/auth/google/login", async (req, res) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      return res.status(400).json({ message: 'No credential provided' });
+    }
+
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    const { email, sub: googleId } = payload;
+
+    // Find user
+    const user = await User.findOne({ 
+      $or: [{ email }, { googleId }] 
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Akun tidak ditemukan'
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Login Google berhasil',
+      data: {
+        token,
+        user: {
+          id: user._id,
+          nama: user.nama,
+          email: user.email,
+          foto: user.foto,
+          role: user.role
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: error.message || 'Gagal login dengan Google'
+    });
+  }
+});
 
 /**
  * @swagger

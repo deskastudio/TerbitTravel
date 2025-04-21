@@ -194,7 +194,7 @@ router.delete("/delete/:id",  deleteConsume);
  *       500:
  *         description: Failed to fetch consumes
  */
-router.get("/get", getAllConsumes);
+router.get("/getAll", getAllConsumes);
 
 /**
  * @swagger
