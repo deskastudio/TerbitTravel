@@ -1,6 +1,9 @@
-import express from 'express';
-import multer from 'multer';
-import { sendOtpController, verifyOtpController } from '../controllers/otpController.js';
+import express from "express";
+import multer from "multer";
+import {
+  sendOtpController,
+  verifyOtpController,
+} from "../controllers/otpController.js";
 
 const router = express.Router();
 const upload = multer(); // digunakan untuk handle FormData (tanpa file)
@@ -88,7 +91,7 @@ const upload = multer(); // digunakan untuk handle FormData (tanpa file)
  *                   type: string
  *                   example: Failed to send OTP
  */
-router.post('/send-otp', upload.none(), sendOtpController);
+router.post("/send-otp", upload.none(), sendOtpController);
 
 /**
  * @swagger
@@ -186,6 +189,6 @@ router.post('/send-otp', upload.none(), sendOtpController);
  *                   type: string
  *                   example: Failed to verify OTP
  */
-router.post('/verify-otp', verifyOtpController);
+router.post("/verify-otp", verifyOtpController);
 
 export default router;

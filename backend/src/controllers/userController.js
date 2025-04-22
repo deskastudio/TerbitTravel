@@ -44,20 +44,7 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({ message: "Email sudah terdaftar." });
     }
 
-    // Generate OTP
-    const otp = generateOTP();
-    
-    // Kirim email OTP
-    try {
-      await sendOTPEmail(email, otp);
-    } catch (emailError) {
-      console.error('Error sending OTP email:', emailError);
-      return res.status(500).json({ 
-        message: "Gagal mengirim email OTP. Silakan coba lagi." 
-      });
-    }
-
-    // Buat user baru
+    // Buat user baru - langsung terverifikasi tanpa OTP
     const newUser = new User({
       nama,
       email,
@@ -66,22 +53,29 @@ export const registerUser = async (req, res) => {
       noTelp,
       instansi,
       foto,
-      otp,
-      otpExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      isVerified: false,
+      isVerified: true, // Langsung aktif tanpa verifikasi OTP
     });
 
     await newUser.save();
 
+    // Generate token untuk user baru
+    const token = generateToken(newUser);
+
     res.status(201).json({
-      message: "Registrasi berhasil. Silakan cek email Anda untuk kode OTP.",
-      email: email // Mengembalikan email untuk digunakan di frontend
+      message: "Registrasi berhasil. Akun Anda sudah aktif.",
+      token,
+      user: {
+        id: newUser._id,
+        nama: newUser.nama,
+        email: newUser.email,
+        foto: newUser.foto,
+      },
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ 
-      message: "Error dalam registrasi user", 
-      error: error.message 
+    console.error("Registration error:", error);
+    res.status(500).json({
+      message: "Error dalam registrasi user",
+      error: error.message,
     });
   }
 };
@@ -187,12 +181,13 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Email atau password salah." });
     }
 
-    if (!user.isVerified) {
-      return res.status(401).json({
-        message:
-          "Email belum diverifikasi. Silakan cek email Anda atau minta kode OTP baru.",
-      });
-    }
+    // Hapus pengecekan isVerified karena semua akun langsung aktif
+    // if (!user.isVerified) {
+    //   return res.status(401).json({
+    //     message:
+    //       "Email belum diverifikasi. Silakan cek email Anda atau minta kode OTP baru.",
+    //   });
+    // }
 
     const token = generateToken(user);
     res.status(200).json({
@@ -224,14 +219,14 @@ export const resendOTP = async (req, res) => {
     }
 
     const otp = generateOTP();
-    
+
     // Kirim email OTP baru
     try {
       await sendOTPEmail(email, otp);
     } catch (emailError) {
-      console.error('Error sending OTP email:', emailError);
-      return res.status(500).json({ 
-        message: "Gagal mengirim ulang OTP. Silakan coba lagi." 
+      console.error("Error sending OTP email:", emailError);
+      return res.status(500).json({
+        message: "Gagal mengirim ulang OTP. Silakan coba lagi.",
       });
     }
 
@@ -242,13 +237,13 @@ export const resendOTP = async (req, res) => {
 
     res.status(200).json({
       message: "Kode OTP baru telah dikirim ke email Anda.",
-      email: email
+      email: email,
     });
   } catch (error) {
-    console.error('Resend OTP error:', error);
-    res.status(500).json({ 
-      message: "Error dalam mengirim ulang OTP", 
-      error: error.message 
+    console.error("Resend OTP error:", error);
+    res.status(500).json({
+      message: "Error dalam mengirim ulang OTP",
+      error: error.message,
     });
   }
 };
