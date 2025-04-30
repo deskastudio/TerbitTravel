@@ -5,7 +5,7 @@ import {
   updateConsume,
   deleteConsume,
   getAllConsumes,
-  getConsumeById, // Import function to get consume by ID
+  getConsumeById,
 } from "../controllers/consumeController.js";
 import {
   parseLauk,
@@ -62,7 +62,7 @@ const upload = multer();
  */
 router.post(
   "/add",
-  // authMiddleware,
+  // authMiddleware, // Uncomment jika authentication diperlukan
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -115,7 +115,7 @@ router.post(
  */
 router.put(
   "/update/:id",
-  // authMiddleware,
+  // authMiddleware, // Uncomment jika authentication diperlukan
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -145,11 +145,11 @@ router.put(
  *       500:
  *         description: Failed to delete consume
  */
-router.delete("/delete/:id",  deleteConsume);
+router.delete("/delete/:id", deleteConsume);
 
 /**
  * @swagger
- * /consume/get:
+ * /consume/getAll:
  *   get:
  *     summary: Get all consumes (Logged-in users)
  *     tags: [Consume]

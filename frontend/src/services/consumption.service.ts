@@ -9,7 +9,8 @@ const CONSUMPTION_BASE_URL = "/consume";
 
 export const ConsumptionService = {
   getAllConsumptions: async (): Promise<IConsumption[]> => {
-    const response = await axiosInstance.get<IConsumption[]>(`${CONSUMPTION_BASE_URL}/get`);
+    // Diubah dari "get" menjadi "getAll" sesuai dengan endpoint backend
+    const response = await axiosInstance.get<IConsumption[]>(`${CONSUMPTION_BASE_URL}/getAll`);
     return response.data;
   },
 

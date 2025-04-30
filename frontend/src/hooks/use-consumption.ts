@@ -21,6 +21,7 @@ export const useConsumption = () => {
       setConsumptions(data);
       setConsumptionsError(null);
     } catch (error) {
+      console.error("Error fetching consumptions:", error);
       setConsumptionsError(error as Error);
       toast({
         variant: "destructive",
@@ -53,6 +54,7 @@ export const useConsumption = () => {
           setConsumption(data);
           setError(null);
         } catch (error) {
+          console.error("Error fetching consumption detail:", error);
           setError(error as Error);
           toast({
             variant: "destructive",
@@ -81,6 +83,7 @@ export const useConsumption = () => {
         description: "Konsumsi berhasil ditambahkan.",
       });
     } catch (error) {
+      console.error("Error creating consumption:", error);
       toast({
         variant: "destructive",
         title: "Error!",
@@ -103,6 +106,7 @@ export const useConsumption = () => {
         description: "Konsumsi berhasil diperbarui.",
       });
     } catch (error) {
+      console.error("Error updating consumption:", error);
       toast({
         variant: "destructive",
         title: "Error!",
@@ -125,6 +129,7 @@ export const useConsumption = () => {
         description: "Konsumsi berhasil dihapus.",
       });
     } catch (error) {
+      console.error("Error deleting consumption:", error);
       toast({
         variant: "destructive",
         title: "Error!",
