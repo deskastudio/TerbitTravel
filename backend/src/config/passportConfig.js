@@ -1,13 +1,13 @@
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import User from '../models/user.js';
-import dotenv from 'dotenv';
+import passport from "passport";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import User from "../models/user.js";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 // Validasi environment variables
-const requiredEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'API_URL'];
-requiredEnvVars.forEach(varName => {
+const requiredEnvVars = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "API_URL"];
+requiredEnvVars.forEach((varName) => {
   if (!process.env[varName]) {
     console.error(`Missing required environment variable: ${varName}`);
     process.exit(1);
@@ -24,11 +24,13 @@ passport.use(
     },
     async (req, accessToken, refreshToken, profile, done) => {
       try {
-        let user = await User.findOne({ 
-          $or: [{ googleId: profile.id }, { email: profile.emails[0].value }] 
+        let user = await User.findOne({
+          $or: [{ googleId: profile.id }, { email: profile.emails[0].value }],
         });
-        
+
         if (!user) {
+          // Buat user baru jika belum ada
+          console.log("Creating new user via passport");
           user = await User.create({
             googleId: profile.id,
             nama: profile.displayName,
@@ -43,10 +45,10 @@ passport.use(
           user.isVerified = true;
           await user.save();
         }
-        
+
         return done(null, user);
       } catch (error) {
-        console.error('Google auth error:', error);
+        console.error("Google auth error:", error);
         return done(error, null);
       }
     }

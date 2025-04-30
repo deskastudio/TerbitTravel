@@ -120,7 +120,7 @@ router.post("/auth/google/register", async (req, res) => {
   }
 });
 
-// Google Login
+// Google Login dengan pembuatan akun otomatis
 router.post("/auth/google/login", async (req, res) => {
   try {
     const { credential } = req.body;
@@ -136,29 +136,55 @@ router.post("/auth/google/login", async (req, res) => {
     });
 
     const payload = ticket.getPayload();
-    const { email, sub: googleId } = payload;
+    if (!payload) {
+      throw new Error("Failed to verify Google token");
+    }
 
-    // Find user
-    const user = await User.findOne({
+    // Ekstrak data user dari token Google
+    const { email, name, picture, sub: googleId } = payload;
+
+    // Cari user di database
+    let user = await User.findOne({
       $or: [{ email }, { googleId }],
     });
 
+    // Jika user tidak ditemukan, buat user baru secara otomatis
     if (!user) {
-      return res.status(404).json({
-        status: "error",
-        message: "Akun tidak ditemukan",
+      console.log("User tidak ditemukan, membuat user baru");
+
+      user = await User.create({
+        nama: name,
+        email,
+        foto: picture,
+        googleId,
+        isVerified: true,
+        password: Math.random().toString(36).slice(-8),
       });
+
+      console.log("User baru berhasil dibuat:", user._id);
+    } else {
+      // Update googleId jika belum ada
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
     }
 
+    // Buat token JWT untuk user
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
+    // Cek apakah profile sudah lengkap (punya alamat dan noTelp)
+    const isProfileComplete = user.alamat && user.noTelp;
+
+    // Jika profile belum lengkap, kirim flag untuk redirect ke form lengkapi profile
     res.status(200).json({
       status: "success",
       message: "Login Google berhasil",
+      needCompleteProfile: !isProfileComplete,
       data: {
         token,
         user: {
@@ -167,6 +193,9 @@ router.post("/auth/google/login", async (req, res) => {
           email: user.email,
           foto: user.foto,
           role: user.role,
+          alamat: user.alamat,
+          noTelp: user.noTelp,
+          instansi: user.instansi,
         },
       },
     });
