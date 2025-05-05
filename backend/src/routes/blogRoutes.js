@@ -7,7 +7,8 @@ import {
   updateBlog,
   deleteBlog,
   getAllBlogs,
-  getBlogById, // Import fungsi baru untuk mendapatkan blog berdasarkan ID
+  getBlogById,
+  getBlogsByCategory, // Import fungsi baru untuk mendapatkan blog berdasarkan kategori
 } from "../controllers/blogController.js";
 import { validateBlogData } from "../middleware/blogValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
@@ -30,7 +31,7 @@ const router = express.Router();
  * /blog/add:
  *   post:
  *     summary: Add a new blog post (Admin only)
- *     description: Add a new blog post with title, author, main image, additional images, and content.
+ *     description: Add a new blog post with title, author, main image, additional images, content, and category.
  *     tags: [Blog]
  *     security:
  *       - BearerAuth: [] # Token is required
@@ -47,6 +48,10 @@ const router = express.Router();
  *               penulis:
  *                 type: string
  *                 example: "John Doe"
+ *               kategori:
+ *                 type: string
+ *                 example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                 description: ID of the blog category
  *               gambarUtama:
  *                 type: string
  *                 format: binary
@@ -83,7 +88,7 @@ router.post(
  * /blog/update/{id}:
  *   put:
  *     summary: Update an existing blog post (Admin only)
- *     description: Update a blog post by ID with title, author, main image, additional images, and content.
+ *     description: Update a blog post by ID with title, author, main image, additional images, content, and category.
  *     tags: [Blog]
  *     security:
  *       - BearerAuth: [] # Token is required
@@ -107,6 +112,10 @@ router.post(
  *               penulis:
  *                 type: string
  *                 example: "Jane Doe"
+ *               kategori:
+ *                 type: string
+ *                 example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                 description: ID of the blog category
  *               gambarUtama:
  *                 type: string
  *                 format: binary
@@ -194,6 +203,15 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteBlog);
  *                   penulis:
  *                     type: string
  *                     example: "John Doe"
+ *                   kategori:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                       title:
+ *                         type: string
+ *                         example: "Travel"
  *                   gambarUtama:
  *                     type: string
  *                     example: "/uploads/blog/main_image.jpg"
@@ -243,5 +261,73 @@ router.get("/get", authMiddleware, getAllBlogs);
  *         description: Error fetching blog
  */
 router.get("/get/:id", authMiddleware, getBlogById);
+
+/**
+ * @swagger
+ * /blog/category/{categoryId}:
+ *   get:
+ *     summary: Get all blog posts by category
+ *     description: Retrieve a list of all blog posts for a specific category.
+ *     tags: [Blog]
+ *     security:
+ *       - BearerAuth: [] # Token is required
+ *     parameters:
+ *       - name: categoryId
+ *         in: path
+ *         required: true
+ *         description: ID of the category to get blogs for
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully fetched blogs by category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                   judul:
+ *                     type: string
+ *                     example: "Amazing Travel Tips"
+ *                   penulis:
+ *                     type: string
+ *                     example: "John Doe"
+ *                   kategori:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         example: "614d1b2e1c4f2d0d9c19b8c8"
+ *                       title:
+ *                         type: string
+ *                         example: "Travel"
+ *                   gambarUtama:
+ *                     type: string
+ *                     example: "/uploads/blog/main_image.jpg"
+ *                   gambarTambahan:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                       example: "/uploads/blog/additional_image1.jpg"
+ *                   isi:
+ *                     type: string
+ *                     example: "This is the content of the blog post."
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2023-08-30T09:30:00.000Z"
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2023-08-31T09:30:00.000Z"
+ *       500:
+ *         description: Error fetching blogs by category
+ */
+router.get("/category/:categoryId", authMiddleware, getBlogsByCategory);
 
 export default router;

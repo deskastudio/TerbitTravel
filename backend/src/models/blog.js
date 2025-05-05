@@ -1,4 +1,4 @@
-// src/models/blogModel.js
+// src/models/blog.js
 import mongoose from "mongoose";
 
 const blogSchema = new mongoose.Schema(
@@ -6,22 +6,28 @@ const blogSchema = new mongoose.Schema(
     judul: {
       type: String,
       required: true,
+      trim: true,
     },
     penulis: {
       type: String,
       required: true,
-    },
-    gambarUtama: {
-      type: String, // Path untuk gambar utama
-      required: true,
-    },
-    gambarTambahan: {
-      type: [String], // Array untuk gambar tambahan
-      default: [],
+      trim: true,
     },
     isi: {
       type: String,
       required: true,
+    },
+    gambarUtama: {
+      type: String,
+      default: "",
+    },
+    gambarTambahan: {
+      type: [String],
+      default: [],
+    },
+    kategori: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BlogCategory",
     },
   },
   { timestamps: true }

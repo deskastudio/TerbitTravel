@@ -4,9 +4,8 @@ import path from "path";
 import fs from "fs";
 
 // Add new blog
-// Tambah blog baru
 export const addBlog = async (req, res) => {
-  const { judul, penulis, isi } = req.body;
+  const { judul, penulis, isi, kategori } = req.body;
   const gambarUtama = req.files["gambarUtama"]
     ? `/uploads/blog/${req.files["gambarUtama"][0].filename}`
     : "";
@@ -23,6 +22,7 @@ export const addBlog = async (req, res) => {
       isi,
       gambarUtama,
       gambarTambahan,
+      kategori, // Tambahkan kategori
     });
     await newBlog.save();
     res.status(201).json({ message: "Blog added successfully", data: newBlog });
@@ -37,7 +37,7 @@ export const addBlog = async (req, res) => {
 // Update existing blog
 export const updateBlog = async (req, res) => {
   const { id } = req.params;
-  const { judul, penulis, isi } = req.body;
+  const { judul, penulis, isi, kategori } = req.body;
   const gambarUtama = req.file ? `uploads/blog/${req.file.filename}` : null; // Gambar utama
   const gambarTambahan = req.files
     ? req.files.map((file) => `uploads/blog/${file.filename}`)
@@ -72,6 +72,7 @@ export const updateBlog = async (req, res) => {
     blog.gambarTambahan =
       gambarTambahan.length > 0 ? gambarTambahan : blog.gambarTambahan;
     blog.isi = isi || blog.isi;
+    blog.kategori = kategori || blog.kategori; // Update kategori
 
     await blog.save();
     res.status(200).json({ message: "Blog updated successfully", data: blog });
@@ -123,7 +124,12 @@ export const deleteBlog = async (req, res) => {
 // Get all blogs
 export const getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find().sort({ createdAt: -1 });
+    const blogs = await Blog.find()
+      .populate({
+        path: "kategori",
+        select: "title", // Ambil hanya field 'title'
+      })
+      .sort({ createdAt: -1 });
     res.status(200).json(blogs);
   } catch (error) {
     console.error("Error fetching blogs:", error);
@@ -138,7 +144,10 @@ export const getBlogById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const blog = await Blog.findById(id);
+    const blog = await Blog.findById(id).populate({
+      path: "kategori",
+      select: "title", // Ambil hanya field 'title'
+    });
 
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
@@ -150,5 +159,27 @@ export const getBlogById = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to fetch blog", error: error.message });
+  }
+};
+
+// Get blogs by category
+export const getBlogsByCategory = async (req, res) => {
+  const { categoryId } = req.params;
+
+  try {
+    const blogs = await Blog.find({ kategori: categoryId })
+      .populate({
+        path: "kategori",
+        select: "title",
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(blogs);
+  } catch (error) {
+    console.error("Error fetching blogs by category:", error);
+    res.status(500).json({
+      message: "Failed to fetch blogs by category",
+      error: error.message,
+    });
   }
 };

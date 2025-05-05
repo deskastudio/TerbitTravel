@@ -21,11 +21,10 @@ import destinationCategoryRoutes from "./src/routes/destinationCategoryRoute.js"
 import teamRoutes from "./src/routes/teamRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
 import cors from "cors";
-import passport from './src/config/passportConfig.js'
+import passport from "./src/config/passportConfig.js";
 import session from "express-session";
-import otpRoutes from './src/routes/otpRoutes.js'; // Jika index.js ada di root
-
-
+import otpRoutes from "./src/routes/otpRoutes.js"; // Jika index.js ada di root
+import blogCategoryRoutes from "./src/routes/blogCategoryRoutes.js";
 
 // Load environment variables from .env file
 dotenv.config();
@@ -34,30 +33,35 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS Configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:5173'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+  "http://localhost:5173",
+];
 
 // CORS Configuration
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Session configuration
-app.use(session({
-  secret: process.env.JWT_SECRET || 'jwbcjwbcjw',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
+app.use(
+  session({
+    secret: process.env.JWT_SECRET || "jwbcjwbcjw",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
 app.use(express.json());
-
 
 // Routes
 app.use("/user", userRoutes);
@@ -79,17 +83,18 @@ app.use("/package-category", packageCategoryRoutes);
 app.use("/destination-category", destinationCategoryRoutes);
 app.use("/team", teamRoutes);
 app.use("/orders", orderRoutes);
-app.use('/api/otp', otpRoutes);
+app.use("/api/otp", otpRoutes);
+app.use("/blog-category", blogCategoryRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  if (err.name === 'UnauthorizedError') {
-    res.status(401).json({ error: 'Invalid token' });
-  } else if (err.name === 'CrossOriginResourceSharingError') {
-    res.status(403).json({ error: 'CORS error' });
+  if (err.name === "UnauthorizedError") {
+    res.status(401).json({ error: "Invalid token" });
+  } else if (err.name === "CrossOriginResourceSharingError") {
+    res.status(403).json({ error: "CORS error" });
   } else {
     console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
+    res.status(500).json({ error: "Something went wrong!" });
   }
 });
 
@@ -105,5 +110,5 @@ mongoose
 // Server Listening
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
+  console.log(`Allowed origins: ${allowedOrigins.join(", ")}`);
 });
