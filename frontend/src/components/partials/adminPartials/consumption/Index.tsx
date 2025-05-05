@@ -35,7 +35,8 @@ import {
   Loader2,
   Plus,
   FilterX,
-  SlidersHorizontal 
+  SlidersHorizontal,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate, Link } from "react-router-dom";
 import { useConsumption } from "@/hooks/use-consumption";
@@ -50,6 +51,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ConsumptionTable = () => {
   const navigate = useNavigate();
@@ -58,25 +60,35 @@ const ConsumptionTable = () => {
   const [itemsPerPage] = useState(5);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedConsumptionId, setSelectedConsumptionId] = useState<string>("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
   
   // Filter states
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
   const [isFilterActive, setIsFilterActive] = useState(false);
-  const [maxPrice, setMaxPrice] = useState(0);
+  const [maxPrice, setMaxPrice] = useState(1000000); // Default value
 
   const {
     consumptions,
     isLoadingConsumptions,
-    deleteConsumption
+    consumptionsError,
+    deleteConsumption,
+    refreshConsumptions
   } = useConsumption();
+
+  // Reload data when page loads
+  useEffect(() => {
+    refreshConsumptions();
+  }, [refreshConsumptions]);
 
   useEffect(() => {
     if (consumptions?.length > 0) {
       const highest = Math.max(...consumptions.map(consumption => consumption.harga));
-      setMaxPrice(highest);
-      setPriceRange([0, highest]);
+      setMaxPrice(highest > 0 ? highest : 1000000);
+      if (!isFilterActive) {
+        setPriceRange([0, highest > 0 ? highest : 1000000]);
+      }
     }
-  }, [consumptions]);
+  }, [consumptions, isFilterActive]);
 
   const filteredConsumptions = useMemo(() => {
     return consumptions?.filter((consumption) => {
@@ -103,6 +115,15 @@ const ConsumptionTable = () => {
     setIsFilterActive(false);
   };
 
+  // Paginate data
+  const pageCount = Math.ceil(filteredConsumptions.length / itemsPerPage);
+  useEffect(() => {
+    // Reset to page 1 if filter changes result in fewer pages
+    if (currentPage > pageCount && pageCount > 0) {
+      setCurrentPage(1);
+    }
+  }, [filteredConsumptions.length, currentPage, pageCount]);
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredConsumptions.slice(indexOfFirstItem, indexOfLastItem);
@@ -116,8 +137,15 @@ const ConsumptionTable = () => {
 
   const handleConfirmDelete = async () => {
     if (selectedConsumptionId) {
-      await deleteConsumption(selectedConsumptionId);
-      setIsDeleteDialogOpen(false);
+      try {
+        setDeleteLoading(true);
+        await deleteConsumption(selectedConsumptionId);
+      } catch (error) {
+        console.error("Error during deletion:", error);
+      } finally {
+        setDeleteLoading(false);
+        setIsDeleteDialogOpen(false);
+      }
     }
   };
 
@@ -148,6 +176,16 @@ const ConsumptionTable = () => {
         </Link>
       </div>
 
+      {consumptionsError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Terjadi kesalahan saat memuat data konsumsi. Silakan coba lagi.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center space-x-2 flex-1">
           <Input
@@ -158,6 +196,15 @@ const ConsumptionTable = () => {
           />
           <Search className="h-4 w-4 text-gray-500" />
         </div>
+
+        <Button 
+          variant="outline" 
+          onClick={() => refreshConsumptions()}
+          className="ml-2"
+        >
+          <Loader2 className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
 
         <Sheet>
           <SheetTrigger asChild>
@@ -216,7 +263,9 @@ const ConsumptionTable = () => {
             {currentItems.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-4">
-                  Tidak ada data konsumsi yang sesuai dengan filter
+                  {consumptions.length === 0 
+                    ? "Tidak ada data konsumsi tersedia" 
+                    : "Tidak ada data konsumsi yang sesuai dengan filter"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -227,6 +276,7 @@ const ConsumptionTable = () => {
                     {consumption.harga.toLocaleString("id-ID", {
                       style: "currency",
                       currency: "IDR",
+                      maximumFractionDigits: 0
                     })}
                   </TableCell>
                   <TableCell>{consumption.lauk.join(", ")}</TableCell>
@@ -266,17 +316,19 @@ const ConsumptionTable = () => {
         </Table>
       </div>
 
-      <div className="flex justify-center space-x-2">
-        {Array.from({ length: Math.ceil(filteredConsumptions.length / itemsPerPage) }, (_, i) => (
-          <Button
-            key={i}
-            onClick={() => paginate(i + 1)}
-            variant={currentPage === i + 1 ? "default" : "outline"}
-          >
-            {i + 1}
-          </Button>
-        ))}
-      </div>
+      {pageCount > 0 && (
+        <div className="flex justify-center space-x-2">
+          {Array.from({ length: pageCount }, (_, i) => (
+            <Button
+              key={i}
+              onClick={() => paginate(i + 1)}
+              variant={currentPage === i + 1 ? "default" : "outline"}
+            >
+              {i + 1}
+            </Button>
+          ))}
+        </div>
+      )}
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -287,10 +339,19 @@ const ConsumptionTable = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete}>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Hapus
+            <AlertDialogCancel disabled={deleteLoading}>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} disabled={deleteLoading}>
+              {deleteLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                <>
+                  <Trash className="mr-2 h-4 w-4" />
+                  Hapus
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
