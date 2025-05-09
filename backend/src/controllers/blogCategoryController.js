@@ -1,120 +1,125 @@
-// src/controllers/categoryController.js
 // src/controllers/blogCategoryController.js
-import Category from "../models/blogCategory.js";
+import BlogCategory from "../models/blogCategory.js";
 
-// Tambah kategori baru
-export const addCategory = async (req, res) => {
-  const { nama, deskripsi } = req.body;
+// Add new blog category
+export const addBlogCategory = async (req, res) => {
+  const { title } = req.body;
 
   try {
-    // Cek apakah kategori sudah ada
-    const existingCategory = await Category.findOne({ nama });
+    // Check if category already exists
+    const existingCategory = await BlogCategory.findOne({ title });
     if (existingCategory) {
       return res
         .status(400)
-        .json({ message: "Kategori dengan nama ini sudah ada" });
+        .json({ message: "Category with this title already exists" });
     }
 
-    const newCategory = new Category({
-      nama,
-      deskripsi,
-    });
+    const newCategory = new BlogCategory({ title });
     await newCategory.save();
-    res
-      .status(201)
-      .json({ message: "Kategori berhasil ditambahkan", data: newCategory });
+    res.status(201).json({
+      message: "Blog category added successfully",
+      data: newCategory,
+    });
   } catch (error) {
-    console.error("Error adding category:", error);
-    res
-      .status(500)
-      .json({ message: "Gagal menambahkan kategori", error: error.message });
+    console.error("Error adding blog category:", error);
+    res.status(500).json({
+      message: "Failed to add blog category",
+      error: error.message,
+    });
   }
 };
 
-// Update kategori
-export const updateCategory = async (req, res) => {
+// Update existing blog category
+export const updateBlogCategory = async (req, res) => {
   const { id } = req.params;
-  const { nama, deskripsi } = req.body;
+  const { title } = req.body;
 
   try {
-    const category = await Category.findById(id);
+    // Check if category exists
+    const category = await BlogCategory.findById(id);
     if (!category) {
-      return res.status(404).json({ message: "Kategori tidak ditemukan" });
+      return res.status(404).json({ message: "Blog category not found" });
     }
 
-    // Cek apakah nama sudah digunakan oleh kategori lain
-    if (nama !== category.nama) {
-      const existingCategory = await Category.findOne({ nama });
+    // Check if new title already exists (but not for this category)
+    if (title !== category.title) {
+      const existingCategory = await BlogCategory.findOne({ title });
       if (existingCategory) {
         return res
           .status(400)
-          .json({ message: "Kategori dengan nama ini sudah ada" });
+          .json({ message: "Category with this title already exists" });
       }
     }
 
-    // Update data kategori
-    category.nama = nama || category.nama;
-    category.deskripsi = deskripsi || category.deskripsi;
+    const updatedCategory = await BlogCategory.findByIdAndUpdate(
+      id,
+      { title },
+      { new: true }
+    );
 
-    await category.save();
-    res
-      .status(200)
-      .json({ message: "Kategori berhasil diupdate", data: category });
+    res.status(200).json({
+      message: "Blog category updated successfully",
+      data: updatedCategory,
+    });
   } catch (error) {
-    console.error("Error updating category:", error);
-    res
-      .status(500)
-      .json({ message: "Gagal mengupdate kategori", error: error.message });
+    console.error("Error updating blog category:", error);
+    res.status(500).json({
+      message: "Failed to update blog category",
+      error: error.message,
+    });
   }
 };
 
-// Hapus kategori
-export const deleteCategory = async (req, res) => {
+// Delete blog category by ID
+export const deleteBlogCategory = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const category = await Category.findById(id);
-    if (!category) {
-      return res.status(404).json({ message: "Kategori tidak ditemukan" });
+    const deletedCategory = await BlogCategory.findByIdAndDelete(id);
+    if (!deletedCategory) {
+      return res.status(404).json({ message: "Blog category not found" });
     }
 
-    await Category.findByIdAndDelete(id);
-    res.status(200).json({ message: "Kategori berhasil dihapus" });
+    res.status(200).json({ message: "Blog category deleted successfully" });
   } catch (error) {
-    console.error("Error deleting category:", error);
-    res
-      .status(500)
-      .json({ message: "Gagal menghapus kategori", error: error.message });
+    console.error("Error deleting blog category:", error);
+    res.status(500).json({
+      message: "Failed to delete blog category",
+      error: error.message,
+    });
   }
 };
 
-// Dapatkan semua kategori
-export const getAllCategories = async (req, res) => {
+// Get all blog categories
+export const getAllBlogCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ nama: 1 });
+    const categories = await BlogCategory.find().sort({ createdAt: -1 });
     res.status(200).json(categories);
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    res
-      .status(500)
-      .json({ message: "Gagal mengambil kategori", error: error.message });
+    console.error("Error fetching blog categories:", error);
+    res.status(500).json({
+      message: "Failed to fetch blog categories",
+      error: error.message,
+    });
   }
 };
 
-// Dapatkan kategori berdasarkan ID
-export const getCategoryById = async (req, res) => {
+// Get blog category by ID
+export const getBlogCategoryById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const category = await Category.findById(id);
+    const category = await BlogCategory.findById(id);
     if (!category) {
-      return res.status(404).json({ message: "Kategori tidak ditemukan" });
+      return res.status(404).json({ message: "Blog category not found" });
     }
+
     res.status(200).json(category);
   } catch (error) {
-    console.error("Error fetching category:", error);
-    res
-      .status(500)
-      .json({ message: "Gagal mengambil kategori", error: error.message });
+    console.error("Error fetching blog category by ID:", error);
+    res.status(500).json({
+      message: "Failed to fetch blog category",
+      error: error.message,
+    });
   }
 };

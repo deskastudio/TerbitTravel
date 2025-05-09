@@ -6,31 +6,28 @@ const blogSchema = new mongoose.Schema(
     judul: {
       type: String,
       required: true,
+      trim: true,
     },
     penulis: {
       type: String,
       required: true,
-    },
-    gambarUtama: {
-      type: String, // Path untuk gambar utama
-      required: true,
-    },
-    gambarTambahan: {
-      type: [String], // Array untuk gambar tambahan
-      default: [],
+      trim: true,
     },
     isi: {
       type: String,
       required: true,
     },
-    kategori: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
+    gambarUtama: {
+      type: String,
+      default: "",
     },
-    hashtags: {
+    gambarTambahan: {
       type: [String],
       default: [],
+    },
+    kategori: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BlogCategory",
     },
   },
   { timestamps: true }

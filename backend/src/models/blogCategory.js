@@ -1,23 +1,17 @@
-// File src/models/blogCategory.js
-// Ubah komentar path
 // src/models/blogCategory.js
 import mongoose from "mongoose";
 
-const categorySchema = new mongoose.Schema(
+const blogCategorySchema = new mongoose.Schema(
   {
-    nama: {
+    title: {
       type: String,
       required: true,
-      unique: true,
-    },
-    deskripsi: {
-      type: String,
-      required: true,
+      trim: true,
     },
   },
   { timestamps: true }
 );
 
-const Category = mongoose.model("Category", categorySchema);
+const BlogCategory = mongoose.model("BlogCategory", blogCategorySchema);
 
-export default Category;
+export default BlogCategory;
