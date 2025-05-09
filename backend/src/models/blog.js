@@ -1,4 +1,4 @@
-// src/models/blogModel.js
+// src/models/blog.js
 import mongoose from "mongoose";
 
 const blogSchema = new mongoose.Schema(
@@ -22,6 +22,15 @@ const blogSchema = new mongoose.Schema(
     isi: {
       type: String,
       required: true,
+    },
+    kategori: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+    hashtags: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }

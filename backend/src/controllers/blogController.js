@@ -1,12 +1,13 @@
 // src/controllers/blogController.js
 import Blog from "../models/blog.js";
+import Category from "../models/blogCategory.js";
 import path from "path";
 import fs from "fs";
 
 // Add new blog
 // Tambah blog baru
 export const addBlog = async (req, res) => {
-  const { judul, penulis, isi } = req.body;
+  const { judul, penulis, isi, kategori, hashtags } = req.body;
   const gambarUtama = req.files["gambarUtama"]
     ? `/uploads/blog/${req.files["gambarUtama"][0].filename}`
     : "";
@@ -17,12 +18,32 @@ export const addBlog = async (req, res) => {
     : [];
 
   try {
+    // Validasi kategori
+    const categoryExists = await Category.findById(kategori);
+    if (!categoryExists) {
+      return res.status(400).json({ message: "Kategori tidak valid" });
+    }
+
+    // Parsing hashtags jika dikirim sebagai string JSON
+    let parsedHashtags = [];
+    if (hashtags) {
+      try {
+        parsedHashtags = typeof hashtags === 'string' ? JSON.parse(hashtags) : hashtags;
+      } catch (e) {
+        console.error("Error parsing hashtags:", e);
+        // Jika gagal parsing, gunakan string hashtags yang dipisahkan koma
+        parsedHashtags = hashtags.split(',').map(tag => tag.trim());
+      }
+    }
+
     const newBlog = new Blog({
       judul,
       penulis,
       isi,
       gambarUtama,
       gambarTambahan,
+      kategori,
+      hashtags: parsedHashtags,
     });
     await newBlog.save();
     res.status(201).json({ message: "Blog added successfully", data: newBlog });
@@ -37,16 +58,40 @@ export const addBlog = async (req, res) => {
 // Update existing blog
 export const updateBlog = async (req, res) => {
   const { id } = req.params;
-  const { judul, penulis, isi } = req.body;
-  const gambarUtama = req.file ? `uploads/blog/${req.file.filename}` : null; // Gambar utama
-  const gambarTambahan = req.files
-    ? req.files.map((file) => `uploads/blog/${file.filename}`)
+  const { judul, penulis, isi, kategori, hashtags } = req.body;
+  
+  const gambarUtama = req.files && req.files["gambarUtama"] 
+    ? `/uploads/blog/${req.files["gambarUtama"][0].filename}` 
+    : null;
+    
+  const gambarTambahan = req.files && req.files["gambarTambahan"]
+    ? req.files["gambarTambahan"].map(file => `/uploads/blog/${file.filename}`)
     : [];
 
   try {
     const blog = await Blog.findById(id);
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });
+    }
+
+    // Validasi kategori jika disediakan
+    if (kategori) {
+      const categoryExists = await Category.findById(kategori);
+      if (!categoryExists) {
+        return res.status(400).json({ message: "Kategori tidak valid" });
+      }
+    }
+
+    // Parsing hashtags jika dikirim sebagai string JSON
+    let parsedHashtags = blog.hashtags;
+    if (hashtags) {
+      try {
+        parsedHashtags = typeof hashtags === 'string' ? JSON.parse(hashtags) : hashtags;
+      } catch (e) {
+        console.error("Error parsing hashtags:", e);
+        // Jika gagal parsing, gunakan string hashtags yang dipisahkan koma
+        parsedHashtags = hashtags.split(',').map(tag => tag.trim());
+      }
     }
 
     // Hapus gambar lama jika ada gambar baru yang diunggah
@@ -57,11 +102,13 @@ export const updateBlog = async (req, res) => {
       }
     }
 
-    // Hapus gambar tambahan lama
-    for (const oldPath of blog.gambarTambahan) {
-      const oldImagePath = path.join(__dirname, "../../", oldPath);
-      if (fs.existsSync(oldImagePath)) {
-        await fs.promises.unlink(oldImagePath);
+    // Hapus gambar tambahan lama jika ada gambar baru
+    if (gambarTambahan.length > 0) {
+      for (const oldPath of blog.gambarTambahan) {
+        const oldImagePath = path.join(__dirname, "../../", oldPath);
+        if (fs.existsSync(oldImagePath)) {
+          await fs.promises.unlink(oldImagePath);
+        }
       }
     }
 
@@ -72,6 +119,8 @@ export const updateBlog = async (req, res) => {
     blog.gambarTambahan =
       gambarTambahan.length > 0 ? gambarTambahan : blog.gambarTambahan;
     blog.isi = isi || blog.isi;
+    blog.kategori = kategori || blog.kategori;
+    blog.hashtags = parsedHashtags;
 
     await blog.save();
     res.status(200).json({ message: "Blog updated successfully", data: blog });
@@ -120,11 +169,56 @@ export const deleteBlog = async (req, res) => {
   }
 };
 
-// Get all blogs
+// Get all blogs with pagination, search, and filtering
 export const getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find().sort({ createdAt: -1 });
-    res.status(200).json(blogs);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+    const kategori = req.query.kategori || "";
+    
+    const skip = (page - 1) * limit;
+    
+    // Buat query filter
+    const filter = {};
+    
+    // Filter pencarian
+    if (search) {
+      filter.$or = [
+        { judul: { $regex: search, $options: "i" } },
+        { penulis: { $regex: search, $options: "i" } },
+        { isi: { $regex: search, $options: "i" } },
+        { hashtags: { $in: [new RegExp(search, "i")] } }
+      ];
+    }
+    
+    // Filter kategori
+    if (kategori) {
+      filter.kategori = kategori;
+    }
+    
+    // Hitung total blog yang sesuai dengan filter
+    const totalItems = await Blog.countDocuments(filter);
+    
+    // Ambil blog dengan pagination
+    const blogs = await Blog.find(filter)
+      .populate("kategori", "nama")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    // Buat metadata pagination
+    const totalPages = Math.ceil(totalItems / limit);
+    
+    res.status(200).json({
+      data: blogs,
+      meta: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit
+      }
+    });
   } catch (error) {
     console.error("Error fetching blogs:", error);
     res
@@ -138,7 +232,7 @@ export const getBlogById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const blog = await Blog.findById(id);
+    const blog = await Blog.findById(id).populate("kategori", "nama");
 
     if (!blog) {
       return res.status(404).json({ message: "Blog not found" });

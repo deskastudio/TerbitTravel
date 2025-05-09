@@ -7,7 +7,7 @@ import {
   updateBlog,
   deleteBlog,
   getAllBlogs,
-  getBlogById, // Import fungsi baru untuk mendapatkan blog berdasarkan ID
+  getBlogById,
 } from "../controllers/blogController.js";
 import { validateBlogData } from "../middleware/blogValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
@@ -30,7 +30,7 @@ const router = express.Router();
  * /blog/add:
  *   post:
  *     summary: Add a new blog post (Admin only)
- *     description: Add a new blog post with title, author, main image, additional images, and content.
+ *     description: Add a new blog post with title, author, main image, additional images, content, category and hashtags.
  *     tags: [Blog]
  *     security:
  *       - BearerAuth: [] # Token is required
@@ -58,6 +58,12 @@ const router = express.Router();
  *               isi:
  *                 type: string
  *                 example: "This is the content of the blog post."
+ *               kategori:
+ *                 type: string
+ *                 example: "614c84b0c1b8d8f53e5c3e2b"
+ *               hashtags:
+ *                 type: string
+ *                 example: '["travel", "tips", "vacation"]'
  *     responses:
  *       201:
  *         description: Blog added successfully
@@ -83,7 +89,7 @@ router.post(
  * /blog/update/{id}:
  *   put:
  *     summary: Update an existing blog post (Admin only)
- *     description: Update a blog post by ID with title, author, main image, additional images, and content.
+ *     description: Update a blog post by ID with title, author, main image, additional images, content, category and hashtags.
  *     tags: [Blog]
  *     security:
  *       - BearerAuth: [] # Token is required
@@ -118,6 +124,12 @@ router.post(
  *               isi:
  *                 type: string
  *                 example: "Updated content of the blog post."
+ *               kategori:
+ *                 type: string
+ *                 example: "614c84b0c1b8d8f53e5c3e2b"
+ *               hashtags:
+ *                 type: string
+ *                 example: '["updated", "travel", "tips"]'
  *     responses:
  *       200:
  *         description: Blog updated successfully
@@ -136,7 +148,6 @@ router.put(
     { name: "gambarUtama", maxCount: 1 },
     { name: "gambarTambahan", maxCount: 10 },
   ]),
-  validateBlogData,
   updateBlog
 );
 
@@ -170,49 +181,41 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteBlog);
  * @swagger
  * /blog/get:
  *   get:
- *     summary: Get all blog posts (Accessible by logged-in users)
- *     description: Retrieve a list of all blog posts.
+ *     summary: Get all blog posts with pagination, search and filtering
+ *     description: Retrieve a list of blog posts with pagination, search functionality and category filtering.
  *     tags: [Blog]
  *     security:
  *       - BearerAuth: [] # Token is required
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         description: Page number
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: Number of items per page
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: Search term for filtering blogs by title, author, content or hashtags
+ *         schema:
+ *           type: string
+ *       - name: kategori
+ *         in: query
+ *         required: false
+ *         description: Category ID for filtering blogs by category
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Successfully fetched all blog posts
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                     example: "614d1b2e1c4f2d0d9c19b8c8"
- *                   judul:
- *                     type: string
- *                     example: "Amazing Travel Tips"
- *                   penulis:
- *                     type: string
- *                     example: "John Doe"
- *                   gambarUtama:
- *                     type: string
- *                     example: "/uploads/blog/main_image.jpg"
- *                   gambarTambahan:
- *                     type: array
- *                     items:
- *                       type: string
- *                       example: "/uploads/blog/additional_image1.jpg"
- *                   isi:
- *                     type: string
- *                     example: "This is the content of the blog post."
- *                   createdAt:
- *                     type: string
- *                     format: date-time
- *                     example: "2023-08-30T09:30:00.000Z"
- *                   updatedAt:
- *                     type: string
- *                     format: date-time
- *                     example: "2023-08-31T09:30:00.000Z"
+ *         description: Successfully fetched blog posts
  *       500:
  *         description: Error fetching blogs
  */

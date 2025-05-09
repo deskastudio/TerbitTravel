@@ -24,6 +24,7 @@ import cors from "cors";
 import passport from './src/config/passportConfig.js'
 import session from "express-session";
 import otpRoutes from './src/routes/otpRoutes.js'; // Jika index.js ada di root
+import categoryRoutes from './src/routes/blogRoutesCategory.js';
 
 
 
@@ -80,6 +81,7 @@ app.use("/destination-category", destinationCategoryRoutes);
 app.use("/team", teamRoutes);
 app.use("/orders", orderRoutes);
 app.use('/api/otp', otpRoutes);
+app.use('/api/category', categoryRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -1,13 +1,9 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -15,21 +11,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,258 +26,259 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { toast } from "@/hooks/use-toast"
-import { MoreHorizontal, Pencil, Trash2, Eye, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import { Loader2, Plus, MoreHorizontal, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useArticle, useCategory } from '@/hooks/use-article';
 
-const articleSchema = z.object({
-  id: z.string(),
-  author: z.string().min(1, "Author is required"),
-  title: z.string().min(1, "Title is required"),
-  content: z.string().min(1, "Content is required"),
-  category: z.string().min(1, "Category is required"),
-  hashtags: z.array(z.string()),
-  images: z.array(z.string()),
-})
+export default function ArticleIndexPage() {
+  const navigate = useNavigate();
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deleteId, setDeleteId] = useState<string>('');
 
-type Article = z.infer<typeof articleSchema>
+  const {
+    articles,
+    isLoadingArticles,
+    pagination,
+    searchTerm,
+    categoryFilter,
+    deleteArticle,
+    setPage,
+    handleSearch,
+    handleCategoryFilter,
+    isDeleting
+  } = useArticle();
 
-const initialArticles: Article[] = [
-  {
-    id: "1",
-    author: "John Doe",
-    title: "The Beauty of Bali",
-    images: ["/placeholder.svg?height=100&width=100", "/placeholder.svg?height=100&width=100"],
-    content: "Bali is a beautiful island with rich culture and stunning landscapes...",
-    category: "Travel",
-    hashtags: ["Bali", "Indonesia", "Travel"],
-  },
-  {
-    id: "2",
-    author: "Jane Smith",
-    title: "Indonesian Culinary Delights",
-    images: ["/placeholder.svg?height=100&width=100"],
-    content: "Indonesian cuisine is known for its rich flavors and diverse ingredients...",
-    category: "Food",
-    hashtags: ["Indonesian Food", "Culinary", "Recipes"],
-  },
-  {
-    id: "3",
-    author: "Mike Johnson",
-    title: "Exploring Jakarta's Nightlife",
-    images: ["/placeholder.svg?height=100&width=100", "/placeholder.svg?height=100&width=100", "/placeholder.svg?height=100&width=100"],
-    content: "Jakarta comes alive at night with its vibrant clubs and bars...",
-    category: "Lifestyle",
-    hashtags: ["Jakarta", "Nightlife", "City Life"],
-  },
-]
+  const {
+    categories,
+    isLoadingCategories
+  } = useCategory();
 
-const ArticlePage = () => {
-  const [articles, setArticles] = useState<Article[]>(initialArticles)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [editingArticle, setEditingArticle] = useState<Article | null>(null)
-  const itemsPerPage = 5
+  // Handle article view
+  const handleViewArticle = (id: string) => {
+    navigate(`/admin/article/${id}`);
+  };
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<Article>({
-    resolver: zodResolver(articleSchema),
-  })
+  // Handle article edit
+  const handleEditArticle = (id: string) => {
+    navigate(`/admin/article/edit/${id}`);
+  };
 
-  const onSubmit = (data: Article) => {
-    if (editingArticle) {
-      setArticles(articles.map(a => a.id === editingArticle.id ? { ...data, id: editingArticle.id } : a))
-      toast({ title: "Article updated", description: "The article has been updated successfully." })
-    } else {
-      const newArticle = { ...data, id: Date.now().toString() }
-      setArticles([...articles, newArticle])
-      toast({ title: "Article added", description: "A new article has been added successfully." })
+  // Handle article delete confirmation
+  const handleDeleteConfirm = (id: string) => {
+    setDeleteId(id);
+    setOpenDeleteDialog(true);
+  };
+
+  // Handle article delete
+  const handleDelete = async () => {
+    await deleteArticle(deleteId);
+    setOpenDeleteDialog(false);
+    setDeleteId('');
+  };
+
+  // Pagination handlers
+  const handlePrevPage = () => {
+    if (pagination.currentPage > 1) {
+      setPage(pagination.currentPage - 1);
     }
-    setIsAddModalOpen(false)
-    setEditingArticle(null)
-    reset()
-  }
+  };
 
-  const handleEdit = (article: Article) => {
-    setEditingArticle(article)
-    setIsAddModalOpen(true)
-  }
+  const handleNextPage = () => {
+    if (pagination.currentPage < pagination.totalPages) {
+      setPage(pagination.currentPage + 1);
+    }
+  };
 
-  const handleDelete = (id: string) => {
-    setArticles(articles.filter(article => article.id !== id))
-    toast({ title: "Article deleted", description: "The article has been deleted successfully." })
-  }
-
-  const categories = ["all", ...new Set(articles.map(article => article.category))]
-
-  const filteredArticles = articles
-    .filter(article => 
-      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.hashtags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    .filter(article => categoryFilter === "all" ? true : article.category === categoryFilter)
-
-  const paginatedArticles = filteredArticles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-
-  const totalPages = Math.ceil(filteredArticles.length / itemsPerPage)
+  // Format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Articles</h1>
-        <Button onClick={() => setIsAddModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add Article
+        <h1 className="text-2xl font-bold">Daftar Artikel</h1>
+        <Button onClick={() => navigate('/admin/article/add')}>
+          <Plus className="mr-2 h-4 w-4" /> Tambah Artikel
         </Button>
       </div>
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex-1 max-w-sm">
+
+      <div className="flex justify-between items-center mb-6 gap-4">
+        <div className="w-full max-w-sm">
           <Input
-            placeholder="Search articles..."
+            placeholder="Cari artikel..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             className="w-full"
           />
         </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by category" />
+        <Select value={categoryFilter} onValueChange={handleCategoryFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filter kategori" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all">Semua Kategori</SelectItem>
             {categories.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category === "all" ? "All Categories" : category}
+              <SelectItem key={category._id} value={category._id}>
+                {category.nama}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead>Images</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Hashtags</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedArticles.map((article) => (
-              <TableRow key={article.id}>
-                <TableCell className="font-medium">{article.title}</TableCell>
-                <TableCell>{article.author}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    {article.images.map((image, index) => (
-                      <img key={index} src={image} alt={`Article image ${index + 1}`} className="w-10 h-10 object-cover rounded" />
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell>{article.category}</TableCell>
-                <TableCell>{article.hashtags.join(", ")}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => console.log('View details', article.id)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleEdit(article)}>
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleDelete(article.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-between space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Previous
-        </Button>
-        <div className="flex-1 text-center text-sm text-muted-foreground">
-          Page {currentPage} of {totalPages}
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Next
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingArticle ? 'Edit Article' : 'Add New Article'}</DialogTitle>
-            <DialogDescription>
-              {editingArticle ? 'Edit the article details below.' : 'Add a new article by filling out the form below.'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" {...register('title')} defaultValue={editingArticle?.title} />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="author">Author</Label>
-              <Input id="author" {...register('author')} defaultValue={editingArticle?.author} />
-              {errors.author && <p className="text-red-500 text-sm mt-1">{errors.author.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="content">Content</Label>
-              <Textarea id="content" {...register('content')} defaultValue={editingArticle?.content} />
-              {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
-              <Input id="category" {...register('category')} defaultValue={editingArticle?.category} />
-              {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>}
-            </div>
-            <div>
-              <Label htmlFor="hashtags">Hashtags (comma-separated)</Label>
-              <Input 
-                id="hashtags" 
-                {...register('hashtags')} 
-                defaultValue={editingArticle?.hashtags.join(', ')}
-                onChange={(e) => setValue('hashtags', e.target.value.split(',').map(tag => tag.trim()))}
-              />
-            </div>
-            <Button type="submit">{editingArticle ? 'Update Article' : 'Add Article'}</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
-}
 
-export default ArticlePage;
+      {isLoadingArticles ? (
+        <div className="flex justify-center items-center h-40">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : articles.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center h-40">
+            <p className="text-muted-foreground mb-4">Tidak ada artikel yang ditemukan</p>
+            <Button onClick={() => navigate('/admin/article/add')}>
+              <Plus className="mr-2 h-4 w-4" /> Tambah Artikel Baru
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="rounded-md border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Judul</TableHead>
+                  <TableHead>Penulis</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Hashtags</TableHead>
+                  <TableHead>Tanggal Dibuat</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {articles.map((article) => (
+                  <TableRow key={article._id}>
+                    <TableCell className="font-medium">{article.judul}</TableCell>
+                    <TableCell>{article.penulis}</TableCell>
+                    <TableCell>
+                      {typeof article.kategori === 'object' ? article.kategori.nama : ''}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {article.hashtags && article.hashtags.map((tag, index) => (
+                          <span key={index} className="bg-muted px-2 py-1 rounded-full text-xs">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>{formatDate(article.createdAt)}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Buka menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleViewArticle(article._id)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Lihat
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditArticle(article._id)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteConfirm(article._id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Hapus
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex items-center justify-between space-x-2 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={pagination.currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Sebelumnya
+            </Button>
+            <div className="flex-1 text-center text-sm text-muted-foreground">
+              Halaman {pagination.currentPage} dari {pagination.totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={pagination.currentPage === pagination.totalPages}
+            >
+              Selanjutnya
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Hapus Artikel</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus artikel ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                'Hapus'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
