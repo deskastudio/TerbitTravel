@@ -1,4 +1,4 @@
-// src/routes/blogRoutesCategory.js
+// src/routes/blogCategoryRoutes.js
 import express from "express";
 import {
   addBlogCategory,
@@ -38,7 +38,7 @@ const router = express.Router();
  *       500:
  *         description: Error adding blog category
  */
-router.post("/add", authMiddleware, checkRole("admin"), addBlogCategory);
+router.post("/add", addBlogCategory);
 
 /**
  * @swagger

@@ -229,44 +229,48 @@ export const useCategory = () => {
   const { toast } = useToast();
 
   // Fetch all categories
-  // Dalam useCategory hook di use-article.ts
-const fetchCategories = useCallback(async () => {
-  try {
-    setIsLoadingCategories(true);
-    console.log('Fetching categories...');
-    
-    // Tambahkan timeout agar lebih jelas jika request tidak merespons
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Request timeout')), 10000)
-    );
-    
-    const dataPromise = ArticleService.getAllCategories();
-    
-    // Race antara data dan timeout
-    const data = await Promise.race([dataPromise, timeoutPromise]);
-    
-    console.log('Categories data:', data);
-    setCategories(Array.isArray(data) ? data : []);
-    setCategoriesError(null);
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    console.error('Error message:', error.message);
-    if (error.response) {
-      console.error('Error status:', error.response.status);
-      console.error('Error data:', error.response.data);
+  const fetchCategories = useCallback(async () => {
+    try {
+      setIsLoadingCategories(true);
+      console.log('Fetching categories...');
+      
+      // Tambahkan timeout agar lebih jelas jika request tidak merespons
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+      
+      const dataPromise = ArticleService.getAllCategories();
+      
+      // Race antara data dan timeout
+      const data = await Promise.race([dataPromise, timeoutPromise]) as ICategory[];
+      
+      console.log('Categories data:', data);
+      setCategories(Array.isArray(data) ? data : []);
+      setCategoriesError(null);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      console.error('Error message:', (error as Error).message);
+      if ((error as any).response) {
+        console.error('Error status:', (error as any).response.status);
+        console.error('Error data:', (error as any).response.data);
+      }
+      setCategoriesError(error as Error);
+      toast({
+        variant: "destructive",
+        title: "Error!",
+        description: `Gagal mengambil data kategori: ${(error as Error).message}`,
+      });
+      // Default to empty array to prevent UI errors
+      setCategories([]);
+    } finally {
+      setIsLoadingCategories(false);
     }
-    setCategoriesError(error as Error);
-    toast({
-      variant: "destructive",
-      title: "Error!",
-      description: `Gagal mengambil data kategori: ${(error as Error).message}`,
-    });
-    // Default to empty array to prevent UI errors
-    setCategories([]);
-  } finally {
-    setIsLoadingCategories(false);
-  }
-}, [toast]);
+  }, [toast]);
+
+  // Load categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Get category detail by ID
   const useCategoryDetail = (id: string) => {
@@ -303,7 +307,7 @@ const fetchCategories = useCallback(async () => {
   };
 
   // Create new category
-  const createCategory = async (data: { nama: string, deskripsi: string }) => {
+  const createCategory = async (data: { title: string }) => {
     try {
       setIsCreating(true);
       await ArticleService.createCategory(data);
@@ -327,7 +331,7 @@ const fetchCategories = useCallback(async () => {
   };
 
   // Update category
-  const updateCategory = async (id: string, data: { nama: string, deskripsi: string }) => {
+  const updateCategory = async (id: string, data: { title: string }) => {
     try {
       setIsUpdating(true);
       await ArticleService.updateCategory(id, data);

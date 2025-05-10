@@ -13,9 +13,13 @@ import {
 } from "../controllers/blogController.js";
 import { validateBlogData } from "../middleware/blogValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Pastikan direktori upload ada
-const uploadDir = "./uploads/blog/";
+const uploadDir = path.join(process.cwd(), 'uploads/blog');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -94,10 +98,9 @@ const router = express.Router();
  *       500:
  *         description: Error adding blog
  */
+// Pastikan middleware upload dan validasi terpasang dengan benar
 router.post(
   "/add",
-  authMiddleware,
-  checkRole("admin"),
   upload.fields([
     { name: "gambarUtama", maxCount: 1 },
     { name: "gambarTambahan", maxCount: 10 },

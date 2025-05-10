@@ -114,7 +114,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
       { name: "Data User", url: "/admin/user", icon: Users },
     ],
     NavContent: [
-      { name: "Artikel", url: "/admin/artikel", icon: FileText },
+      { name: "Artikel", url: "/admin/article", icon: FileText },
       { name: "Testimoni", url: "/admin/testimoni", icon: MessageSquare },
     ]
   }), []);

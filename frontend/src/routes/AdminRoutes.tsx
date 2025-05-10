@@ -64,8 +64,8 @@ function AdminRoutes() {
       <Route path="/admin/destination/:id" element={<DetailDestination />} />
       <Route path="/admin/destination/:id/edit" element={<EditDestination />} /> 
 
-      <Route path="/admin/artikel" element={<AdminAllArticle/>} />
-      <Route path="/admin/artikel/add" element={<AddArticle />} />
+      <Route path="/admin/article" element={<AdminAllArticle/>} />
+      <Route path="/admin/article/add" element={<AddArticle />} />
       {/* <Route path="/admin/artikel/:id" element={<DetailArticle />} />
       <Route path="/admin/artikel/:id/edit" element={<EditArticle />} /> */}
 

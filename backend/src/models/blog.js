@@ -28,6 +28,7 @@ const blogSchema = new mongoose.Schema(
     kategori: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "BlogCategory",
+      required: false,
     },
   },
   { timestamps: true }

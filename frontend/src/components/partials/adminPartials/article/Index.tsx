@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,31 @@ export default function ArticleIndexPage() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState<string>('');
 
+  // Inisialisasi dengan default values untuk menjaga agar tidak undefined
+  const [articleData, setArticleData] = useState<{
+    articles: any[],
+    isLoadingArticles: boolean,
+    pagination: {
+      currentPage: number,
+      totalPages: number,
+      totalItems: number,
+      itemsPerPage: number
+    },
+    searchTerm: string,
+    categoryFilter: string
+  }>({
+    articles: [],
+    isLoadingArticles: true,
+    pagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
+      itemsPerPage: 10
+    },
+    searchTerm: '',
+    categoryFilter: 'all'
+  });
+
   const {
     articles,
     isLoadingArticles,
@@ -61,6 +86,20 @@ export default function ArticleIndexPage() {
     handleCategoryFilter,
     isDeleting
   } = useArticle();
+
+  // Update state lokal saat data berubah
+  useEffect(() => {
+    if (articles !== undefined) {
+      setArticleData(prev => ({
+        ...prev,
+        articles: articles || [],
+        isLoadingArticles,
+        pagination,
+        searchTerm,
+        categoryFilter
+      }));
+    }
+  }, [articles, isLoadingArticles, pagination, searchTerm, categoryFilter]);
 
   const {
     categories,
@@ -92,13 +131,13 @@ export default function ArticleIndexPage() {
 
   // Pagination handlers
   const handlePrevPage = () => {
-    if (pagination.currentPage > 1) {
+    if (pagination && pagination.currentPage > 1) {
       setPage(pagination.currentPage - 1);
     }
   };
 
   const handleNextPage = () => {
-    if (pagination.currentPage < pagination.totalPages) {
+    if (pagination && pagination.currentPage < pagination.totalPages) {
       setPage(pagination.currentPage + 1);
     }
   };
@@ -110,6 +149,13 @@ export default function ArticleIndexPage() {
       month: 'short',
       year: 'numeric'
     });
+  };
+
+  // Safely get category name, handling different data structures
+  const getCategoryName = (category: any) => {
+    if (!category) return '';
+    if (typeof category === 'string') return 'Unknown'; // In case it's just an ID
+    return category.title || category.nama || '';
   };
 
   return (
@@ -125,31 +171,31 @@ export default function ArticleIndexPage() {
         <div className="w-full max-w-sm">
           <Input
             placeholder="Cari artikel..."
-            value={searchTerm}
+            value={articleData.searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
             className="w-full"
           />
         </div>
-        <Select value={categoryFilter} onValueChange={handleCategoryFilter}>
+        <Select value={articleData.categoryFilter} onValueChange={handleCategoryFilter}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Filter kategori" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Semua Kategori</SelectItem>
-            {categories.map((category) => (
+            {categories && categories.map((category) => (
               <SelectItem key={category._id} value={category._id}>
-                {category.nama}
+                {category.title}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {isLoadingArticles ? (
+      {articleData.isLoadingArticles ? (
         <div className="flex justify-center items-center h-40">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : articles.length === 0 ? (
+      ) : articleData.articles.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40">
             <p className="text-muted-foreground mb-4">Tidak ada artikel yang ditemukan</p>
@@ -167,27 +213,17 @@ export default function ArticleIndexPage() {
                   <TableHead>Judul</TableHead>
                   <TableHead>Penulis</TableHead>
                   <TableHead>Kategori</TableHead>
-                  <TableHead>Hashtags</TableHead>
                   <TableHead>Tanggal Dibuat</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {articles.map((article) => (
+                {articleData.articles.map((article) => (
                   <TableRow key={article._id}>
                     <TableCell className="font-medium">{article.judul}</TableCell>
                     <TableCell>{article.penulis}</TableCell>
                     <TableCell>
-                      {typeof article.kategori === 'object' ? article.kategori.nama : ''}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {article.hashtags && article.hashtags.map((tag, index) => (
-                          <span key={index} className="bg-muted px-2 py-1 rounded-full text-xs">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
+                      {getCategoryName(article.kategori)}
                     </TableCell>
                     <TableCell>{formatDate(article.createdAt)}</TableCell>
                     <TableCell className="text-right">
@@ -230,19 +266,19 @@ export default function ArticleIndexPage() {
               variant="outline"
               size="sm"
               onClick={handlePrevPage}
-              disabled={pagination.currentPage === 1}
+              disabled={!pagination || pagination.currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
               Sebelumnya
             </Button>
             <div className="flex-1 text-center text-sm text-muted-foreground">
-              Halaman {pagination.currentPage} dari {pagination.totalPages}
+              Halaman {pagination?.currentPage || 1} dari {pagination?.totalPages || 1}
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={handleNextPage}
-              disabled={pagination.currentPage === pagination.totalPages}
+              disabled={!pagination || pagination.currentPage === pagination.totalPages}
             >
               Selanjutnya
               <ChevronRight className="h-4 w-4 ml-2" />

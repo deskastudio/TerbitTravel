@@ -8,7 +8,6 @@ export interface IArticle {
   gambarUtama: string;
   gambarTambahan: string[];
   kategori: ICategory | string;
-  hashtags: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -18,15 +17,13 @@ export interface IArticleInput {
   penulis: string;
   isi: string;
   kategori: string;
-  hashtags?: string[];
   gambarUtama: File | null;
   gambarTambahan: File[];
 }
 
 export interface ICategory {
   _id: string;
-  nama: string;
-  deskripsi: string;
+  title: string; // Mengubah dari nama menjadi title untuk menyesuaikan dengan model backend
   createdAt: string;
   updatedAt: string;
 }

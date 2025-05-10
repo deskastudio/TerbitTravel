@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,7 +26,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,6 +34,8 @@ import {
 import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react';
 import { IArticleInput } from '@/types/article.types';
 import { useArticle, useCategory } from '@/hooks/use-article';
+import AddCategory from './AddCategory';
+import { useToast } from '@/hooks/use-toast';
 
 // Schema validasi untuk artikel
 const articleSchema = z.object({
@@ -42,7 +43,6 @@ const articleSchema = z.object({
   penulis: z.string().min(1, "Nama penulis wajib diisi"),
   isi: z.string().min(1, "Konten artikel wajib diisi"),
   kategori: z.string().min(1, "Kategori wajib dipilih"),
-  hashtags: z.array(z.string()).optional().default([]),
 });
 
 type FormData = z.infer<typeof articleSchema>;
@@ -50,13 +50,15 @@ type FormData = z.infer<typeof articleSchema>;
 export default function ArticleAddPage() {
   const navigate = useNavigate();
   const { createArticle, isCreating } = useArticle();
-  const { categories, isLoadingCategories } = useCategory();
+  const { categories, isLoadingCategories, refreshCategories } = useCategory();
+  const { toast } = useToast();
   
   // State untuk gambar
   const [mainImage, setMainImage] = useState<File | null>(null);
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
   const [mainImagePreview, setMainImagePreview] = useState<string>('');
   const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form
   const form = useForm<FormData>({
@@ -66,21 +68,59 @@ export default function ArticleAddPage() {
       penulis: '',
       isi: '',
       kategori: '',
-      hashtags: [],
     },
   });
 
   // Proses submit form
   const onSubmit = async (data: FormData) => {
-    const articleData: IArticleInput = {
-      ...data,
-      gambarUtama: mainImage,
-      gambarTambahan: additionalImages,
-    };
+    try {
+      setIsSubmitting(true);
+      
+      // Validasi gambar utama
+      if (!mainImage) {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: "Gambar utama wajib diunggah",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Konversi data form ke format yang diharapkan API
+      const articleData: IArticleInput = {
+        ...data,
+        gambarUtama: mainImage,
+        gambarTambahan: additionalImages,
+      };
+      
+      console.log("Submitting article data:", {
+        judul: articleData.judul,
+        penulis: articleData.penulis,
+        isi: articleData.isi.substring(0, 20) + "...",
+        kategori: articleData.kategori,
+        gambarUtama: articleData.gambarUtama ? "File terlampir" : null,
+        gambarTambahan: articleData.gambarTambahan.length + " files"
+      });
 
-    const success = await createArticle(articleData);
-    if (success) {
-      navigate('/admin/article');
+      const success = await createArticle(articleData);
+      
+      if (success) {
+        toast({
+          title: "Sukses!",
+          description: "Artikel berhasil ditambahkan.",
+        });
+        navigate('/admin/article');
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        variant: "destructive",
+        title: "Error!",
+        description: `Gagal menambahkan artikel: ${error.message || "Terjadi kesalahan"}`,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -88,6 +128,27 @@ export default function ArticleAddPage() {
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validasi ukuran file (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: "Ukuran gambar maksimal 5MB",
+        });
+        return;
+      }
+      
+      // Validasi tipe file
+      if (!file.type.startsWith("image/")) {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: "File harus berupa gambar",
+        });
+        return;
+      }
+      
       setMainImage(file);
       
       // Membuat preview
@@ -105,10 +166,36 @@ export default function ArticleAddPage() {
   const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      setAdditionalImages(prev => [...prev, ...filesArray]);
+      
+      // Validasi ukuran dan tipe file
+      const validFiles = filesArray.filter(file => {
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            variant: "destructive",
+            title: "Error!",
+            description: `File ${file.name} melebihi ukuran maksimal 5MB`,
+          });
+          return false;
+        }
+        
+        if (!file.type.startsWith("image/")) {
+          toast({
+            variant: "destructive",
+            title: "Error!",
+            description: `File ${file.name} bukan gambar`,
+          });
+          return false;
+        }
+        
+        return true;
+      });
+      
+      if (validFiles.length === 0) return;
+      
+      setAdditionalImages(prev => [...prev, ...validFiles]);
       
       // Membuat preview untuk semua gambar
-      filesArray.forEach(file => {
+      validFiles.forEach(file => {
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
@@ -123,21 +210,21 @@ export default function ArticleAddPage() {
     }
   };
 
-  // Handler untuk mengkonversi string hashtags menjadi array
-  const handleHashtagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const hashtagsString = e.target.value;
-    const hashtagsArray = hashtagsString
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag !== '');
-    form.setValue('hashtags', hashtagsArray);
-  };
-
   // Hapus gambar tambahan
   const removeAdditionalImage = (index: number) => {
     setAdditionalImages(additionalImages.filter((_, i) => i !== index));
     setAdditionalImagePreviews(additionalImagePreviews.filter((_, i) => i !== index));
   };
+
+  // Handle kategori baru ditambahkan
+  const handleCategoryAdded = () => {
+    refreshCategories();
+  };
+
+  // Load kategori pertama kali
+  useEffect(() => {
+    refreshCategories();
+  }, []);
 
   // Komponen untuk preview gambar
   const ImagePreview = ({ 
@@ -169,9 +256,6 @@ export default function ArticleAddPage() {
       </div>
     );
   };
-
-  // Mengenerate string hashtags dari array untuk ditampilkan di input
-  const hashtagsValue = form.watch("hashtags")?.join(", ") || "";
 
   return (
     <div className="container max-w-4xl mx-auto py-6">
@@ -233,7 +317,13 @@ export default function ArticleAddPage() {
                 name="kategori"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kategori</FormLabel>
+                    <div className="flex justify-between items-center">
+                      <FormLabel>Kategori</FormLabel>
+                      <AddCategory 
+                        variant="inline" 
+                        onSuccess={handleCategoryAdded} 
+                      />
+                    </div>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value} 
@@ -250,12 +340,16 @@ export default function ArticleAddPage() {
                             <Loader2 className="h-4 w-4 animate-spin mr-2" />
                             <span>Memuat kategori...</span>
                           </div>
-                        ) : (
+                        ) : categories && categories.length > 0 ? (
                           categories.map((category) => (
                             <SelectItem key={category._id} value={category._id}>
-                              {category.nama}
+                              {category.title}
                             </SelectItem>
                           ))
+                        ) : (
+                          <div className="text-center p-2 text-muted-foreground">
+                            Tidak ada kategori. Klik "Tambah Kategori Baru".
+                          </div>
                         )}
                       </SelectContent>
                     </Select>
@@ -263,20 +357,6 @@ export default function ArticleAddPage() {
                   </FormItem>
                 )}
               />
-
-              <FormItem>
-                <FormLabel>Hashtags</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Pisahkan hashtags dengan koma (contoh: travel, pantai, liburan)" 
-                    value={hashtagsValue}
-                    onChange={handleHashtagsChange}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Hashtags akan mempermudah pencarian artikel
-                </FormDescription>
-              </FormItem>
 
               <FormField
                 control={form.control}
@@ -298,7 +378,7 @@ export default function ArticleAddPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label>Gambar Utama</Label>
+                  <Label htmlFor="mainImage">Gambar Utama <span className="text-destructive">*</span></Label>
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-4">
                       <Button
@@ -328,16 +408,14 @@ export default function ArticleAddPage() {
                         />
                       )}
                     </div>
-                    {!mainImage && (
-                      <p className="text-sm text-muted-foreground">
-                        Gambar utama wajib diunggah
-                      </p>
-                    )}
+                    <p className={`text-sm ${!mainImage ? "text-destructive" : "text-muted-foreground"}`}>
+                      Gambar utama wajib diunggah (Max: 5MB)
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Gambar Tambahan</Label>
+                  <Label htmlFor="additionalImages">Gambar Tambahan</Label>
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-wrap gap-4">
                       <Button
@@ -367,7 +445,7 @@ export default function ArticleAddPage() {
                       ))}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Bisa menambahkan beberapa gambar (opsional)
+                      Bisa menambahkan beberapa gambar (opsional, Max: 5MB per gambar)
                     </p>
                   </div>
                 </div>
@@ -378,15 +456,15 @@ export default function ArticleAddPage() {
                   type="button" 
                   variant="outline" 
                   onClick={() => navigate('/admin/article')}
-                  disabled={isCreating}
+                  disabled={isCreating || isSubmitting}
                 >
                   Batal
                 </Button>
                 <Button 
                   type="submit" 
-                  disabled={isCreating || !mainImage}
+                  disabled={isCreating || isSubmitting || !mainImage}
                 >
-                  {isCreating ? (
+                  {(isCreating || isSubmitting) ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Menyimpan...
