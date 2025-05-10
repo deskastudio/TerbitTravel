@@ -32,6 +32,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TourPackageService } from "@/services/tour-package.service" // Tambahkan import service
+import { ITourPackage, IPackageCategory } from "@/types/tour-package.types" // Tambahkan import tipe
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -51,7 +53,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 // Types
-type Category = "semua" | "populer" | "promo" | "flash-sale"
+type CategoryType = "semua" | string  // Diubah agar dinamis berdasarkan ID kategori
 
 // Interface for travel package
 interface IPaketWisata {
@@ -66,140 +68,37 @@ interface IPaketWisata {
   rating: number
   foto: string[]
   fasilitas: string[]
-  isPopular?: boolean
-  isPromo?: boolean
-  isFlashSale?: boolean
+  kategoriId: string // ID kategori untuk filter
   createdAt?: string
   updatedAt?: string
 }
 
-// Sample data
-const paketWisata: IPaketWisata[] = [
-  {
-    _id: "1",
-    nama: "Pesona Bali 3 Hari 2 Malam",
-    destinasi: ["Pantai Kuta", "Ubud", "Tanah Lot"],
-    deskripsi: "Nikmati liburan di Pulau Dewata dengan mengunjungi destinasi-destinasi ikonik di Bali.",
-    harga: 2500000,
-    diskon: 15,
-    durasi: "3 hari 2 malam",
-    maxPeserta: 15,
-    rating: 4.7,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Hotel", "Transport", "Makan 3x", "Tour Guide"],
-    isPopular: true,
-    isPromo: false,
-    isFlashSale: false,
-  },
-  {
-    _id: "2",
-    nama: "Eksotisme Lombok",
-    destinasi: ["Gili Trawangan", "Pantai Senggigi", "Gunung Rinjani"],
-    deskripsi: "Jelajahi keindahan alam Lombok yang masih alami dan eksotis.",
-    harga: 3000000,
-    durasi: "4 hari 3 malam",
-    maxPeserta: 10,
-    rating: 4.8,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Hotel", "Transport", "Makan 3x", "Tour Guide", "Snorkeling"],
-    isPopular: true,
-    isPromo: true,
-    isFlashSale: false,
-  },
-  {
-    _id: "3",
-    nama: "Petualangan Raja Ampat",
-    destinasi: ["Pulau Wayag", "Teluk Kabui", "Pianemo"],
-    deskripsi: "Eksplorasi surga bawah laut di Raja Ampat dengan keindahan terumbu karang dan ikan warna-warni.",
-    harga: 8500000,
-    diskon: 10,
-    durasi: "5 hari 4 malam",
-    maxPeserta: 8,
-    rating: 4.9,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Resort", "Transport", "Makan 3x", "Tour Guide", "Diving", "Snorkeling"],
-    isPopular: false,
-    isPromo: false,
-    isFlashSale: true,
-  },
-  {
-    _id: "4",
-    nama: "Wisata Budaya Yogyakarta",
-    destinasi: ["Candi Borobudur", "Candi Prambanan", "Keraton Yogyakarta", "Malioboro"],
-    deskripsi: "Telusuri sejarah dan budaya Jawa di kota pelajar Yogyakarta.",
-    harga: 1800000,
-    durasi: "3 hari 2 malam",
-    maxPeserta: 20,
-    rating: 4.6,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Hotel", "Transport", "Makan 2x", "Tour Guide", "Tiket Masuk"],
-    isPopular: true,
-    isPromo: false,
-    isFlashSale: false,
-  },
-  {
-    _id: "5",
-    nama: "Gunung Bromo Sunrise Tour",
-    destinasi: ["Gunung Bromo", "Bukit Teletubbies", "Pasir Berbisik", "Gunung Penanjakan"],
-    deskripsi: "Saksikan keajaiban matahari terbit dari puncak Gunung Bromo yang memukau.",
-    harga: 1500000,
-    diskon: 5,
-    durasi: "2 hari 1 malam",
-    maxPeserta: 12,
-    rating: 4.7,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Homestay", "Jeep 4x4", "Makan 2x", "Tour Guide", "Tiket Masuk"],
-    isPopular: true,
-    isPromo: true,
-    isFlashSale: false,
-  },
-  {
-    _id: "6",
-    nama: "Eksplorasi Pulau Komodo",
-    destinasi: ["Pulau Komodo", "Pulau Rinca", "Pink Beach", "Pulau Padar"],
-    deskripsi: "Bertemu dengan komodo, hewan purba yang masih hidup hingga saat ini di habitat aslinya.",
-    harga: 4500000,
-    durasi: "4 hari 3 malam",
-    maxPeserta: 10,
-    rating: 4.8,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Hotel", "Kapal", "Makan 3x", "Tour Guide", "Ranger", "Snorkeling"],
-    isPopular: false,
-    isPromo: false,
-    isFlashSale: true,
-  },
-  {
-    _id: "7",
-    nama: "Pesona Danau Toba",
-    destinasi: ["Danau Toba", "Pulau Samosir", "Tomok", "Tuktuk"],
-    deskripsi: "Nikmati keindahan danau vulkanik terbesar di dunia dengan budaya Batak yang kental.",
-    harga: 2200000,
-    durasi: "3 hari 2 malam",
-    maxPeserta: 15,
-    rating: 4.5,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Hotel", "Transport", "Makan 3x", "Tour Guide", "Kapal Ferry"],
-    isPopular: false,
-    isPromo: true,
-    isFlashSale: false,
-  },
-  {
-    _id: "8",
-    nama: "Wisata Sejarah Malang",
-    destinasi: ["Jatim Park", "Museum Angkut", "Kota Batu", "Candi Singosari"],
-    deskripsi: "Jelajahi kota Malang yang sejuk dengan berbagai destinasi wisata edukatif dan sejarah.",
-    harga: 1600000,
-    diskon: 8,
-    durasi: "3 hari 2 malam",
-    maxPeserta: 20,
-    rating: 4.4,
-    foto: ["/placeholder.svg?height=200&width=400"],
-    fasilitas: ["Hotel", "Transport", "Makan 2x", "Tour Guide", "Tiket Masuk"],
-    isPopular: false,
-    isPromo: true,
-    isFlashSale: false,
-  },
-]
+// Fungsi untuk mengkonversi ITourPackage ke IPaketWisata
+const convertToUIFormat = (tourPackage: ITourPackage): IPaketWisata => {
+  // Ambil nilai random untuk rating (sementara)
+  const randomRating = 4 + Math.random();
+  const rating = parseFloat(randomRating.toFixed(1));
+  
+  // Ambil nilai random untuk diskon (sementara)
+  const diskon = Math.random() > 0.5 ? Math.floor(Math.random() * 20) : undefined;
+  
+  return {
+    _id: tourPackage._id,
+    nama: tourPackage.nama,
+    destinasi: [tourPackage.destination.nama], // Konversi dari objek ke array string
+    deskripsi: tourPackage.deskripsi,
+    harga: tourPackage.harga,
+    diskon: diskon, // Random diskon
+    durasi: tourPackage.durasi,
+    maxPeserta: 15, // Default value karena tidak ada di ITourPackage
+    rating: rating,
+    foto: ["/placeholder.svg?height=200&width=400"], // Default foto
+    fasilitas: [...tourPackage.include], // Gunakan include sebagai fasilitas
+    kategoriId: tourPackage.kategori._id, // ID kategori
+    createdAt: tourPackage.createdAt,
+    updatedAt: tourPackage.updatedAt
+  }
+}
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -224,10 +123,6 @@ const PaketWisataCard = ({ paket }: { paket: IPaketWisata }) => {
     <Card className="overflow-hidden transition-all hover:shadow-md">
       <div className="relative">
         <img src={paket.foto[0] || "/placeholder.svg"} alt={paket.nama} className="h-48 w-full object-cover" />
-        {paket.isFlashSale && <Badge className="absolute right-2 top-2 bg-red-500 hover:bg-red-600">Flash Sale</Badge>}
-        {paket.isPromo && !paket.isFlashSale && (
-          <Badge className="absolute right-2 top-2 bg-orange-500 hover:bg-orange-600">Promo</Badge>
-        )}
         {paket.diskon && (
           <Badge className="absolute left-2 top-2 bg-green-500 hover:bg-green-600">{paket.diskon}% OFF</Badge>
         )}
@@ -327,9 +222,8 @@ const PaketWisataCardSkeleton = () => (
 
 // Recommendation Component
 const RecommendationSection = ({ paketWisata }: { paketWisata: IPaketWisata[] }) => {
-  // Get 3 random popular packages for recommendations
-  const recommendedPaket = paketWisata
-    .filter((p) => p.isPopular)
+  // Get 3 random packages for recommendations
+  const recommendedPaket = [...paketWisata]
     .sort(() => 0.5 - Math.random())
     .slice(0, 3)
 
@@ -337,9 +231,17 @@ const RecommendationSection = ({ paketWisata }: { paketWisata: IPaketWisata[] })
     <div className="mt-8 mb-12">
       <h2 className="text-2xl font-bold mb-4">Rekomendasi Untuk Anda</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {recommendedPaket.map((paket) => (
-          <PaketWisataCard key={`rec-${paket._id}`} paket={paket} />
-        ))}
+        {recommendedPaket.length > 0 ? (
+          recommendedPaket.map((paket) => (
+            <PaketWisataCard key={`rec-${paket._id}`} paket={paket} />
+          ))
+        ) : (
+          <>
+            <PaketWisataCardSkeleton />
+            <PaketWisataCardSkeleton />
+            <PaketWisataCardSkeleton />
+          </>
+        )}
       </div>
     </div>
   )
@@ -349,15 +251,67 @@ const RecommendationSection = ({ paketWisata }: { paketWisata: IPaketWisata[] })
 const PaketWisataPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
-  const [selectedCategory, setSelectedCategory] = useState<Category>("semua")
+  const [selectedCategory, setSelectedCategory] = useState<CategoryType>("semua")
   const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true) // Set isLoading awal ke true
   const [sortBy, setSortBy] = useState("recommended")
   const [durasiFilter, setDurasiFilter] = useState("")
   const [hargaFilter, setHargaFilter] = useState("")
   const [fasilitasFilter, setFasilitasFilter] = useState("")
+  
+  // State untuk menyimpan data kategori dari API
+  const [categories, setCategories] = useState<IPackageCategory[]>([])
+  
+  // State untuk menyimpan data paket wisata dari API
+  const [paketWisata, setPaketWisata] = useState<IPaketWisata[]>([])
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const itemsPerPage = 6
+
+  // Fetch data kategori dan paket wisata dari API pada saat komponen dimount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        setFetchError(null)
+        
+        // Ambil kategori dan paket wisata secara parallel
+        const [categoriesData, packagesData] = await Promise.all([
+          TourPackageService.getAllCategories(),
+          TourPackageService.getAllPackages()
+        ])
+        
+        console.log("Data kategori dari API:", categoriesData)
+        console.log("Data paket wisata dari API:", packagesData)
+        
+        // Set kategori
+        if (categoriesData && Array.isArray(categoriesData)) {
+          setCategories(categoriesData)
+        } else {
+          console.error("Data kategori yang diterima bukan array:", categoriesData)
+        }
+        
+        // Set paket wisata
+        if (packagesData && Array.isArray(packagesData)) {
+          // Konversi data dari API ke format yang dibutuhkan UI
+          const convertedData = packagesData.map(convertToUIFormat)
+          console.log("Data paket wisata setelah konversi:", convertedData)
+          
+          setPaketWisata(convertedData)
+        } else {
+          console.error("Data paket wisata yang diterima bukan array:", packagesData)
+          setFetchError("Format data tidak valid")
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+        setFetchError("Gagal mengambil data")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   // Filter packages based on search, category, and other filters
   const filteredPaket = paketWisata.filter((paket) => {
@@ -370,12 +324,8 @@ const PaketWisataPage: React.FC = () => {
 
     // Category filter
     let matchesCategory = true
-    if (selectedCategory === "populer") {
-      matchesCategory = !!paket.isPopular
-    } else if (selectedCategory === "promo") {
-      matchesCategory = !!paket.isPromo
-    } else if (selectedCategory === "flash-sale") {
-      matchesCategory = !!paket.isFlashSale
+    if (selectedCategory !== "semua") {
+      matchesCategory = paket.kategoriId === selectedCategory
     }
 
     // Durasi filter
@@ -448,7 +398,7 @@ const PaketWisataPage: React.FC = () => {
 
   // Handle category change
   const handleCategoryChange = useCallback((value: string) => {
-    setSelectedCategory(value as Category)
+    setSelectedCategory(value as CategoryType)
     setCurrentPage(1)
   }, [])
 
@@ -494,14 +444,24 @@ const PaketWisataPage: React.FC = () => {
         />
       </div>
 
-      {/* Category Tabs */}
+      {/* Error Message if API fetch failed */}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-center">
+          <p className="text-red-700">{fetchError}</p>
+          <p className="text-sm text-red-600 mt-1">Silakan coba muat ulang halaman ini</p>
+        </div>
+      )}
+
+      {/* Category Tabs - Dinamis dari Database + Tab Semua */}
       <Tabs defaultValue="semua" value={selectedCategory} onValueChange={handleCategoryChange} className="mb-8">
         <div className="flex justify-between items-center mb-4">
-          <TabsList>
+          <TabsList className="overflow-x-auto">
             <TabsTrigger value="semua">Semua</TabsTrigger>
-            <TabsTrigger value="populer">Populer</TabsTrigger>
-            <TabsTrigger value="promo">Promo</TabsTrigger>
-            <TabsTrigger value="flash-sale">Flash Sale</TabsTrigger>
+            
+            {/* Tab dari database */}
+            {categories.map((category) => (
+              <TabsTrigger key={category._id} value={category._id}>{category.title}</TabsTrigger>
+            ))}
           </TabsList>
 
           <div className="flex items-center gap-2">
@@ -595,9 +555,12 @@ const PaketWisataPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Content untuk tab 'semua' */}
         <TabsContent value="semua" className="mt-0">
           {/* Recommendation Section */}
-          <RecommendationSection paketWisata={paketWisata} />
+          {!isLoading && paketWisata.length > 0 && (
+            <RecommendationSection paketWisata={paketWisata} />
+          )}
 
           {/* Packages Grid */}
           {isLoading ? (
@@ -691,86 +654,94 @@ const PaketWisataPage: React.FC = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="populer" className="mt-0">
-          {/* Same structure as "semua" tab but with filtered data */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array(6)
-                .fill(0)
-                .map((_, index) => (
-                  <PaketWisataCardSkeleton key={`skeleton-pop-${index}`} />
+        {/* Content untuk tab kategori dari database */}
+        {categories.map((category) => (
+          <TabsContent key={category._id} value={category._id} className="mt-0">
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array(6)
+                  .fill(0)
+                  .map((_, index) => (
+                    <PaketWisataCardSkeleton key={`skeleton-${category._id}-${index}`} />
+                  ))}
+              </div>
+            ) : paginatedPaket.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedPaket.map((paket) => (
+                  <PaketWisataCard key={`${category._id}-${paket._id}`} paket={paket} />
                 ))}
-            </div>
-          ) : paginatedPaket.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedPaket.map((paket) => (
-                <PaketWisataCard key={paket._id} paket={paket} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
-              <p className="text-muted-foreground">Tidak ada paket wisata populer yang sesuai dengan filter Anda.</p>
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
+                <p className="text-muted-foreground">
+                  Tidak ada paket wisata dalam kategori "{category.title}" yang sesuai dengan filter Anda.
+                </p>
+              </div>
+            )}
 
-          {/* Pagination (same as above) */}
-          {!isLoading && totalPages > 1 && (
-            <Pagination className="mt-8">{/* Same pagination structure as above */}</Pagination>
-          )}
-        </TabsContent>
+            {/* Pagination */}
+            {!isLoading && totalPages > 1 && (
+              <Pagination className="mt-8">
+                <PaginationContent>
+                  <PaginationItem>
+                  <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (currentPage > 1) handlePageChange(currentPage - 1)
+                      }}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
 
-        <TabsContent value="promo" className="mt-0">
-          {/* Same structure as other tabs */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array(6)
-                .fill(0)
-                .map((_, index) => (
-                  <PaketWisataCardSkeleton key={`skeleton-promo-${index}`} />
-                ))}
-            </div>
-          ) : paginatedPaket.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedPaket.map((paket) => (
-                <PaketWisataCard key={paket._id} paket={paket} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
-              <p className="text-muted-foreground">Tidak ada paket wisata promo yang sesuai dengan filter Anda.</p>
-            </div>
-          )}
-        </TabsContent>
+                  {Array.from({ length: totalPages }).map((_, index) => {
+                    const page = index + 1
+                    if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                      return (
+                        <PaginationItem key={`${category._id}-page-${page}`}>
+                          <PaginationLink
+                            href="#"
+                            isActive={page === currentPage}
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handlePageChange(page)
+                            }}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    }
+                    if (page === 2 || page === totalPages - 1) {
+                      return (
+                        <PaginationItem key={`${category._id}-ellipsis-${page}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      )
+                    }
+                    return null
+                  })}
 
-        <TabsContent value="flash-sale" className="mt-0">
-          {/* Same structure as other tabs */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array(6)
-                .fill(0)
-                .map((_, index) => (
-                  <PaketWisataCardSkeleton key={`skeleton-flash-${index}`} />
-                ))}
-            </div>
-          ) : paginatedPaket.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedPaket.map((paket) => (
-                <PaketWisataCard key={paket._id} paket={paket} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
-              <p className="text-muted-foreground">Tidak ada paket wisata flash sale yang sesuai dengan filter Anda.</p>
-            </div>
-          )}
-        </TabsContent>
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        if (currentPage < totalPages) handlePageChange(currentPage + 1)
+                      }}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </TabsContent>
+        ))}
       </Tabs>
 
       {/* "Under Development" Section for empty states */}
-      {paginatedPaket.length === 0 && !isLoading && (
+      {!isLoading && paketWisata.length === 0 && !fetchError && (
         <div className="bg-blue-50 rounded-xl p-8 text-center my-8">
           <div className="flex justify-center mb-4">
             <svg

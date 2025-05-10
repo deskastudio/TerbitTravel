@@ -16,8 +16,14 @@ export class TourPackageService {
   //     Paket Wisata
   // ========================
   static async getAllPackages(): Promise<ITourPackage[]> {
-    const response = await axios.get("/package"); // Ubah dari "/package/getAll"
-    return response.data;
+    try {
+      const response = await axios.get("/package"); // Ubah endpoint sesuai kebutuhan
+      console.log("Response dari API:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching packages:", error);
+      throw error;
+    }
   }
 
   static async createPackage(data: ITourPackageInput): Promise<ITourPackage> {

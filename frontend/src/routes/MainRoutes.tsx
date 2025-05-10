@@ -32,7 +32,7 @@ function MainRoutes() {
         <Route path="/" element={<Homepage />} />
         <Route path="/article" element={<Article />} />
         <Route path="/tour-package" element={<TourPackage />} />
-        <Route path="/tour-packages/:id" element={<TourPackageDetails />} />
+        <Route path="/paket-wisata/:id" element={<TourPackageDetails />} />
         <Route path="/destination" element={<Destination />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-condition" element={<TermsConditionsPage />} />
