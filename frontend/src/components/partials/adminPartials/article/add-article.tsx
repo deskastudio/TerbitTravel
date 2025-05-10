@@ -71,58 +71,69 @@ export default function ArticleAddPage() {
     },
   });
 
-  // Proses submit form
-  const onSubmit = async (data: FormData) => {
-    try {
-      setIsSubmitting(true);
-      
-      // Validasi gambar utama
-      if (!mainImage) {
-        toast({
-          variant: "destructive",
-          title: "Error!",
-          description: "Gambar utama wajib diunggah",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Konversi data form ke format yang diharapkan API
-      const articleData: IArticleInput = {
-        ...data,
-        gambarUtama: mainImage,
-        gambarTambahan: additionalImages,
-      };
-      
-      console.log("Submitting article data:", {
-        judul: articleData.judul,
-        penulis: articleData.penulis,
-        isi: articleData.isi.substring(0, 20) + "...",
-        kategori: articleData.kategori,
-        gambarUtama: articleData.gambarUtama ? "File terlampir" : null,
-        gambarTambahan: articleData.gambarTambahan.length + " files"
-      });
-
-      const success = await createArticle(articleData);
-      
-      if (success) {
-        toast({
-          title: "Sukses!",
-          description: "Artikel berhasil ditambahkan.",
-        });
-        navigate('/admin/article');
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
+  // Proses submit form (revisi)
+const onSubmit = async (data: FormData) => {
+  try {
+    setIsSubmitting(true);
+    
+    // Validasi panjang isi
+    if (data.isi.length < 100) {
       toast({
         variant: "destructive",
         title: "Error!",
-        description: `Gagal menambahkan artikel: ${error.message || "Terjadi kesalahan"}`,
+        description: "Isi artikel minimal 100 karakter",
       });
-    } finally {
       setIsSubmitting(false);
+      return;
     }
-  };
+    
+    // Validasi gambar utama
+    if (!mainImage) {
+      toast({
+        variant: "destructive",
+        title: "Error!",
+        description: "Gambar utama wajib diunggah",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Konversi data form ke format yang diharapkan API
+    const articleData: IArticleInput = {
+      ...data,
+      gambarUtama: mainImage,
+      gambarTambahan: additionalImages.length > 0 ? additionalImages : undefined,
+    };
+    
+    console.log("Submitting article data:", {
+      judul: articleData.judul,
+      penulis: articleData.penulis,
+      isi: articleData.isi.length > 20 ? articleData.isi.substring(0, 20) + "..." : articleData.isi,
+      kategori: articleData.kategori,
+      gambarUtama: articleData.gambarUtama ? "File terlampir" : null,
+      gambarTambahan: additionalImages.length + " files"
+    });
+
+    const success = await createArticle(articleData);
+    
+    if (success) {
+      toast({
+        title: "Sukses!",
+        description: "Artikel berhasil ditambahkan.",
+      });
+      navigate('/admin/article');
+    }
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    toast({
+      variant: "destructive",
+      title: "Error!",
+      description: `Gagal menambahkan artikel: ${error.message || "Terjadi kesalahan"}`,
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Handler untuk upload gambar utama
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

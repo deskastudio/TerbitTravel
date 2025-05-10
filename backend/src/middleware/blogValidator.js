@@ -2,7 +2,7 @@
 import { body, validationResult } from "express-validator";
 import mongoose from "mongoose";
 
-// Fungsi untuk validasi data blog
+// Fungsi untuk validasi data blog dengan pesan error yang lebih jelas
 export const validateBlogData = [
   // Validasi judul
   body("judul")
@@ -27,20 +27,44 @@ export const validateBlogData = [
 
   // Validasi kategori
   body("kategori")
-    .optional()
+    .notEmpty()
+    .withMessage("Kategori tidak boleh kosong")
     .custom((value) => {
-      if (value && !mongoose.Types.ObjectId.isValid(value)) {
+      if (!mongoose.Types.ObjectId.isValid(value)) {
         throw new Error("Format ID kategori tidak valid");
       }
       return true;
     }),
 
-  // Handler hasil validasi
+  // Handler hasil validasi dengan pesan error yang lebih detail
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log("Validation errors:", errors.array());
+      
+      // Cek apakah ada file yang diunggah
+      if (!req.files || !req.files.gambarUtama) {
+        errors.errors.push({
+          msg: "Gambar utama wajib diunggah",
+          param: "gambarUtama",
+          location: "body"
+        });
+      }
+      
+      return res.status(400).json({ 
+        message: "Validasi gagal", 
+        errors: errors.array() 
+      });
     }
+    
+    // Validasi gambar utama
+    if (!req.files || !req.files.gambarUtama || req.files.gambarUtama.length === 0) {
+      return res.status(400).json({ 
+        message: "Validasi gagal", 
+        errors: [{ msg: "Gambar utama wajib diunggah", param: "gambarUtama" }] 
+      });
+    }
+    
     next();
   },
 ];

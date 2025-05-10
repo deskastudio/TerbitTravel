@@ -43,21 +43,25 @@ export const ArticleService = {
   createArticle: async (data: IArticleInput): Promise<ArticleResponse> => {
     try {
       const formData = new FormData();
+      
+      // Pastikan semua field wajib
+      if (!data.judul || !data.penulis || !data.isi || !data.kategori) {
+        throw new Error("Semua field wajib diisi (judul, penulis, isi, kategori)");
+      }
+      
       formData.append("judul", data.judul);
       formData.append("penulis", data.penulis);
       formData.append("isi", data.isi);
+      formData.append("kategori", data.kategori);
       
-      // Pastikan kategori tidak undefined atau null
-      if (data.kategori) {
-        formData.append("kategori", data.kategori);
+      // Pastikan gambarUtama tersedia dan valid
+      if (!data.gambarUtama || !(data.gambarUtama instanceof File)) {
+        throw new Error("Gambar utama wajib diunggah");
       }
       
-      // Append main image - pastikan gambarUtama tidak undefined atau null
-      if (data.gambarUtama instanceof File) {
-        formData.append("gambarUtama", data.gambarUtama);
-      }
+      formData.append("gambarUtama", data.gambarUtama);
       
-      // Append additional images - pastikan gambarTambahan adalah array dan tidak kosong
+      // Tambahkan gambar tambahan jika ada
       if (data.gambarTambahan && Array.isArray(data.gambarTambahan) && data.gambarTambahan.length > 0) {
         data.gambarTambahan.forEach((image) => {
           if (image instanceof File) {
@@ -65,17 +69,18 @@ export const ArticleService = {
           }
         });
       }
-
+  
       // Log untuk debugging
       console.log('Creating article with data:', {
         judul: data.judul,
         penulis: data.penulis,
-        isi: data.isi,
+        isi: data.isi.substring(0, 30) + "...", // Hanya tampilkan sebagian
         kategori: data.kategori,
         gambarUtama: data.gambarUtama ? 'File terlampir' : 'Tidak ada',
         gambarTambahan: data.gambarTambahan ? `${data.gambarTambahan.length} file` : 'Tidak ada'
       });
-
+  
+      // Kirim request dengan timeout yang lebih lama
       const response = await axiosInstance.post<ArticleResponse>(
         `/blog/add`,
         formData,
@@ -83,16 +88,33 @@ export const ArticleService = {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          timeout: 30000, // Timeout 30 detik
         }
       );
       return response.data;
     } catch (error) {
       console.error('Error in createArticle:', error);
+      
       // Log detail error lebih lengkap
       if (error.response) {
         console.error('Error response data:', error.response.data);
         console.error('Error response status:', error.response.status);
+        console.error('Error response headers:', error.response.headers);
+        
+        // Jika ada pesan error spesifik dari server
+        if (error.response.data && error.response.data.message) {
+          throw new Error(error.response.data.message);
+        }
+        
+        // Jika ada detail errors dari validasi
+        if (error.response.data && error.response.data.errors) {
+          const errorMessages = error.response.data.errors
+            .map((err: any) => err.msg || err.message)
+            .join(", ");
+          throw new Error(errorMessages);
+        }
       }
+      
       throw error;
     }
   },

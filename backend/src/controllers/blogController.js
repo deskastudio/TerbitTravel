@@ -5,21 +5,33 @@ import fs from "fs";
 
 // Add new blog
 export const addBlog = async (req, res) => {
-  const { judul, penulis, isi, kategori } = req.body;
-  
   try {
+    console.log("Processing blog creation...");
     console.log("Request body:", req.body);
+    
+    // Validasi data dasar
+    const { judul, penulis, isi, kategori } = req.body;
+    if (!judul || !penulis || !isi || !kategori) {
+      return res.status(400).json({ 
+        message: "Data tidak lengkap", 
+        details: "Semua field (judul, penulis, isi, kategori) wajib diisi" 
+      });
+    }
+    
+    // Validasi dan proses file upload
     console.log("Request files:", req.files);
     
+    if (!req.files || !req.files.gambarUtama || req.files.gambarUtama.length === 0) {
+      return res.status(400).json({ 
+        message: "Gambar utama wajib diunggah" 
+      });
+    }
+    
     // Handle file uploads
-    const gambarUtama = req.files && req.files["gambarUtama"] && req.files["gambarUtama"].length > 0
-      ? `/uploads/blog/${req.files["gambarUtama"][0].filename}`
-      : "";
-      
-    const gambarTambahan = req.files && req.files["gambarTambahan"] && req.files["gambarTambahan"].length > 0
-      ? req.files["gambarTambahan"].map(
-          (file) => `/uploads/blog/${file.filename}`
-        )
+    const gambarUtama = `/uploads/blog/${req.files.gambarUtama[0].filename}`;
+    
+    const gambarTambahan = req.files.gambarTambahan && req.files.gambarTambahan.length > 0
+      ? req.files.gambarTambahan.map(file => `/uploads/blog/${file.filename}`)
       : [];
 
     console.log("Processed gambarUtama:", gambarUtama);
@@ -40,11 +52,17 @@ export const addBlog = async (req, res) => {
     res.status(201).json({ message: "Blog added successfully", data: newBlog });
   } catch (error) {
     console.error("Error adding blog:", error);
-    res
-      .status(500)
-      .json({ message: "Failed to add blog", error: error.message });
+    // Log error stack untuk debugging
+    console.error("Error stack:", error.stack);
+    
+    res.status(500).json({ 
+      message: "Failed to add blog", 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
+
 
 // Update existing blog
 export const updateBlog = async (req, res) => {
