@@ -22,10 +22,13 @@ export const useDestination = () => {
   const fetchDestinations = useCallback(async () => {
     try {
       setIsLoadingDestinations(true);
+      console.log("Fetching all destinations...");
       const data = await DestinationService.getAllDestinations();
+      console.log("Destinations fetched successfully:", data.length);
       setDestinations(data);
       setDestinationsError(null);
     } catch (error) {
+      console.error("Error fetching destinations:", error);
       setDestinationsError(error as Error);
       toast({
         variant: "destructive",
@@ -41,10 +44,13 @@ export const useDestination = () => {
   const fetchCategories = useCallback(async () => {
     try {
       setIsLoadingCategories(true);
+      console.log("Fetching all categories...");
       const data = await DestinationService.getAllCategories();
+      console.log("Categories fetched successfully:", data.length);
       setCategories(data);
       setCategoriesError(null);
     } catch (error) {
+      console.error("Error fetching categories:", error);
       setCategoriesError(error as Error);
       toast({
         variant: "destructive",
@@ -67,38 +73,72 @@ export const useDestination = () => {
     const [destination, setDestination] = useState<IDestination | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
       const fetchDestination = async () => {
-        if (!id) return;
+        if (!id) {
+          console.warn("Cannot fetch destination: ID is empty");
+          return;
+        }
+        
+        setIsLoading(true);
+        console.log(`Fetching destination with ID: ${id}`);
         
         try {
-          setIsLoading(true);
           const data = await DestinationService.getDestinationById(id);
+          console.log("Destination detail fetched successfully:", data);
           setDestination(data);
           setError(null);
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.error(`Error fetching destination detail for ID ${id}:`, errorMessage);
           setError(error as Error);
+          
           toast({
             variant: "destructive",
             title: "Error!",
-            description: "Gagal mengambil detail destinasi.",
+            description: `Gagal mengambil detail destinasi: ${errorMessage}`,
           });
         } finally {
           setIsLoading(false);
+          setIsInitialized(true);
         }
       };
 
       fetchDestination();
-    }, [id]);
+    }, [id, toast]);
 
-    return { destination, isLoading, error };
+    return { 
+      destination, 
+      isLoading, 
+      error,
+      isInitialized, // New flag to indicate if initial fetch is complete
+      refetch: () => {
+        if (id) {
+          // Function to manually refetch data
+          setIsLoading(true);
+          DestinationService.getDestinationById(id)
+            .then(data => {
+              setDestination(data);
+              setError(null);
+            })
+            .catch(err => {
+              setError(err as Error);
+            })
+            .finally(() => {
+              setIsLoading(false);
+            });
+        }
+      }
+    };
   };
 
   // Create new destination
   const createDestination = async (data: IDestinationInput, images: File[]) => {
     try {
       setIsCreating(true);
+      console.log("Creating new destination:", data);
       await DestinationService.createDestination(data, images);
       await fetchDestinations();
       toast({
@@ -106,6 +146,7 @@ export const useDestination = () => {
         description: "Destinasi berhasil ditambahkan.",
       });
     } catch (error) {
+      console.error("Error creating destination:", error);
       toast({
         variant: "destructive",
         title: "Error!",
@@ -121,6 +162,7 @@ export const useDestination = () => {
   const updateDestination = async (id: string, data: IDestinationInput, newImages?: File[]) => {
     try {
       setIsUpdating(true);
+      console.log(`Updating destination with ID ${id}:`, data);
       await DestinationService.updateDestination(id, data, newImages);
       await fetchDestinations();
       toast({
@@ -128,6 +170,7 @@ export const useDestination = () => {
         description: "Destinasi berhasil diperbarui.",
       });
     } catch (error) {
+      console.error(`Error updating destination with ID ${id}:`, error);
       toast({
         variant: "destructive",
         title: "Error!",
@@ -143,6 +186,7 @@ export const useDestination = () => {
   const deleteDestination = async (id: string) => {
     try {
       setIsDeleting(true);
+      console.log(`Deleting destination with ID ${id}`);
       await DestinationService.deleteDestination(id);
       await fetchDestinations();
       toast({
@@ -150,6 +194,7 @@ export const useDestination = () => {
         description: "Destinasi berhasil dihapus.",
       });
     } catch (error) {
+      console.error(`Error deleting destination with ID ${id}:`, error);
       toast({
         variant: "destructive",
         title: "Error!",
@@ -164,6 +209,7 @@ export const useDestination = () => {
   // Category management functions
   const createCategory = async (title: string) => {
     try {
+      console.log("Creating new category:", title);
       await DestinationService.createCategory(title);
       await fetchCategories();
       toast({
@@ -171,6 +217,7 @@ export const useDestination = () => {
         description: "Kategori berhasil ditambahkan.",
       });
     } catch (error) {
+      console.error("Error creating category:", error);
       toast({
         variant: "destructive",
         title: "Error!",

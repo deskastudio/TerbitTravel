@@ -23,17 +23,32 @@ import Register from '@/pages/register/Index';
 import ForgotPassword from '@/pages/forgotPassword/Index';
 import VerifyOtp from '@/pages/verify-otp/Index';
 
+// Detail Pages
+import DestinationDetail from '@/components/partials/mainPartials/destination/detailDestination';
+import ArticleDetail from '@/components/partials/mainPartials/article/detailArticle';
+
 
 function MainRoutes() {
+  console.log("MainRoutes rendering");
+  
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Homepage />} />
+        
+        {/* Article Routes */}
         <Route path="/article" element={<Article />} />
+        <Route path="/article/:slug" element={<ArticleDetail />} />
+        <Route path="/article/id/:id" element={<ArticleDetail />} />
+        
         <Route path="/tour-package" element={<TourPackage />} />
-        <Route path="/paket-wisata/:id" element={<TourPackageDetails />} />
+        <Route path="/paket-wisata/:slug" element={<TourPackageDetails />} />
+        
+        {/* Destination Routes */}
         <Route path="/destination" element={<Destination />} />
+        <Route path="/destination/:id" element={<DestinationDetail />} />
+        
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-condition" element={<TermsConditionsPage />} />
         <Route path="/faq" element={<Faq />} />

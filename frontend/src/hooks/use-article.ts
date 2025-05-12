@@ -21,6 +21,7 @@ export const useArticle = () => {
   // Pagination, search and filter
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('terbaru');
   const [pagination, setPagination] = useState<PaginationMeta>({
     currentPage: 1,
     totalPages: 0,
@@ -35,18 +36,49 @@ export const useArticle = () => {
     page = pagination.currentPage,
     limit = pagination.itemsPerPage,
     search = searchTerm,
-    category = categoryFilter
+    category = categoryFilter,
+    sort = sortBy
   ) => {
     try {
       setIsLoadingArticles(true);
-      console.log('Fetching articles with params:', { page, limit, search, category });
+      console.log('Fetching articles with params:', { page, limit, search, category, sort });
       const response = await ArticleService.getAllArticles(page, limit, search, category);
       console.log('Articles response:', response);
       
-      setArticles(response.data);
-      if (response.meta) {
-        setPagination(response.meta);
+      // Update articles and pagination
+      if (response && response.data) {
+        setArticles(response.data);
+        
+        // Update pagination if we have meta information
+        if (response.meta) {
+          setPagination({
+            currentPage: response.meta.currentPage || page,
+            totalPages: response.meta.totalPages || Math.ceil((response.data.length || 0) / limit),
+            totalItems: response.meta.totalItems || response.data.length,
+            itemsPerPage: response.meta.itemsPerPage || limit
+          });
+        } else {
+          // If no meta data is provided, calculate pagination based on the data
+          setPagination({
+            currentPage: page,
+            totalPages: Math.ceil((response.data.length || 0) / limit),
+            totalItems: response.data.length,
+            itemsPerPage: limit
+          });
+        }
+      } else {
+        // Handle unexpected response format
+        console.error('Unexpected response format:', response);
+        setArticles([]);
+        setPagination({
+          currentPage: 1,
+          totalPages: 0,
+          totalItems: 0,
+          itemsPerPage: limit
+        });
       }
+      
+      // Clear any previous errors
       setArticlesError(null);
     } catch (error) {
       console.error('Error fetching articles:', error);
@@ -56,33 +88,44 @@ export const useArticle = () => {
         title: "Error!",
         description: "Gagal mengambil data artikel.",
       });
+      
+      // Set empty articles in case of error
+      setArticles([]);
     } finally {
       setIsLoadingArticles(false);
     }
-  }, [pagination.currentPage, pagination.itemsPerPage, searchTerm, categoryFilter, toast]);
+  }, [pagination.currentPage, pagination.itemsPerPage, searchTerm, categoryFilter, sortBy, toast]);
 
   // Load articles on mount and when dependencies change
   useEffect(() => {
     fetchArticles();
   }, [fetchArticles]);
 
-  // Get article detail by ID
-  const useArticleDetail = (id: string) => {
+  // Get article detail by ID or slug
+  const useArticleDetail = (idOrSlug: string) => {
     const [article, setArticle] = useState<IArticle | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
       const fetchArticle = async () => {
-        if (!id) return;
+        if (!idOrSlug) {
+          console.warn("Cannot fetch article: ID or slug is empty");
+          return;
+        }
         
         try {
           setIsLoading(true);
-          const data = await ArticleService.getArticleById(id);
+          console.log(`Fetching article with ID/slug: ${idOrSlug}`);
+          
+          const data = await ArticleService.getArticleById(idOrSlug);
+          console.log('Article detail response:', data);
+          
           setArticle(data);
           setError(null);
         } catch (error) {
-          console.error('Error fetching article detail:', error);
+          console.error(`Error fetching article with ID/slug ${idOrSlug}:`, error);
           setError(error as Error);
           toast({
             variant: "destructive",
@@ -91,19 +134,42 @@ export const useArticle = () => {
           });
         } finally {
           setIsLoading(false);
+          setIsInitialized(true);
         }
       };
 
       fetchArticle();
-    }, [id]);
+    }, [idOrSlug]);
 
-    return { article, isLoading, error };
+    // Function to manually refetch article data
+    const refetch = useCallback(async () => {
+      if (!idOrSlug) return;
+      
+      try {
+        setIsLoading(true);
+        const data = await ArticleService.getArticleById(idOrSlug);
+        setArticle(data);
+        setError(null);
+      } catch (error) {
+        setError(error as Error);
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: "Gagal memuat ulang detail artikel.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }, [idOrSlug, toast]);
+
+    return { article, isLoading, error, isInitialized, refetch };
   };
 
   // Create new article
   const createArticle = async (data: IArticleInput) => {
     try {
       setIsCreating(true);
+      console.log('Creating article with data:', data);
       await ArticleService.createArticle(data);
       await fetchArticles();
       toast({
@@ -128,6 +194,7 @@ export const useArticle = () => {
   const updateArticle = async (id: string, data: IArticleInput) => {
     try {
       setIsUpdating(true);
+      console.log(`Updating article with ID ${id}:`, data);
       await ArticleService.updateArticle(id, data);
       await fetchArticles();
       toast({
@@ -152,6 +219,7 @@ export const useArticle = () => {
   const deleteArticle = async (id: string) => {
     try {
       setIsDeleting(true);
+      console.log(`Deleting article with ID ${id}`);
       await ArticleService.deleteArticle(id);
       await fetchArticles();
       toast({
@@ -174,22 +242,39 @@ export const useArticle = () => {
 
   // Set page for pagination
   const setPage = (page: number) => {
-    setPagination(prev => ({ ...prev, currentPage: page }));
-    fetchArticles(page, pagination.itemsPerPage, searchTerm, categoryFilter);
+    const newPagination = { ...pagination, currentPage: page };
+    setPagination(newPagination);
+    
+    // Fetch articles with new page
+    fetchArticles(page, pagination.itemsPerPage, searchTerm, categoryFilter, sortBy);
   };
 
   // Handle search
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
-    fetchArticles(1, pagination.itemsPerPage, term, categoryFilter);
+    // Reset to first page when searching
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    
+    // Fetch articles with search term
+    fetchArticles(1, pagination.itemsPerPage, term, categoryFilter, sortBy);
   };
 
   // Handle category filter
   const handleCategoryFilter = (category: string) => {
     setCategoryFilter(category);
-    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page
-    fetchArticles(1, pagination.itemsPerPage, searchTerm, category);
+    // Reset to first page when filtering
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    
+    // Fetch articles with category filter
+    fetchArticles(1, pagination.itemsPerPage, searchTerm, category, sortBy);
+  };
+
+  // Handle sort change
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
+    
+    // Fetch articles with new sort parameter
+    fetchArticles(pagination.currentPage, pagination.itemsPerPage, searchTerm, categoryFilter, sort);
   };
 
   return {
@@ -200,6 +285,7 @@ export const useArticle = () => {
     pagination,
     searchTerm,
     categoryFilter,
+    sortBy,
     useArticleDetail,
 
     // Actions
@@ -210,6 +296,7 @@ export const useArticle = () => {
     setPage,
     handleSearch,
     handleCategoryFilter,
+    handleSortChange,
 
     // Loading States
     isCreating,
@@ -234,32 +321,38 @@ export const useCategory = () => {
       setIsLoadingCategories(true);
       console.log('Fetching categories...');
       
-      // Tambahkan timeout agar lebih jelas jika request tidak merespons
+      // Add safety in case of timeout
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout')), 10000)
       );
       
       const dataPromise = ArticleService.getAllCategories();
       
-      // Race antara data dan timeout
+      // Race between data and timeout
       const data = await Promise.race([dataPromise, timeoutPromise]) as ICategory[];
       
       console.log('Categories data:', data);
-      setCategories(Array.isArray(data) ? data : []);
+      // Ensure we have an array of categories
+      const categoriesArray = Array.isArray(data) ? data : [];
+      setCategories(categoriesArray);
       setCategoriesError(null);
     } catch (error) {
       console.error('Error fetching categories:', error);
       console.error('Error message:', (error as Error).message);
+      
+      // Log detailed error response if available
       if ((error as any).response) {
         console.error('Error status:', (error as any).response.status);
         console.error('Error data:', (error as any).response.data);
       }
+      
       setCategoriesError(error as Error);
       toast({
         variant: "destructive",
         title: "Error!",
         description: `Gagal mengambil data kategori: ${(error as Error).message}`,
       });
+      
       // Default to empty array to prevent UI errors
       setCategories([]);
     } finally {
@@ -310,6 +403,7 @@ export const useCategory = () => {
   const createCategory = async (data: { title: string }) => {
     try {
       setIsCreating(true);
+      console.log('Creating category with data:', data);
       await ArticleService.createCategory(data);
       await fetchCategories();
       toast({
@@ -334,6 +428,7 @@ export const useCategory = () => {
   const updateCategory = async (id: string, data: { title: string }) => {
     try {
       setIsUpdating(true);
+      console.log(`Updating category with ID ${id}:`, data);
       await ArticleService.updateCategory(id, data);
       await fetchCategories();
       toast({
@@ -358,6 +453,7 @@ export const useCategory = () => {
   const deleteCategory = async (id: string) => {
     try {
       setIsDeleting(true);
+      console.log(`Deleting category with ID ${id}`);
       await ArticleService.deleteCategory(id);
       await fetchCategories();
       toast({

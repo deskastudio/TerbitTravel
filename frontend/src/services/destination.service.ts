@@ -5,7 +5,8 @@ import {
   IDestination,
   IDestinationInput,
   DestinationResponse,
-  IDestinationCategory
+  IDestinationCategory,
+  DestinationsResponse
 } from "@/types/destination.types";
 
 const DESTINATION_BASE_URL = "/destination";
@@ -13,13 +14,40 @@ const CATEGORY_BASE_URL = "/destination-category";
 
 export const DestinationService = {
   getAllDestinations: async (): Promise<IDestination[]> => {
-    const response = await axiosInstance.get<IDestination[]>(`${DESTINATION_BASE_URL}/getAll`);
-    return response.data;
+    try {
+      const response = await axiosInstance.get<IDestination[] | DestinationsResponse>(`${DESTINATION_BASE_URL}/getAll`);
+      
+      // Handle both cases: API returning array directly or wrapped in a data property
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data && 'data' in response.data) {
+        return response.data.data;
+      }
+      
+      console.error("Unexpected API response format:", response.data);
+      return [];
+    } catch (error) {
+      console.error("Error fetching destinations:", error);
+      throw error;
+    }
   },
 
   getDestinationById: async (id: string): Promise<IDestination> => {
-    const response = await axiosInstance.get<IDestination>(`${DESTINATION_BASE_URL}/${id}`);
-    return response.data;
+    try {
+      const response = await axiosInstance.get<IDestination | DestinationResponse>(`${DESTINATION_BASE_URL}/${id}`);
+      
+      // Check if response has 'data' property (response wrapped in object)
+      if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+        // This handles cases where API returns { data: IDestination }
+        return response.data.data;
+      }
+      
+      // Direct response case where API returns IDestination directly
+      return response.data as IDestination;
+    } catch (error) {
+      console.error(`Error fetching destination with id ${id}:`, error);
+      throw error;
+    }
   },
 
   createDestination: async (data: IDestinationInput, images: File[]): Promise<DestinationResponse> => {
@@ -83,8 +111,22 @@ export const DestinationService = {
 
   // Category Services
   getAllCategories: async (): Promise<IDestinationCategory[]> => {
-    const response = await axiosInstance.get<IDestinationCategory[]>(`${CATEGORY_BASE_URL}/get`);
-    return response.data;
+    try {
+      const response = await axiosInstance.get<IDestinationCategory[] | { data: IDestinationCategory[] }>(`${CATEGORY_BASE_URL}/get`);
+      
+      // Handle both response formats
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data && 'data' in response.data) {
+        return response.data.data;
+      }
+      
+      console.error("Unexpected API response format for categories:", response.data);
+      return [];
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      throw error;
+    }
   },
 
   createCategory: async (title: string): Promise<{ message: string; data: IDestinationCategory }> => {

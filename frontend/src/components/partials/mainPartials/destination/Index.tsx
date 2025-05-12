@@ -32,6 +32,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useDestination } from "@/hooks/use-destination"
+import { IDestination } from "@/types/destination.types"
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -50,143 +52,15 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-// Types
-type Destination = {
-  id: number
-  title: string
-  location: string
-  price: number
-  discount?: number
-  rating: number
-  image: string
-  category: string[]
-  duration: string
-  maxPeople: number
-  isPopular: boolean
-  isPromo: boolean
-  isFlashSale: boolean
+// Enhanced destination type (API data + UI specific fields)
+interface EnhancedDestination extends IDestination {
+  price?: number;
+  discount?: number;
+  rating?: number;
+  image?: string;
+  duration?: string;
+  maxPeople?: number;
 }
-
-type Category = "semua" | "populer" | "promo" | "flash-sale"
-
-// Sample data
-const destinations: Destination[] = [
-  {
-    id: 1,
-    title: "Pantai Kuta Bali",
-    location: "Bali, Indonesia",
-    price: 2500000,
-    discount: 15,
-    rating: 4.7,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["pantai", "populer"],
-    duration: "3 hari 2 malam",
-    maxPeople: 4,
-    isPopular: true,
-    isPromo: false,
-    isFlashSale: false,
-  },
-  {
-    id: 2,
-    title: "Gunung Bromo",
-    location: "Jawa Timur, Indonesia",
-    price: 1800000,
-    rating: 4.8,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["gunung", "populer"],
-    duration: "2 hari 1 malam",
-    maxPeople: 6,
-    isPopular: true,
-    isPromo: true,
-    isFlashSale: false,
-  },
-  {
-    id: 3,
-    title: "Raja Ampat",
-    location: "Papua, Indonesia",
-    price: 5000000,
-    discount: 20,
-    rating: 4.9,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["pantai", "diving"],
-    duration: "5 hari 4 malam",
-    maxPeople: 2,
-    isPopular: false,
-    isPromo: false,
-    isFlashSale: true,
-  },
-  {
-    id: 4,
-    title: "Danau Toba",
-    location: "Sumatera Utara, Indonesia",
-    price: 2200000,
-    rating: 4.6,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["danau", "budaya"],
-    duration: "4 hari 3 malam",
-    maxPeople: 8,
-    isPopular: false,
-    isPromo: true,
-    isFlashSale: false,
-  },
-  {
-    id: 5,
-    title: "Candi Borobudur",
-    location: "Jawa Tengah, Indonesia",
-    price: 1500000,
-    rating: 4.7,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["sejarah", "budaya"],
-    duration: "2 hari 1 malam",
-    maxPeople: 10,
-    isPopular: true,
-    isPromo: false,
-    isFlashSale: false,
-  },
-  {
-    id: 6,
-    title: "Pulau Komodo",
-    location: "Nusa Tenggara Timur, Indonesia",
-    price: 3500000,
-    discount: 10,
-    rating: 4.8,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["alam", "petualangan"],
-    duration: "3 hari 2 malam",
-    maxPeople: 6,
-    isPopular: false,
-    isPromo: false,
-    isFlashSale: true,
-  },
-  {
-    id: 7,
-    title: "Kawah Ijen",
-    location: "Jawa Timur, Indonesia",
-    price: 1900000,
-    rating: 4.6,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["gunung", "petualangan"],
-    duration: "2 hari 1 malam",
-    maxPeople: 4,
-    isPopular: false,
-    isPromo: true,
-    isFlashSale: false,
-  },
-  {
-    id: 8,
-    title: "Taman Nasional Ujung Kulon",
-    location: "Banten, Indonesia",
-    price: 2800000,
-    rating: 4.5,
-    image: "/placeholder.svg?height=200&width=400",
-    category: ["alam", "petualangan"],
-    duration: "4 hari 3 malam",
-    maxPeople: 6,
-    isPopular: false,
-    isPromo: false,
-    isFlashSale: false,
-  },
-]
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -199,34 +73,29 @@ const formatCurrency = (amount: number): string => {
 }
 
 // Destination Card Component
-const DestinationCard = ({ destination }: { destination: Destination }) => {
+const DestinationCard = ({ destination }: { destination: EnhancedDestination }) => {
   const navigate = useNavigate()
   const discountedPrice = destination.discount
-    ? destination.price - (destination.price * destination.discount) / 100
-    : destination.price
+    ? (destination.price || 0) - ((destination.price || 0) * destination.discount) / 100
+    : destination.price || 0
 
   const handleViewDetail = () => {
-    navigate(`/destinasi/${destination.id}`)
-  }
+    console.log("Navigating to destination detail:", destination._id);
+    navigate(`/destination/${destination._id}`);
+  };
 
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md">
+    <Card className="overflow-hidden transition-all hover:shadow-md cursor-pointer" onClick={handleViewDetail}>
       <div className="relative">
         <img
-          src={destination.image || "/placeholder.svg"}
-          alt={destination.title}
+          src={destination.foto?.[0] || destination.image || "/placeholder.svg"}
+          alt={destination.nama}
           className="h-48 w-full object-cover"
         />
-        {destination.isFlashSale && (
-          <Badge className="absolute right-2 top-2 bg-red-500 hover:bg-red-600">Flash Sale</Badge>
-        )}
-        {destination.isPromo && !destination.isFlashSale && (
-          <Badge className="absolute right-2 top-2 bg-orange-500 hover:bg-orange-600">Promo</Badge>
-        )}
       </div>
       <CardHeader className="p-4 pb-0">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-bold line-clamp-1">{destination.title}</CardTitle>
+          <CardTitle className="text-lg font-bold line-clamp-1">{destination.nama}</CardTitle>
           <div className="flex items-center text-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -240,39 +109,47 @@ const DestinationCard = ({ destination }: { destination: Destination }) => {
                 clipRule="evenodd"
               />
             </svg>
-            {destination.rating}
+            {destination.rating || 4.5}
           </div>
         </div>
         <CardDescription className="flex items-center mt-1">
           <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground line-clamp-1">{destination.location}</span>
+          <span className="text-sm text-muted-foreground line-clamp-1">{destination.lokasi}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-2">
         <div className="flex flex-wrap gap-1 mb-2">
           <div className="flex items-center text-xs text-muted-foreground">
             <Calendar className="h-3.5 w-3.5 mr-1" />
-            {destination.duration}
+            {destination.duration || "3 hari 2 malam"}
           </div>
           <div className="flex items-center text-xs text-muted-foreground ml-2">
             <Users className="h-3.5 w-3.5 mr-1" />
-            Maks. {destination.maxPeople} orang
+            Maks. {destination.maxPeople || 4} orang
           </div>
         </div>
+        {destination.category && (
+          <Badge variant="outline" className="mt-1">
+            {destination.category.title}
+          </Badge>
+        )}
       </CardContent>
       <CardFooter className="p-4 pt-0 flex justify-between items-center">
         <div>
           {destination.discount ? (
             <div>
-              <span className="text-sm line-through text-muted-foreground">{formatCurrency(destination.price)}</span>
+              <span className="text-sm line-through text-muted-foreground">{formatCurrency(destination.price || 0)}</span>
               <div className="text-lg font-bold text-primary">{formatCurrency(discountedPrice)}</div>
             </div>
           ) : (
-            <div className="text-lg font-bold text-primary">{formatCurrency(destination.price)}</div>
+            <div className="text-lg font-bold text-primary">{formatCurrency(destination.price || 2500000)}</div>
           )}
           <div className="text-xs text-muted-foreground">per orang</div>
         </div>
-        <Button size="sm" onClick={handleViewDetail}>
+        <Button size="sm" onClick={(e) => {
+          e.stopPropagation();
+          handleViewDetail();
+        }}>
           Lihat Detail
         </Button>
       </CardFooter>
@@ -299,19 +176,22 @@ const DestinationCardSkeleton = () => (
 )
 
 // Recommendation Component
-const RecommendationSection = ({ destinations }: { destinations: Destination[] }) => {
-  // Get 3 random popular destinations for recommendations
-  const recommendedDestinations = destinations
-    .filter((d) => d.isPopular)
+const RecommendationSection = ({ destinations }: { destinations: EnhancedDestination[] }) => {
+  // Get 3 random destinations for recommendations
+  const recommendedDestinations = [...destinations]
     .sort(() => 0.5 - Math.random())
-    .slice(0, 3)
+    .slice(0, Math.min(3, destinations.length));
+
+  if (recommendedDestinations.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mt-8 mb-12">
       <h2 className="text-2xl font-bold mb-4">Rekomendasi Untuk Anda</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {recommendedDestinations.map((destination) => (
-          <DestinationCard key={`rec-${destination.id}`} destination={destination} />
+          <DestinationCard key={`rec-${destination._id}`} destination={destination} />
         ))}
       </div>
     </div>
@@ -320,122 +200,149 @@ const RecommendationSection = ({ destinations }: { destinations: Destination[] }
 
 // Main Component
 export default function DestinationPage() {
+  const { destinations, isLoadingDestinations, destinationsError, categories } = useDestination();
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
-  const [selectedCategory, setSelectedCategory] = useState<Category>("semua")
+  const [selectedCategory, setSelectedCategory] = useState<string>("semua")
   const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [sortBy, setSortBy] = useState("recommended")
   const [locationFilter, setLocationFilter] = useState("")
   const [priceRangeFilter, setPriceRangeFilter] = useState("")
   const [durationFilter, setDurationFilter] = useState("")
+  const [enhancedDestinations, setEnhancedDestinations] = useState<EnhancedDestination[]>([]);
 
-  const itemsPerPage = 6
+  const itemsPerPage = 6;
+
+  // Log destinations when they change
+  useEffect(() => {
+    console.log("Destinations loaded:", destinations.length);
+  }, [destinations]);
+
+  // Enhance destinations with additional UI data
+  useEffect(() => {
+    if (destinations.length > 0) {
+      // Add UI display properties to each destination
+      const enhanced = destinations.map((dest) => {
+        const price = Math.floor(Math.random() * 3000000) + 1500000;
+        const hasDiscount = Math.random() > 0.7;
+        
+        return {
+          ...dest,
+          price,
+          discount: hasDiscount ? Math.floor(Math.random() * 15) + 5 : undefined,
+          rating: (Math.random() * 0.9 + 4.0).toFixed(1), // Rating between 4.0 and 4.9
+          duration: `${Math.floor(Math.random() * 4) + 2} hari ${Math.floor(Math.random() * 3) + 1} malam`,
+          maxPeople: Math.floor(Math.random() * 6) + 2,
+        };
+      });
+
+      setEnhancedDestinations(enhanced);
+      setIsLoading(false);
+    }
+  }, [destinations]);
 
   // Filter destinations based on search, category, and other filters
-  const filteredDestinations = destinations.filter((destination) => {
+  const filteredDestinations = enhancedDestinations.filter((destination) => {
     // Search filter
     const matchesSearch =
       debouncedSearchQuery === "" ||
-      destination.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      destination.location.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+      destination.nama.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      destination.lokasi.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
 
     // Category filter
-    let matchesCategory = true
-    if (selectedCategory === "populer") {
-      matchesCategory = destination.isPopular
-    } else if (selectedCategory === "promo") {
-      matchesCategory = destination.isPromo
-    } else if (selectedCategory === "flash-sale") {
-      matchesCategory = destination.isFlashSale
+    let matchesCategory = true;
+    if (selectedCategory !== "semua") {
+      // Match by API category ID
+      matchesCategory = destination.category?._id === selectedCategory;
     }
 
     // Location filter
     const matchesLocation =
-      locationFilter === "" || destination.location.toLowerCase().includes(locationFilter.toLowerCase())
+      locationFilter === "" || destination.lokasi.toLowerCase().includes(locationFilter.toLowerCase());
 
     // Price range filter
-    let matchesPriceRange = true
+    let matchesPriceRange = true;
     if (priceRangeFilter === "under-2m") {
-      matchesPriceRange = destination.price < 2000000
+      matchesPriceRange = (destination.price || 0) < 2000000;
     } else if (priceRangeFilter === "2m-4m") {
-      matchesPriceRange = destination.price >= 2000000 && destination.price <= 4000000
+      matchesPriceRange = (destination.price || 0) >= 2000000 && (destination.price || 0) <= 4000000;
     } else if (priceRangeFilter === "above-4m") {
-      matchesPriceRange = destination.price > 4000000
+      matchesPriceRange = (destination.price || 0) > 4000000;
     }
 
     // Duration filter
-    let matchesDuration = true
+    let matchesDuration = true;
     if (durationFilter === "1-2-days") {
-      matchesDuration = destination.duration.includes("1 malam") || destination.duration.includes("2 hari")
+      matchesDuration = (destination.duration || "").includes("1 malam") || (destination.duration || "").includes("2 hari");
     } else if (durationFilter === "3-4-days") {
-      matchesDuration = destination.duration.includes("3 hari") || destination.duration.includes("4 hari")
+      matchesDuration = (destination.duration || "").includes("3 hari") || (destination.duration || "").includes("4 hari");
     } else if (durationFilter === "5-plus-days") {
       matchesDuration =
-        destination.duration.includes("5 hari") ||
-        destination.duration.includes("6 hari") ||
-        destination.duration.includes("7 hari")
+        (destination.duration || "").includes("5 hari") ||
+        (destination.duration || "").includes("6 hari") ||
+        (destination.duration || "").includes("7 hari");
     }
 
-    return matchesSearch && matchesCategory && matchesLocation && matchesPriceRange && matchesDuration
-  })
+    return matchesSearch && matchesCategory && matchesLocation && matchesPriceRange && matchesDuration;
+  });
 
   // Sort destinations
   const sortedDestinations = [...filteredDestinations].sort((a, b) => {
     if (sortBy === "price-low") {
-      return a.price - b.price
+      return (a.price || 0) - (b.price || 0);
     } else if (sortBy === "price-high") {
-      return b.price - a.price
+      return (b.price || 0) - (a.price || 0);
     } else if (sortBy === "rating") {
-      return b.rating - a.rating
+      return parseFloat(b.rating?.toString() || '0') - parseFloat(a.rating?.toString() || '0');
     }
     // Default: recommended (no specific sort)
-    return 0
-  })
+    return 0;
+  });
 
   // Pagination
-  const totalPages = Math.ceil(sortedDestinations.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedDestinations = sortedDestinations.slice(startIndex, startIndex + itemsPerPage)
+  const totalPages = Math.ceil(sortedDestinations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedDestinations = sortedDestinations.slice(startIndex, startIndex + itemsPerPage);
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    setIsLoading(true)
-    setCurrentPage(page)
+    setIsLoading(true);
+    setCurrentPage(page);
     // Simulate loading
     setTimeout(() => {
-      setIsLoading(false)
-    }, 500)
-  }
+      setIsLoading(false);
+    }, 500);
+  };
 
   // Handle search change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    setCurrentPage(1)
-  }
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
 
   // Handle category change
   const handleCategoryChange = (value: string) => {
-    setSelectedCategory(value as Category)
-    setCurrentPage(1)
-  }
+    setSelectedCategory(value);
+    setCurrentPage(1);
+  };
 
   // Reset filters
   const resetFilters = () => {
-    setLocationFilter("")
-    setPriceRangeFilter("")
-    setDurationFilter("")
-  }
+    setLocationFilter("");
+    setPriceRangeFilter("");
+    setDurationFilter("");
+  };
 
   // Simulate loading effect when changing filters
   useEffect(() => {
-    setIsLoading(true)
+    setIsLoading(true);
     const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 500)
+      setIsLoading(false);
+    }, 500);
 
-    return () => clearTimeout(timer)
-  }, [debouncedSearchQuery, selectedCategory, locationFilter, priceRangeFilter, durationFilter, sortBy])
+    return () => clearTimeout(timer);
+  }, [debouncedSearchQuery, selectedCategory, locationFilter, priceRangeFilter, durationFilter, sortBy]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -462,12 +369,17 @@ export default function DestinationPage() {
       {/* Category Tabs */}
       <Tabs defaultValue="semua" value={selectedCategory} onValueChange={handleCategoryChange} className="mb-8">
         <div className="flex justify-between items-center mb-4">
-          <TabsList>
-            <TabsTrigger value="semua">Semua</TabsTrigger>
-            <TabsTrigger value="populer">Populer</TabsTrigger>
-            <TabsTrigger value="promo">Promo</TabsTrigger>
-            <TabsTrigger value="flash-sale">Flash Sale</TabsTrigger>
-          </TabsList>
+          <div className="flex overflow-x-auto">
+            <TabsList>
+              <TabsTrigger value="semua">Semua</TabsTrigger>
+              {/* Hanya kategori dari API */}
+              {categories.map((category) => (
+                <TabsTrigger key={category._id} value={category._id}>
+                  {category.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <div className="flex items-center gap-2">
             <Select value={sortBy} onValueChange={setSortBy}>
@@ -501,7 +413,7 @@ export default function DestinationPage() {
                         <SelectValue placeholder="Pilih lokasi" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="semua">Semua Lokasi</SelectItem>
+                        <SelectItem value="">Semua Lokasi</SelectItem>
                         <SelectItem value="bali">Bali</SelectItem>
                         <SelectItem value="jawa">Jawa</SelectItem>
                         <SelectItem value="sumatera">Sumatera</SelectItem>
@@ -520,7 +432,7 @@ export default function DestinationPage() {
                         <SelectValue placeholder="Pilih rentang harga" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="semua">Semua Harga</SelectItem>
+                        <SelectItem value="">Semua Harga</SelectItem>
                         <SelectItem value="under-2m">Di bawah Rp2.000.000</SelectItem>
                         <SelectItem value="2m-4m">Rp2.000.000 - Rp4.000.000</SelectItem>
                         <SelectItem value="above-4m">Di atas Rp4.000.000</SelectItem>
@@ -537,7 +449,7 @@ export default function DestinationPage() {
                         <SelectValue placeholder="Pilih durasi" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="semua">Semua Durasi</SelectItem>
+                        <SelectItem value="">Semua Durasi</SelectItem>
                         <SelectItem value="1-2-days">1-2 Hari</SelectItem>
                         <SelectItem value="3-4-days">3-4 Hari</SelectItem>
                         <SelectItem value="5-plus-days">5+ Hari</SelectItem>
@@ -558,186 +470,140 @@ export default function DestinationPage() {
           </div>
         </div>
 
-        <TabsContent value="semua" className="mt-0">
-          {/* Recommendation Section */}
-          <RecommendationSection destinations={destinations} />
-
-          {/* Destinations Grid */}
-          {isLoading ? (
+        <TabsContent value={selectedCategory} className="mt-0">
+          {isLoadingDestinations ? (
+            // Tampilkan skeleton selama data destinasi utama dimuat
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array(6)
                 .fill(0)
                 .map((_, index) => (
-                  <DestinationCardSkeleton key={`skeleton-${index}`} />
+                  <DestinationCardSkeleton key={`initial-skeleton-${index}`} />
                 ))}
             </div>
-          ) : paginatedDestinations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedDestinations.map((destination) => (
-                <DestinationCard key={destination.id} destination={destination} />
-              ))}
-            </div>
-          ) : (
+          ) : destinationsError ? (
+            // Tampilkan pesan error jika gagal memuat data
             <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
-                <Search className="h-8 w-8 text-muted-foreground" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                  />
+                </svg>
               </div>
-              <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
+              <h3 className="text-lg font-medium mb-2">Gagal Memuat Data</h3>
               <p className="text-muted-foreground mb-4">
-                Tidak ada destinasi wisata yang sesuai dengan filter Anda. Coba ubah filter atau cari dengan kata kunci
-                lain.
+                Terjadi kesalahan saat memuat data destinasi. Silakan coba lagi nanti.
               </p>
-              <Button onClick={resetFilters}>Reset Filter</Button>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {!isLoading && totalPages > 1 && (
-            <Pagination className="mt-8">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (currentPage > 1) handlePageChange(currentPage - 1)
-                    }}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-
-                {Array.from({ length: totalPages }).map((_, index) => {
-                  const page = index + 1
-
-                  // Show first page, last page, current page, and pages around current page
-                  if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          href="#"
-                          isActive={page === currentPage}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handlePageChange(page)
-                          }}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )
-                  }
-
-                  // Show ellipsis for gaps
-                  if (page === 2 || page === totalPages - 1) {
-                    return (
-                      <PaginationItem key={`ellipsis-${page}`}>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    )
-                  }
-
-                  return null
-                })}
-
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      if (currentPage < totalPages) handlePageChange(currentPage + 1)
-                    }}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </TabsContent>
-
-        <TabsContent value="populer" className="mt-0">
-          {/* Same structure as "semua" tab but with filtered data */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array(6)
-                .fill(0)
-                .map((_, index) => (
-                  <DestinationCardSkeleton key={`skeleton-pop-${index}`} />
-                ))}
-            </div>
-          ) : paginatedDestinations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedDestinations.map((destination) => (
-                <DestinationCard key={destination.id} destination={destination} />
-              ))}
+              <Button onClick={() => window.location.reload()}>Muat Ulang</Button>
             </div>
           ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
-              <p className="text-muted-foreground">
-                Tidak ada destinasi wisata populer yang sesuai dengan filter Anda.
-              </p>
-            </div>
-          )}
+            // Tampilkan konten utama jika data sudah dimuat
+            <>
+              {/* Recommendation Section - jika ini tab "semua" dan ada data */}
+              {selectedCategory === "semua" && enhancedDestinations.length > 0 && (
+                <RecommendationSection destinations={enhancedDestinations} />
+              )}
 
-          {/* Pagination (same as above) */}
-          {!isLoading && totalPages > 1 && (
-            <Pagination className="mt-8">{/* Same pagination structure as above */}</Pagination>
-          )}
-        </TabsContent>
+              {/* Destinations Grid */}
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {Array(6)
+                    .fill(0)
+                    .map((_, index) => (
+                      <DestinationCardSkeleton key={`filter-skeleton-${index}`} />
+                    ))}
+                </div>
+              ) : paginatedDestinations.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {paginatedDestinations.map((destination) => (
+                    <DestinationCard key={destination._id} destination={destination} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Tidak ada destinasi wisata yang sesuai dengan filter Anda. Coba ubah filter atau cari dengan kata kunci
+                    lain.
+                  </p>
+                  <Button onClick={resetFilters}>Reset Filter</Button>
+                </div>
+              )}
 
-        <TabsContent value="promo" className="mt-0">
-          {/* Same structure as other tabs */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array(6)
-                .fill(0)
-                .map((_, index) => (
-                  <DestinationCardSkeleton key={`skeleton-promo-${index}`} />
-                ))}
-            </div>
-          ) : paginatedDestinations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedDestinations.map((destination) => (
-                <DestinationCard key={destination.id} destination={destination} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
-              <p className="text-muted-foreground">Tidak ada destinasi wisata promo yang sesuai dengan filter Anda.</p>
-            </div>
-          )}
-        </TabsContent>
+              {/* Pagination */}
+              {!isLoading && totalPages > 1 && (
+                <Pagination className="mt-8">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          if (currentPage > 1) handlePageChange(currentPage - 1)
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
 
-        <TabsContent value="flash-sale" className="mt-0">
-          {/* Same structure as other tabs */}
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array(6)
-                .fill(0)
-                .map((_, index) => (
-                  <DestinationCardSkeleton key={`skeleton-flash-${index}`} />
-                ))}
-            </div>
-          ) : paginatedDestinations.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedDestinations.map((destination) => (
-                <DestinationCard key={destination.id} destination={destination} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
-              <p className="text-muted-foreground">
-                Tidak ada destinasi wisata flash sale yang sesuai dengan filter Anda.
-              </p>
-            </div>
+                    {Array.from({ length: totalPages }).map((_, index) => {
+                      const page = index + 1
+
+                      // Show first page, last page, current page, and pages around current page
+                      if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                        return (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              href="#"
+                              isActive={page === currentPage}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handlePageChange(page)
+                              }}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        )
+                      }
+
+                      // Show ellipsis for gaps
+                      if (page === 2 || page === totalPages - 1) {
+                        return (
+                          <PaginationItem key={`ellipsis-${page}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )
+                      }
+
+                      return null
+                    })}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          if (currentPage < totalPages) handlePageChange(currentPage + 1)
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
 
-      {/* "Under Development" Section for empty states */}
-      {paginatedDestinations.length === 0 && !isLoading && (
+      {/* "Under Development" Section for when there are no destinations */}
+      {enhancedDestinations.length === 0 && !isLoadingDestinations && !destinationsError && (
         <div className="bg-blue-50 rounded-xl p-8 text-center my-8">
           <div className="flex justify-center mb-4">
             <svg
