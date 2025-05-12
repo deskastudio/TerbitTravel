@@ -43,7 +43,7 @@ function MainRoutes() {
         <Route path="/article/id/:id" element={<ArticleDetail />} />
         
         <Route path="/tour-package" element={<TourPackage />} />
-        <Route path="/paket-wisata/:slug" element={<TourPackageDetails />} />
+        <Route path="/paket-wisata/:id" element={<TourPackageDetails />} />
         
         {/* Destination Routes */}
         <Route path="/destination" element={<Destination />} />
