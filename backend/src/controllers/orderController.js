@@ -1,12 +1,13 @@
-// Definisikan fungsi calculateTotalPrice langsung di controller
-const calculateTotalPrice = (hargaPerOrang, jumlahPeserta) => {
-  return hargaPerOrang * jumlahPeserta;
-};
-
 import Order from "../models/order.js";
 import User from "../models/user.js";
 import Package from "../models/package.js";
 import Armada from "../models/armada.js";
+import { createPaymentTransaction } from "../config/midtrans.js"; // Pastikan sudah mengimpor helper Midtrans
+
+// Fungsi untuk menghitung total harga berdasarkan harga per orang dan jumlah peserta
+const calculateTotalPrice = (hargaPerOrang, jumlahPeserta) => {
+  return hargaPerOrang * jumlahPeserta;
+};
 
 // Fungsi untuk validasi dan membuat order
 const validateAndCreateOrder = async (req, res, role) => {
@@ -14,6 +15,7 @@ const validateAndCreateOrder = async (req, res, role) => {
     const { userId, packageId, armadaId, jumlahPeserta, nomorIdentitas } =
       req.body;
 
+    // Validasi jika data tidak lengkap
     if (
       !userId ||
       !packageId ||
@@ -24,30 +26,28 @@ const validateAndCreateOrder = async (req, res, role) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
+    // Validasi jumlah peserta lebih dari 0
     if (jumlahPeserta <= 0) {
       return res
         .status(400)
         .json({ message: "Jumlah peserta harus lebih dari 0." });
     }
 
+    // Ambil data user, package, dan armada
     const user = await User.findById(userId);
     const packageData = await Package.findById(packageId);
     const armada = await Armada.findById(armadaId);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found." });
-    }
-
-    if (!packageData) {
+    // Jika data tidak ditemukan, kembalikan error
+    if (!user) return res.status(404).json({ message: "User not found." });
+    if (!packageData)
       return res.status(404).json({ message: "Package not found." });
-    }
+    if (!armada) return res.status(404).json({ message: "Armada not found." });
 
-    if (!armada) {
-      return res.status(404).json({ message: "Armada not found." });
-    }
-
+    // Hitung total harga
     const harga = calculateTotalPrice(packageData.harga, jumlahPeserta);
 
+    // Buat order baru
     const order = new Order({
       userId: user._id,
       packageId: packageData._id,
@@ -55,13 +55,33 @@ const validateAndCreateOrder = async (req, res, role) => {
       jumlahPeserta,
       harga,
       nomorIdentitas,
-      status: "pending",
-      createdBy: role, // Track who created the order
+      status: "pending", // Status sementara hingga pembayaran
+      createdBy: role,
     });
 
+    // Simpan order ke database
     await order.save();
-    res.status(201).json({ message: "Order created successfully.", order });
+
+    // Populate data user dan package untuk Midtrans
+    await order.populate([
+      { path: "userId", select: "nama email noTelp" },
+      { path: "packageId", select: "nama" },
+    ]);
+
+    // Buat transaksi di Midtrans untuk pembayaran
+    const midtransResponse = await createPaymentTransaction(order);
+
+    // Respons berhasil dengan data order dan link pembayaran Midtrans
+    res.status(201).json({
+      message: "Order created successfully.",
+      order,
+      payment: {
+        token: midtransResponse.token, // Token untuk transaksi Midtrans
+        redirect_url: midtransResponse.redirect_url, // URL untuk halaman pembayaran Midtrans
+      },
+    });
   } catch (error) {
+    // Tangani error server
     res
       .status(500)
       .json({ message: "Failed to create order.", error: error.message });

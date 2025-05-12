@@ -177,17 +177,18 @@ export const loginUser = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
+    if (!user) {
       return res.status(400).json({ message: "Email atau password salah." });
     }
 
-    // Hapus pengecekan isVerified karena semua akun langsung aktif
-    // if (!user.isVerified) {
-    //   return res.status(401).json({
-    //     message:
-    //       "Email belum diverifikasi. Silakan cek email Anda atau minta kode OTP baru.",
-    //   });
-    // }
+    console.log("User found:", user); // Debug: Menampilkan user yang ditemukan
+
+    const isMatch = await user.comparePassword(password);
+    console.log("Password match:", isMatch); // Debug: Menampilkan hasil perbandingan password
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Email atau password salah." });
+    }
 
     const token = generateToken(user);
     res.status(200).json({
