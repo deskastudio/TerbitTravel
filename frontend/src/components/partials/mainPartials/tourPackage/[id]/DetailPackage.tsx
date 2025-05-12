@@ -759,6 +759,7 @@ export default function PaketWisataDetail() {
                     className="w-full"
                     size="lg"
                     disabled={!selectedSchedule || jumlahPeserta < 1 || paketWisata.status !== "available"}
+                    onClick={() => navigate(`/booking/${id}/${selectedSchedule}`)}
                   >
                     Pesan Sekarang
                   </Button>

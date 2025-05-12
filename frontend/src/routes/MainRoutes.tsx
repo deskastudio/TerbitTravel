@@ -14,8 +14,9 @@ import TermsConditionsPage from '@/pages/mainPages/syarat-ketentuan/Index';
 import PrivacyPolicy from '@/pages/mainPages/privacy-policy/Index';
 import Faq from '@/pages/mainPages/faq/Index';
 import UserProfile from '@/pages/mainPages/user-profile/Index';
-import Booking from '@/pages/mainPages/form-pemesanan/Index';
-import BookingPage from '@/components/partials/mainPartials/form-pemesanan/Index';
+import BookingForm from '@/components/partials/mainPartials/booking/booking-form';
+import BookingSuccess from '@/components/partials/mainPartials/booking/booking-success';
+import BookingDetail from '@/components/partials/mainPartials/booking/booking-detail';
 
 // Auth Pages
 import Login from '@/pages/login/Index';
@@ -77,18 +78,26 @@ function MainRoutes() {
           }
         />
         <Route
-          path="/booking"
+          path="/booking/:id/:scheduleId"
           element={
             <ProtectedRoute allowedRoles={['user']}>
-              <Booking />
+              <BookingForm />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/booking/:id"
+          path="/booking-success/:id"
           element={
             <ProtectedRoute allowedRoles={['user']}>
-              <BookingPage />
+              <BookingSuccess />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/booking-detail/:bookingId"
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <BookingDetail />
             </ProtectedRoute>
           }
         />
