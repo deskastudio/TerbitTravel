@@ -1,3 +1,5 @@
+// tour-package.types.ts dengan perbaikan
+
 export interface ITourPackageInput {
   nama: string;
   deskripsi: string;
@@ -12,6 +14,7 @@ export interface ITourPackageInput {
   armada: string;       // Hanya ID dari armada
   consume: string;      // Hanya ID dari konsumsi
   kategori: string;     // Hanya ID dari kategori
+  foto?: string[];      // Tambahkan field foto yang optional
 }
 
 export interface Schedule {
@@ -28,8 +31,7 @@ export interface include {
   _id: string;
 }
 
-
-type TourPackageStatus = 
+export type TourPackageStatus = 
   | "available" 
   | "booked" 
   | "in_progress" 
@@ -40,23 +42,9 @@ export interface IDestination {
   _id: string;
   nama: string;
   lokasi: string;
-}
-
-export interface IHotel {
-  _id: string;
-  nama: string;
-  bintang: number;
-}
-
-export interface IArmada {
-  _id: string;
-  nama: string;
-  kapasitas: number;
-}
-
-export interface IConsumption {
-  _id: string;
-  nama: string;
+  // tambahkan properti opsional untuk foto dan deskripsi
+  foto?: string[];
+  deskripsi?: string;
 }
 
 export interface IPackageCategory {
@@ -64,6 +52,31 @@ export interface IPackageCategory {
   title: string;
   createdAt?: string;
   updatedAt?: string;
+  // tambahkan properti opsional
+  deskripsi?: string;
+  icon?: string;
+}
+
+// Tambahkan interface untuk ulasan
+export interface IReview {
+  _id: string;
+  packageId: string;
+  userId: string;
+  userName: string;
+  userPhoto?: string;
+  rating: number;
+  komentar: string;
+  tanggal: string;
+}
+
+// Tambahkan interface untuk user
+export interface IUser {
+  _id: string;
+  nama: string;
+  email: string;
+  telepon: string;
+  alamat?: string;
+  foto?: string;
 }
 
 // Gabungkan definisi ITourPackageInput dan ITourPackage
@@ -84,4 +97,82 @@ export interface ITourPackage {
   kategori: IPackageCategory;  // Objek lengkap kategori
   createdAt: string;  // Waktu pembuatan paket
   updatedAt: string;  // Waktu terakhir pembaruan paket
+  foto?: string[];    // Array URL foto paket wisata
+  isFavorite?: boolean; // Flag untuk status favorit (client-side only)
 }
+
+// Interface untuk data booking
+export interface IBooking {
+  _id: string;
+  userId: string;
+  packageId: string;
+  package: ITourPackage;
+  tanggalAwal: string;
+  tanggalAkhir: string;
+  jumlahPeserta: number;
+  totalHarga: number;
+  status: BookingStatus;
+  pembayaran: {
+    metode: PaymentMethod;
+    status: PaymentStatus;
+    tanggal?: string;
+    buktiPembayaran?: string;
+  };
+  userData: {
+    nama: string;
+    email: string;
+    telepon: string;
+    alamat?: string;
+    instansi?: string;
+    catatan?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Interface untuk booking status
+export type BookingStatus = 
+  | "pending" 
+  | "confirmed" 
+  | "completed" 
+  | "cancelled";
+
+// Interface untuk payment method
+export type PaymentMethod = 
+  | "bank_transfer" 
+  | "e_wallet" 
+  | "credit_card" 
+  | "cash";
+
+// Interface untuk payment status
+export type PaymentStatus = 
+  | "pending" 
+  | "paid" 
+  | "failed" 
+  | "refunded";
+
+  export interface IHotel {
+    _id: string;
+    nama: string;
+    alamat: string;
+    gambar: string[]; // Sesuai dengan field di database
+    bintang: number;
+    harga: number;
+    fasilitas: string[];
+  }
+  
+  export interface IArmada {
+    _id: string;
+    nama: string;
+    kapasitas: string[]; // Sesuai dengan field di database
+    gambar: string[]; // Sesuai dengan field di database
+    harga: number;
+    merek: string;
+  }
+  
+  export interface IConsumption {
+    _id: string;
+    nama: string;
+    harga: number;
+    lauk: string[]; // Sesuai dengan field di database
+  }

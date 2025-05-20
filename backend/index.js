@@ -25,8 +25,8 @@ import passport from "./src/config/passportConfig.js";
 import session from "express-session";
 import otpRoutes from "./src/routes/otpRoutes.js"; // Jika index.js ada di root
 import blogCategoryRoutes from "./src/routes/blogCategoryRoutes.js";
+import paymentRoutes from "./src/routes/paymentRoutes.js";
 
-// Load environment variables from .env file
 dotenv.config();
 
 const app = express();
@@ -61,7 +61,9 @@ app.use(
   })
 );
 
-app.use(express.json());
+// Perluas limit JSON untuk menangani payload yang mungkin besar
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes
 app.use("/user", userRoutes);
@@ -85,6 +87,29 @@ app.use("/team", teamRoutes);
 app.use("/orders", orderRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/blog-category", blogCategoryRoutes);
+app.use('/api/Payments', paymentRoutes);
+
+// Tambahkan alias untuk rute orders untuk mendukung endpoint API Midtrans
+app.use('/api/Bookings', orderRoutes);
+
+// Tambahkan rute untuk Midtrans jika paymentRoutes.js sudah dibuat
+// app.use('/api/Payments', paymentRoutes);
+
+// Endpoint khusus untuk webhook Midtrans
+app.post('/api/webhook/midtrans', (req, res) => {
+  try {
+    console.log('Received webhook from Midtrans:', JSON.stringify(req.body));
+    
+    // Untuk saat ini, hanya log notifikasi dan return success
+    res.status(200).json({ success: true, message: 'Webhook received successfully' });
+    
+    // Nantinya, implementasi lengkap bisa ditambahkan di sini
+  } catch (error) {
+    console.error('Error handling Midtrans webhook:', error);
+    // Selalu return 200 untuk Midtrans
+    res.status(200).json({ success: true, message: 'Webhook received with errors' });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -111,4 +136,9 @@ mongoose
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Allowed origins: ${allowedOrigins.join(", ")}`);
+  
+  // Log Midtrans status
+  if (process.env.MIDTRANS_SERVER_KEY) {
+    console.log("Midtrans configuration detected");
+  }
 });

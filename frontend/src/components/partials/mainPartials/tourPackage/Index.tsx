@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import { Search, MapPin, Calendar, Users, Filter } from "lucide-react"
+import { Search, MapPin, Calendar, Users, Filter, Heart } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast" // Tambahkan import useToast
 import {
   Pagination,
   PaginationContent,
@@ -71,32 +72,39 @@ interface IPaketWisata {
   kategoriId: string // ID kategori untuk filter
   createdAt?: string
   updatedAt?: string
+  isFavorite?: boolean // Tambahkan properti untuk favorit
 }
 
-// Fungsi untuk mengkonversi ITourPackage ke IPaketWisata
+// Fungsi untuk mengkonversi ITourPackage ke IPaketWisata dengan penanganan gambar yang lebih baik
 const convertToUIFormat = (tourPackage: ITourPackage): IPaketWisata => {
-  // Ambil nilai random untuk rating (sementara)
+  // Ambil nilai random untuk rating (sementara) - ini sebaiknya diganti dengan rata-rata rating asli
   const randomRating = 4 + Math.random();
   const rating = parseFloat(randomRating.toFixed(1));
   
-  // Ambil nilai random untuk diskon (sementara)
+  // Ambil nilai random untuk diskon (sementara) - ini sebaiknya diganti dengan diskon asli jika ada
   const diskon = Math.random() > 0.5 ? Math.floor(Math.random() * 20) : undefined;
+  
+  // Penanganan gambar yang lebih baik
+  const photos = tourPackage.foto && tourPackage.foto.length > 0 
+    ? tourPackage.foto 
+    : [`https://source.unsplash.com/random/800x600/?travel,${tourPackage.destination.nama}`];
   
   return {
     _id: tourPackage._id,
     nama: tourPackage.nama,
-    destinasi: [tourPackage.destination.nama], // Konversi dari objek ke array string
+    destinasi: [tourPackage.destination.nama, tourPackage.destination.lokasi], // Tambahkan lokasi
     deskripsi: tourPackage.deskripsi,
     harga: tourPackage.harga,
     diskon: diskon, // Random diskon
     durasi: tourPackage.durasi,
-    maxPeserta: 15, // Default value karena tidak ada di ITourPackage
+    maxPeserta: tourPackage.armada?.kapasitas || 15, // Gunakan kapasitas armada jika tersedia
     rating: rating,
-    foto: ["/placeholder.svg?height=200&width=400"], // Default foto
+    foto: photos,
     fasilitas: [...tourPackage.include], // Gunakan include sebagai fasilitas
     kategoriId: tourPackage.kategori._id, // ID kategori
     createdAt: tourPackage.createdAt,
-    updatedAt: tourPackage.updatedAt
+    updatedAt: tourPackage.updatedAt,
+    isFavorite: tourPackage.isFavorite || false
   }
 }
 
@@ -113,19 +121,80 @@ const formatCurrency = (amount: number): string => {
 // Travel Package Card Component
 const PaketWisataCard = ({ paket }: { paket: IPaketWisata }) => {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const discountedPrice = paket.diskon ? paket.harga - (paket.harga * paket.diskon) / 100 : paket.harga
+  
+  // State untuk menangani loading gambar
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(paket.isFavorite || false);
 
   const handleViewDetail = () => {
     navigate(`/paket-wisata/${paket._id}`)
   }
+  
+  // Toggle favorit
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Mencegah navigasi ke detail
+    
+    const savedFavorites = JSON.parse(localStorage.getItem('favoritePackages') || '[]');
+    
+    if (savedFavorites.includes(paket._id)) {
+      // Hapus dari favorit
+      const updatedFavorites = savedFavorites.filter((id: string) => id !== paket._id);
+      localStorage.setItem('favoritePackages', JSON.stringify(updatedFavorites));
+      
+      toast({
+        title: "Dihapus dari favorit",
+        description: "Paket wisata telah dihapus dari daftar favorit Anda"
+      });
+    } else {
+      // Tambahkan ke favorit
+      savedFavorites.push(paket._id);
+      localStorage.setItem('favoritePackages', JSON.stringify(savedFavorites));
+      
+      toast({
+        title: "Ditambahkan ke favorit",
+        description: "Paket wisata telah ditambahkan ke daftar favorit Anda"
+      });
+    }
+    
+    // Update state isFavorite lokal
+    setIsFavorite(!isFavorite);
+  }
 
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md">
+    <Card className="overflow-hidden transition-all hover:shadow-md cursor-pointer" onClick={handleViewDetail}>
       <div className="relative">
-        <img src={paket.foto[0] || "/placeholder.svg"} alt={paket.nama} className="h-48 w-full object-cover" />
+        {!imageLoaded && !imageError && (
+          <div className="h-48 w-full bg-muted animate-pulse flex items-center justify-center">
+            <span className="text-muted-foreground">Memuat gambar...</span>
+          </div>
+        )}
+        
+        <img 
+          src={imageError ? "/placeholder.svg" : (paket.foto[0] || "/placeholder.svg")} 
+          alt={paket.nama} 
+          className={`h-48 w-full object-cover ${!imageLoaded && !imageError ? 'hidden' : ''}`} 
+          onLoad={() => setImageLoaded(true)}
+          onError={() => {
+            setImageError(true);
+            setImageLoaded(true);
+          }}
+        />
+        
         {paket.diskon && (
           <Badge className="absolute left-2 top-2 bg-green-500 hover:bg-green-600">{paket.diskon}% OFF</Badge>
         )}
+        
+        {/* Tombol favorit */}
+        <button 
+          className="absolute right-2 top-2 bg-white/80 hover:bg-white p-1.5 rounded-full"
+          onClick={toggleFavorite}
+          aria-label={isFavorite ? "Hapus dari favorit" : "Tambah ke favorit"}
+        >
+          <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
+        </button>
       </div>
       <CardHeader className="p-4 pb-0">
         <div className="flex justify-between items-start">
@@ -188,7 +257,10 @@ const PaketWisataCard = ({ paket }: { paket: IPaketWisata }) => {
           )}
           <div className="text-xs text-muted-foreground">per orang</div>
         </div>
-        <Button size="sm" onClick={handleViewDetail}>
+        <Button size="sm" onClick={(e) => {
+          e.stopPropagation();
+          handleViewDetail();
+        }}>
           Lihat Detail
         </Button>
       </CardFooter>
@@ -222,10 +294,10 @@ const PaketWisataCardSkeleton = () => (
 
 // Recommendation Component
 const RecommendationSection = ({ paketWisata }: { paketWisata: IPaketWisata[] }) => {
-  // Get 3 random packages for recommendations
+  // Dapatkan paket dengan rating tertinggi untuk rekomendasi
   const recommendedPaket = [...paketWisata]
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 3)
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 3);
 
   return (
     <div className="mt-8 mb-12">
@@ -249,6 +321,7 @@ const RecommendationSection = ({ paketWisata }: { paketWisata: IPaketWisata[] })
 
 // Main Component
 const PaketWisataPage: React.FC = () => {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearchQuery = useDebounce(searchQuery, 500)
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>("semua")
@@ -267,6 +340,25 @@ const PaketWisataPage: React.FC = () => {
   const [fetchError, setFetchError] = useState<string | null>(null)
 
   const itemsPerPage = 6
+
+  // Tambahkan useEffect untuk memperoleh data favorit dari localStorage
+  useEffect(() => {
+    // Ambil data paket favorit dari localStorage
+    const checkFavorites = () => {
+      const savedFavorites = JSON.parse(localStorage.getItem('favoritePackages') || '[]');
+      
+      // Tandai paket yang sudah difavoritkan
+      if (paketWisata.length > 0 && savedFavorites.length > 0) {
+        const updatedPakets = paketWisata.map(paket => ({
+          ...paket,
+          isFavorite: savedFavorites.includes(paket._id)
+        }));
+        setPaketWisata(updatedPakets);
+      }
+    };
+    
+    checkFavorites();
+  }, [paketWisata.length]);
 
   // Fetch data kategori dan paket wisata dari API pada saat komponen dimount
   useEffect(() => {
@@ -289,29 +381,53 @@ const PaketWisataPage: React.FC = () => {
           setCategories(categoriesData)
         } else {
           console.error("Data kategori yang diterima bukan array:", categoriesData)
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Format data kategori tidak valid"
+          });
         }
         
         // Set paket wisata
         if (packagesData && Array.isArray(packagesData)) {
-          // Konversi data dari API ke format yang dibutuhkan UI
-          const convertedData = packagesData.map(convertToUIFormat)
+          // Ambil data favorit dari localStorage
+          const savedFavorites = JSON.parse(localStorage.getItem('favoritePackages') || '[]');
+          
+          // Konversi data dari API ke format yang dibutuhkan UI dan tandai yang favorit
+          const convertedData = packagesData.map(pkg => {
+            const converted = convertToUIFormat(pkg);
+            // Cek apakah paket ini ada di favorit
+            converted.isFavorite = savedFavorites.includes(converted._id);
+            return converted;
+          });
+          
           console.log("Data paket wisata setelah konversi:", convertedData)
           
           setPaketWisata(convertedData)
         } else {
           console.error("Data paket wisata yang diterima bukan array:", packagesData)
           setFetchError("Format data tidak valid")
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Format data paket wisata tidak valid"
+          });
         }
       } catch (error) {
         console.error("Error fetching data:", error)
         setFetchError("Gagal mengambil data")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Gagal mengambil data dari server"
+        });
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchData()
-  }, [])
+  }, [toast])
 
   // Filter packages based on search, category, and other filters
   const filteredPaket = paketWisata.filter((paket) => {
@@ -766,8 +882,78 @@ const PaketWisataPage: React.FC = () => {
           </p>
         </div>
       )}
+
+      {/* Tampilkan paket favorit jika ada */}
+      {!isLoading && paketWisata.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-4">Paket Wisata Favorit Anda</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {paketWisata
+              .filter((paket) => paket.isFavorite)
+              .slice(0, 3)
+              .map((paket) => (
+                <PaketWisataCard key={`fav-${paket._id}`} paket={paket} />
+              ))}
+            {paketWisata.filter((paket) => paket.isFavorite).length === 0 && (
+              <div className="col-span-3 text-center py-8">
+                <p className="text-muted-foreground">
+                  Anda belum memiliki paket wisata favorit. Klik ikon ❤️ pada paket wisata untuk menambahkannya ke daftar favorit.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Footer Banner */}
+      <div className="mt-12 bg-primary/5 rounded-xl p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div>
+            <h2 className="text-2xl font-bold mb-3">Butuh Bantuan Menemukan Paket Wisata?</h2>
+            <p className="text-muted-foreground mb-4">
+              Tim kami siap membantu Anda merancang perjalanan sesuai dengan kebutuhan dan preferensi Anda.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={() => {
+                  const phone = "628123456789";
+                  const text = "Halo, saya ingin konsultasi tentang paket wisata.";
+                  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                }}
+              >
+                Hubungi Kami via WhatsApp
+              </Button>
+              <Button variant="outline">Lihat FAQ</Button>
+            </div>
+          </div>
+          <div className="hidden md:block">
+            <img 
+              src="https://source.unsplash.com/random/600x400/?travel,guide" 
+              alt="Customer Service" 
+              className="w-full h-auto rounded-lg shadow-lg object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder.svg?height=400&width=600";
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Newsletter Section */}
+      <div className="mt-12 mb-8">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Dapatkan Penawaran Terbaik</h2>
+          <p className="text-muted-foreground max-w-md mx-auto mb-6">
+            Berlangganan newsletter kami untuk mendapatkan informasi tentang promosi dan paket wisata terbaru.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+            <Input type="email" placeholder="Email Anda" className="flex-1" />
+            <Button>Berlangganan</Button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
 
-export default PaketWisataPage
+export default PaketWisataPage;

@@ -17,6 +17,8 @@ import UserProfile from '@/pages/mainPages/user-profile/Index';
 import BookingForm from '@/components/partials/mainPartials/booking/booking-form';
 import BookingSuccess from '@/components/partials/mainPartials/booking/booking-success';
 import BookingDetail from '@/components/partials/mainPartials/booking/booking-detail';
+import BookingPending from '@/components/partials/mainPartials/booking/booking-pending';
+import BookingError from '@/components/partials/mainPartials/booking/booking-error';
 
 // Auth Pages
 import Login from '@/pages/login/Index';
@@ -101,6 +103,8 @@ function MainRoutes() {
             </ProtectedRoute>
           }
         />
+      <Route path="/booking-pending/:bookingId" element={<BookingPending />} />
+      <Route path="/booking-error/:bookingId" element={<BookingError />} />
       </Routes>
     </GoogleOAuthProvider>
   );

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import {
   ArrowLeft,
@@ -19,6 +19,8 @@ import {
   Bus,
   Utensils,
   Tag,
+  Users,
+  AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,9 +35,10 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton" // Tambahkan impor Skeleton
-import { TourPackageService } from "@/services/tour-package.service" // Tambahkan impor service
-import { ITourPackage, Schedule, TourPackageStatus } from "@/types/tour-package.types" // Impor tipe data dari file types
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast" // Tambahkan import useToast
+import { TourPackageService } from "@/services/tour-package.service"
+import { ITourPackage, Schedule, TourPackageStatus } from "@/types/tour-package.types"
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -184,11 +187,12 @@ const placeholderData = {
         "Anda dapat memperpanjang masa menginap dengan tambahan biaya. Silakan hubungi customer service kami untuk informasi lebih lanjut.",
     },
   ],
-}
+};
 
 export default function PaketWisataDetail() {
-  const { id } = useParams<{ id: string }>() // Ambil ID dari URL
+  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { toast } = useToast() // Gunakan hook useToast
   const [paketWisata, setPaketWisata] = useState<ITourPackage | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -196,50 +200,197 @@ export default function PaketWisataDetail() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState("")
   const [jumlahPeserta, setJumlahPeserta] = useState(2)
+  const [galleryImages, setGalleryImages] = useState<string[]>([])
+  const [isImageLoading, setIsImageLoading] = useState(true)
+  // State untuk gambar dan fasilitas hotel yang diambil dari database
+  const [hotelImages, setHotelImages] = useState<string[]>([])
+  const [hotelFacilities, setHotelFacilities] = useState<string[]>([])
+  // State untuk gambar armada dan kapasitas
+  const [armadaImages, setArmadaImages] = useState<string[]>([])
+  const [armadaKapasitas, setArmadaKapasitas] = useState<string[]>([])
+  // State untuk menu makanan/lauk
+  const [menuMakanan, setMenuMakanan] = useState<string[]>([])
+
+  // Tambahkan useEffect untuk memeriksa apakah paket ini sudah difavoritkan
+  useEffect(() => {
+    if (id) {
+      const savedFavorites = JSON.parse(localStorage.getItem('favoritePackages') || '[]');
+      setIsFavorite(savedFavorites.includes(id));
+    }
+  }, [id]);
+
+  // Fungsi untuk toggle favorit
+  const toggleFavorite = useCallback(() => {
+    const savedFavorites = JSON.parse(localStorage.getItem('favoritePackages') || '[]');
+    
+    if (isFavorite) {
+      // Hapus dari favorit
+      const updatedFavorites = savedFavorites.filter((favId: string) => favId !== id);
+      localStorage.setItem('favoritePackages', JSON.stringify(updatedFavorites));
+      toast({
+        title: "Dihapus dari favorit",
+        description: "Paket wisata telah dihapus dari daftar favorit Anda"
+      });
+    } else {
+      // Tambahkan ke favorit
+      if (!savedFavorites.includes(id)) {
+        savedFavorites.push(id);
+        localStorage.setItem('favoritePackages', JSON.stringify(savedFavorites));
+      }
+      toast({
+        title: "Ditambahkan ke favorit",
+        description: "Paket wisata telah ditambahkan ke daftar favorit Anda"
+      });
+    }
+    
+    setIsFavorite(!isFavorite);
+  }, [id, isFavorite, toast]);
+
+  // Fungsi untuk sharing paket wisata
+  const handleShare = useCallback(async () => {
+    if (!paketWisata) return;
+    
+    const url = window.location.href;
+    const title = `Paket Wisata ${paketWisata.nama}`;
+    const text = `Lihat paket wisata ${paketWisata.nama} ke ${paketWisata.destination.nama} dengan harga mulai dari ${formatCurrency(paketWisata.harga)} per orang!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text,
+          url
+        });
+        toast({
+          title: "Berhasil dibagikan!",
+          description: "Paket wisata telah dibagikan"
+        });
+      } catch (error) {
+        console.error("Error sharing:", error);
+        // Fallback to clipboard
+        copyToClipboard(url);
+      }
+    } else {
+      // Fallback to clipboard
+      copyToClipboard(url);
+    }
+  }, [paketWisata, toast]);
+
+  // Fungsi untuk menyalin ke clipboard
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        toast({
+          title: "Disalin ke clipboard!",
+          description: "Link paket wisata telah disalin. Anda dapat membagikannya sekarang"
+        });
+      })
+      .catch(err => {
+        console.error("Error copying to clipboard:", err);
+        toast({
+          variant: "destructive",
+          title: "Gagal menyalin",
+          description: "Tidak dapat menyalin link ke clipboard"
+        });
+      });
+  };
 
   // Ambil data paket wisata berdasarkan ID
-  useEffect(() => {
-    const fetchPackageDetail = async () => {
-      try {
-        setIsLoading(true)
-        if (!id) {
-          throw new Error("ID paket wisata tidak ditemukan")
-        }
-        
-        const data = await TourPackageService.getPackageById(id)
-        console.log("Data paket wisata dari API:", data)
-        setPaketWisata(data)
-      } catch (error) {
-        console.error("Error fetching package detail:", error)
-        setError("Gagal mengambil data paket wisata")
-      } finally {
-        setIsLoading(false)
+  // Ambil data paket wisata berdasarkan ID
+useEffect(() => {
+  const fetchPackageDetail = async () => {
+    try {
+      setIsLoading(true)
+      if (!id) {
+        throw new Error("ID paket wisata tidak ditemukan")
       }
+      
+      const data = await TourPackageService.getPackageById(id)
+      console.log("Data paket wisata dari API:", data)
+      
+      // Generate placeholder images jika foto tidak tersedia
+      let packageImages = data.foto && data.foto.length > 0 
+        ? data.foto 
+        : [
+            `https://source.unsplash.com/random/800x600/?travel,${data.destination.nama}`,
+            `https://source.unsplash.com/random/800x600/?${data.destination.nama},landscape`,
+            `https://source.unsplash.com/random/800x600/?${data.destination.nama},scenery`
+          ];
+      
+      // Set gambar hotel dari database
+      // Perhatikan bahwa dalam model hotel, field-nya adalah "gambar" bukan "foto"
+      const hotelImgs = data.hotel?.gambar && data.hotel.gambar.length > 0
+        ? data.hotel.gambar
+        : [
+            `https://source.unsplash.com/random/800x600/?hotel,room,${data.hotel.nama}`,
+            `https://source.unsplash.com/random/800x600/?hotel,lobby,${data.hotel.nama}`,
+            `https://source.unsplash.com/random/800x600/?hotel,pool,${data.hotel.nama}`
+          ];
+      
+      // Set gambar armada dari database
+      // Perhatikan bahwa dalam model armada, field-nya adalah "gambar" bukan "foto"
+      const armadaImgs = data.armada?.gambar && data.armada.gambar.length > 0
+        ? data.armada.gambar
+        : [
+            `https://source.unsplash.com/random/800x600/?bus,${data.armada.nama}`,
+            `https://source.unsplash.com/random/800x600/?coach,${data.armada.nama}`,
+            `https://source.unsplash.com/random/800x600/?transport,${data.armada.nama}`
+          ];
+      
+      // Set langsung fasilitas hotel dari database
+      const hotelFacs = data.hotel?.fasilitas || [];
+      
+      // Set langsung kapasitas armada dari database
+      const armadaKaps = data.armada?.kapasitas || [];
+      
+      // Set menu makanan dari field lauk di model consume
+      const lauk = data.consume?.lauk || [];
+      
+      setGalleryImages(packageImages);
+      setHotelImages(hotelImgs);
+      setArmadaImages(armadaImgs);
+      setHotelFacilities(hotelFacs);
+      setArmadaKapasitas(armadaKaps);
+      setMenuMakanan(lauk);
+      setPaketWisata(data);
+    } catch (error) {
+      console.error("Error fetching package detail:", error)
+      setError("Gagal mengambil data paket wisata")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    fetchPackageDetail()
-  }, [id])
+  fetchPackageDetail()
+}, [id])
 
   // Fungsi navigasi galeri
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev === (placeholderData.galeri.length - 1) ? 0 : prev + 1))
-  }
+  const nextImage = useCallback(() => {
+    setIsImageLoading(true);
+    setCurrentImageIndex((prev) => (prev === (galleryImages.length - 1) ? 0 : prev + 1))
+  }, [galleryImages.length]);
 
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? placeholderData.galeri.length - 1 : prev - 1))
-  }
+  const prevImage = useCallback(() => {
+    setIsImageLoading(true);
+    setCurrentImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))
+  }, [galleryImages.length]);
 
   // Hitung total harga
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     if (!selectedSchedule || !paketWisata) return 0
     return paketWisata.harga * jumlahPeserta
-  }
+  }, [jumlahPeserta, paketWisata, selectedSchedule]);
 
   // Mendapatkan jadwal yang dipilih
-  const getSelectedSchedule = () => {
+  const getSelectedSchedule = useCallback(() => {
     if (!selectedSchedule || !paketWisata) return null
     return paketWisata.jadwal.find((j) => `${j.tanggalAwal}-${j.tanggalAkhir}` === selectedSchedule)
-  }
+  }, [paketWisata, selectedSchedule]);
+
+  // Handle image load complete
+  const handleImageLoad = () => {
+    setIsImageLoading(false);
+  };
 
   // Jika masih loading, tampilkan skeleton
   if (isLoading) {
@@ -251,6 +402,7 @@ export default function PaketWisataDetail() {
     return (
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error || "Paket wisata tidak ditemukan"}</AlertDescription>
         </Alert>
@@ -301,10 +453,21 @@ export default function PaketWisataDetail() {
       {/* Galeri Foto */}
       <div className="relative mb-8 overflow-hidden rounded-xl">
         <div className="relative aspect-[16/9] w-full overflow-hidden">
+          {isImageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-muted">
+              <Skeleton className="h-full w-full" />
+            </div>
+          )}
           <img
-            src={placeholderData.galeri[currentImageIndex] || "/placeholder.svg"}
+            src={galleryImages[currentImageIndex]}
             alt={`${paketWisata.nama} - Foto ${currentImageIndex + 1}`}
             className="h-full w-full object-cover"
+            onLoad={handleImageLoad}
+            onError={(e) => {
+              // Fallback image if error
+              (e.target as HTMLImageElement).src = "/placeholder.svg?height=600&width=1200";
+              setIsImageLoading(false);
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
@@ -329,13 +492,16 @@ export default function PaketWisataDetail() {
 
         {/* Indikator Foto */}
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
-          {placeholderData.galeri.map((_, index) => (
+          {galleryImages.map((_, index) => (
             <button
               key={index}
               className={`h-2 w-2 rounded-full ${
                 index === currentImageIndex ? "bg-white" : "bg-white/50"
               } transition-all`}
-              onClick={() => setCurrentImageIndex(index)}
+              onClick={() => {
+                setIsImageLoading(true);
+                setCurrentImageIndex(index);
+              }}
             />
           ))}
         </div>
@@ -346,11 +512,18 @@ export default function PaketWisataDetail() {
             variant="outline"
             size="icon"
             className="rounded-full bg-white/80 hover:bg-white"
-            onClick={() => setIsFavorite(!isFavorite)}
+            onClick={toggleFavorite}
+            aria-label={isFavorite ? "Hapus dari favorit" : "Tambah ke favorit"}
           >
             <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
           </Button>
-          <Button variant="outline" size="icon" className="rounded-full bg-white/80 hover:bg-white">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full bg-white/80 hover:bg-white"
+            onClick={handleShare}
+            aria-label="Bagikan paket wisata"
+          >
             <Share2 className="h-5 w-5" />
           </Button>
         </div>
@@ -379,52 +552,94 @@ export default function PaketWisataDetail() {
 
                 {/* Informasi Akomodasi dan Transportasi */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <Hotel className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold">Akomodasi</h3>
+                <div className="md:w-1/2">
+                  <div className="bg-muted/30 p-4 rounded-lg h-full">
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-lg">{paketWisata.hotel.nama}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <HotelStars rating={paketWisata.hotel.bintang} />
+                        <span className="text-sm text-muted-foreground">Hotel {paketWisata.hotel.bintang} Bintang</span>
                       </div>
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <span className="font-medium">Hotel:</span> {paketWisata.hotel.nama}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">Rating:</span>
-                          <HotelStars rating={paketWisata.hotel.bintang} />
-                        </div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span>{paketWisata.hotel.alamat}</span>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
 
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <Bus className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold">Transportasi</h3>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <span className="font-medium">Armada:</span> {paketWisata.armada.nama}
+                    <h4 className="font-medium mb-2">Fasilitas Hotel:</h4>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {hotelFacilities.map((facility, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <div className="bg-primary/10 p-1.5 rounded-full">
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                          </div>
+                          <span>{facility}</span>
                         </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Kapasitas:</span> {paketWisata.armada.kapasitas} orang
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      ))}
+                    </div>
 
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <Utensils className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold">Konsumsi</h3>
+                    <div className="mt-2">
+                      <h4 className="font-medium mb-1">Harga Hotel:</h4>
+                      <div className="text-sm text-muted-foreground">
+                        <div>{formatCurrency(paketWisata.hotel.harga)} per malam</div>
                       </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Paket Makan:</span> {paketWisata.consume.nama}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:w-1/2">
+                  <div className="bg-muted/30 p-4 rounded-lg h-full">
+                    <div className="mb-3">
+                      <h3 className="font-semibold text-lg">{paketWisata.armada.nama}</h3>
+                      <div className="mb-2 flex flex-wrap gap-2">
+                        <Badge variant="outline">{paketWisata.armada.merek}</Badge>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+
+                    <h4 className="font-medium mb-2">Kapasitas Armada:</h4>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {armadaKapasitas.map((kapasitas, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <div className="bg-primary/10 p-1.5 rounded-full">
+                            <Users className="h-4 w-4 text-primary" />
+                          </div>
+                          <span>{kapasitas}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-2">
+                      <h4 className="font-medium mb-1">Harga Armada:</h4>
+                      <div className="text-sm text-muted-foreground">
+                        <div>{formatCurrency(paketWisata.armada.harga)} per hari</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="mb-3 text-xl font-semibold">Menu Makanan</h2>
+                  <p className="text-muted-foreground mb-4">
+                    Berikut adalah menu makanan yang disediakan dalam paket {paketWisata.consume.nama}:
+                  </p>
+                  
+                  <div className="bg-muted/30 p-4 rounded-lg">
+                    <h3 className="font-medium mb-2">Daftar Menu:</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
+                      {menuMakanan.map((menu, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <Utensils className="h-4 w-4 text-primary mt-0.5" />
+                          <span className="text-sm">{menu}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    <p>* Menu dapat berubah sesuai dengan ketersediaan bahan makanan di lokasi</p>
+                    <p>* Harga paket konsumsi: {formatCurrency(paketWisata.consume.harga)} per orang per hari</p>
+                  </div>
+                </div>
 
                   <Card>
                     <CardContent className="p-4">
@@ -763,7 +978,16 @@ export default function PaketWisataDetail() {
                   >
                     Pesan Sekarang
                   </Button>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      // Buka WhatsApp
+                      const phone = "628123456789";
+                      const text = `Halo, saya ingin bertanya tentang paket wisata *${paketWisata.nama}* ke ${paketWisata.destination.nama} dengan harga ${formatCurrency(paketWisata.harga)}.`;
+                      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                    }}
+                  >
                     Tanya via WhatsApp
                   </Button>
                 </div>
@@ -824,13 +1048,18 @@ export default function PaketWisataDetail() {
             <Card>
               <CardContent className="p-6">
                 <h3 className="mb-4 text-lg font-semibold">Paket Wisata Serupa</h3>
-                <div className="space-y-4">
+                <div className="space-y-4" id="similar-packages">
+                  {/* Placeholder - nanti akan diisi dengan paket-paket serupa */}
                   {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3">
+                    <div key={i} className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors" 
+                      onClick={() => navigate(`/paket-wisata/similar-${i}`)}>
                       <img
-                        src="/placeholder.svg?height=60&width=60"
+                        src={`https://source.unsplash.com/random/60x60/?${paketWisata.destination.nama},travel,${i}`}
                         alt={`Paket Wisata Serupa ${i}`}
                         className="h-14 w-14 rounded-md object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/placeholder.svg?height=60&width=60";
+                        }}
                       />
                       <div>
                         <div className="font-medium">

@@ -1,74 +1,46 @@
-import axios from 'axios';
+// lib/axios.ts
 
-const baseURL = 'http://localhost:5000';
+import axios from "axios";
 
-export const axiosInstance = axios.create({
-  baseURL,
-  timeout: 10000,
+const instance = axios.create({
+  baseURL: "http://localhost:5000", // Sesuaikan dengan URL backend Anda
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
+  // Tambahkan konfigurasi timeout 
+  timeout: 10000, // 10 detik
 });
 
-// // Request interceptor
-// axiosInstance.interceptors.request.use(
-//   (config) => {
-//     // Ambil token dari localStorage
-//     const token = localStorage.getItem('token');
+// Add a request interceptor to include auth token
+instance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
     
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
+    // Log request untuk debugging
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
     
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
-// // Response interceptor
-// axiosInstance.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
+// Add a response interceptor for better error handling
+instance.interceptors.response.use(
+  (response) => {
+    // Log success response untuk debugging
+    console.log(`[API Response] ${response.status} ${response.config.url}`, response.data);
+    return response;
+  },
+  (error) => {
+    // Log error response untuk debugging
+    console.error(`[API Error] ${error.config?.url || 'unknown'}:`, error.response?.data || error.message);
+    return Promise.reject(error);
+  }
+);
 
-//     // Jika error 401 dan belum pernah retry
-//     if (error.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
-
-//       // Redirect ke halaman login jika token tidak valid
-//       if (error.response?.data?.message === 'Invalid token') {
-//         localStorage.removeItem('token');
-//         window.location.href = '/login';
-//         return Promise.reject(error);
-//       }
-
-//       try {
-//         // Coba refresh token
-//         const refreshToken = localStorage.getItem('refreshToken');
-//         if (refreshToken) {
-//           const response = await axios.post(`${baseURL}/auth/refresh-token`, {
-//             refreshToken,
-//           });
-          
-//           const { token } = response.data;
-//           localStorage.setItem('token', token);
-          
-//           // Update header dengan token baru
-//           originalRequest.headers.Authorization = `Bearer ${token}`;
-//           return axiosInstance(originalRequest);
-//         }
-//       } catch (refreshError) {
-//         // Jika refresh token gagal, logout user
-//         localStorage.removeItem('token');
-//         localStorage.removeItem('refreshToken');
-//         window.location.href = '/login';
-//       }
-//     }
-    
-//     return Promise.reject(error);
-//   }
-// );
-
-export default axiosInstance;
+export default instance;
