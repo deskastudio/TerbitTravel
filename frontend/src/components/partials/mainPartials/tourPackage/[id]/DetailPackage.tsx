@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import {
@@ -14,31 +12,25 @@ import {
   CheckCircle2,
   Info,
   Minus,
-  Plus,
   Hotel,
   Bus,
   Utensils,
-  Tag,
   Users,
-  AlertCircle
+  AlertCircle,
+  Tag
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useToast } from "@/hooks/use-toast" // Tambahkan import useToast
+import { useToast } from "@/hooks/use-toast"
 import { TourPackageService } from "@/services/tour-package.service"
-import { ITourPackage, Schedule, TourPackageStatus } from "@/types/tour-package.types"
+import { ITourPackage, TourPackageStatus } from "@/types/tour-package.types"
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -111,105 +103,22 @@ const DetailSkeleton = () => {
   )
 }
 
-// Data placeholder untuk ulasan dan galeri
-const placeholderData = {
-  ulasan: [
-    {
-      id: "u1",
-      nama: "Pengunjung",
-      foto: "/placeholder.svg?height=40&width=40",
-      rating: 5,
-      tanggal: "20 Februari 2023",
-      komentar: "Paket wisata yang sangat memuaskan! Tour guide sangat ramah dan profesional.",
-    },
-    {
-      id: "u2",
-      nama: "Pengunjung",
-      foto: "/placeholder.svg?height=40&width=40",
-      rating: 4,
-      tanggal: "15 Maret 2023",
-      komentar: "Perjalanan yang menyenangkan. Hotel yang disediakan nyaman dan bersih.",
-    },
-  ],
-  ratingStats: {
-    total: 38,
-    average: 4.5,
-    distribution: [2, 3, 5, 12, 16],
-  },
-  galeri: [
-    "/placeholder.svg?height=600&width=800",
-    "/placeholder.svg?height=600&width=800",
-    "/placeholder.svg?height=600&width=800",
-  ],
-  // Data placeholder untuk itinerary
-  itinerary: [
-    {
-      hari: 1,
-      aktivitas: [
-        {
-          waktu: "08:00 - 10:00",
-          kegiatan: "Penjemputan di Lokasi",
-          deskripsi: "Penjemputan oleh tour guide dan langsung menuju hotel untuk check-in.",
-        },
-        {
-          waktu: "12:00 - 13:00",
-          kegiatan: "Makan Siang",
-          deskripsi: "Makan siang di restoran lokal dengan menu khas daerah.",
-        },
-      ],
-    },
-    {
-      hari: 2,
-      aktivitas: [
-        {
-          waktu: "07:00 - 08:00",
-          kegiatan: "Sarapan di Hotel",
-          deskripsi: "Sarapan pagi dengan menu internasional dan lokal.",
-        },
-        {
-          waktu: "09:00 - 12:00",
-          kegiatan: "Mengunjungi Objek Wisata",
-          deskripsi: "Mengunjungi objek wisata utama di daerah.",
-        },
-      ],
-    },
-  ],
-  // Data placeholder untuk FAQ
-  faq: [
-    {
-      pertanyaan: "Apakah paket ini tersedia setiap hari?",
-      jawaban:
-        "Ya, paket ini tersedia untuk keberangkatan sesuai jadwal yang tertera. Untuk jadwal di luar yang tertera, silakan hubungi customer service kami.",
-    },
-    {
-      pertanyaan: "Bagaimana jika saya ingin memperpanjang masa menginap?",
-      jawaban:
-        "Anda dapat memperpanjang masa menginap dengan tambahan biaya. Silakan hubungi customer service kami untuk informasi lebih lanjut.",
-    },
-  ],
-};
-
 export default function PaketWisataDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { toast } = useToast() // Gunakan hook useToast
+  const { toast } = useToast()
   const [paketWisata, setPaketWisata] = useState<ITourPackage | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [selectedSchedule, setSelectedSchedule] = useState("")
-  const [jumlahPeserta, setJumlahPeserta] = useState(2)
   const [galleryImages, setGalleryImages] = useState<string[]>([])
   const [isImageLoading, setIsImageLoading] = useState(true)
-  // State untuk gambar dan fasilitas hotel yang diambil dari database
-  const [hotelImages, setHotelImages] = useState<string[]>([])
-  const [hotelFacilities, setHotelFacilities] = useState<string[]>([])
-  // State untuk gambar armada dan kapasitas
-  const [armadaImages, setArmadaImages] = useState<string[]>([])
-  const [armadaKapasitas, setArmadaKapasitas] = useState<string[]>([])
   // State untuk menu makanan/lauk
   const [menuMakanan, setMenuMakanan] = useState<string[]>([])
+  // State untuk paket sejenis (akan diambil dari API)
+  const [similarPackages, setSimilarPackages] = useState<ITourPackage[]>([])
 
   // Tambahkan useEffect untuk memeriksa apakah paket ini sudah difavoritkan
   useEffect(() => {
@@ -295,96 +204,88 @@ export default function PaketWisataDetail() {
       });
   };
 
-  // Ambil data paket wisata berdasarkan ID
-  // Ambil data paket wisata berdasarkan ID
-useEffect(() => {
-  const fetchPackageDetail = async () => {
-    try {
-      setIsLoading(true)
-      if (!id) {
-        throw new Error("ID paket wisata tidak ditemukan")
+  // Ambil data paket wisata berdasarkan ID dan paket sejenis
+  useEffect(() => {
+    const fetchPackageDetail = async () => {
+      try {
+        setIsLoading(true);
+        if (!id) {
+          throw new Error("ID paket wisata tidak ditemukan");
+        }
+        
+        // Mengambil data paket wisata
+        const data = await TourPackageService.getPackageById(id);
+        console.log("Data paket wisata dari API:", data);
+        
+        // Pastikan objek hotel memiliki array fasilitas, jika kosong gunakan array kosong
+        if (data.hotel && !data.hotel.fasilitas) {
+          data.hotel.fasilitas = [];
+        }
+        
+        // Generate placeholder images jika foto tidak tersedia
+        const packageImages: string[] = data.foto && data.foto.length > 0 
+          ? data.foto 
+          : [
+              ``,
+              ``,
+              ``
+            ];
+        
+        // Set menu makanan dari field lauk di model consume
+        const lauk: string[] = data.consume?.lauk || [];
+        
+        setGalleryImages(packageImages);
+        setMenuMakanan(lauk);
+        setPaketWisata(data);
+        
+        // Setelah mengambil detail paket, ambil paket sejenis berdasarkan kategori
+        if (data.kategori && data.kategori._id) {
+          try {
+            // Pastikan method getPackagesByCategory tersedia di TourPackageService
+            if (typeof TourPackageService.getPackagesByCategory === 'function') {
+              const similarPackagesData = await TourPackageService.getPackagesByCategory(data.kategori._id, 3, id);
+              console.log("Data paket sejenis dari API:", similarPackagesData);
+              setSimilarPackages(similarPackagesData || []);
+            }
+          } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            console.error("Error fetching similar packages:", errorMessage);
+            // Tidak perlu menampilkan error, karena ini fitur tambahan
+          }
+        }
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error("Error fetching package detail:", errorMessage);
+        setError("Gagal mengambil data paket wisata");
+      } finally {
+        setIsLoading(false);
       }
-      
-      const data = await TourPackageService.getPackageById(id)
-      console.log("Data paket wisata dari API:", data)
-      
-      // Generate placeholder images jika foto tidak tersedia
-      let packageImages = data.foto && data.foto.length > 0 
-        ? data.foto 
-        : [
-            `https://source.unsplash.com/random/800x600/?travel,${data.destination.nama}`,
-            `https://source.unsplash.com/random/800x600/?${data.destination.nama},landscape`,
-            `https://source.unsplash.com/random/800x600/?${data.destination.nama},scenery`
-          ];
-      
-      // Set gambar hotel dari database
-      // Perhatikan bahwa dalam model hotel, field-nya adalah "gambar" bukan "foto"
-      const hotelImgs = data.hotel?.gambar && data.hotel.gambar.length > 0
-        ? data.hotel.gambar
-        : [
-            `https://source.unsplash.com/random/800x600/?hotel,room,${data.hotel.nama}`,
-            `https://source.unsplash.com/random/800x600/?hotel,lobby,${data.hotel.nama}`,
-            `https://source.unsplash.com/random/800x600/?hotel,pool,${data.hotel.nama}`
-          ];
-      
-      // Set gambar armada dari database
-      // Perhatikan bahwa dalam model armada, field-nya adalah "gambar" bukan "foto"
-      const armadaImgs = data.armada?.gambar && data.armada.gambar.length > 0
-        ? data.armada.gambar
-        : [
-            `https://source.unsplash.com/random/800x600/?bus,${data.armada.nama}`,
-            `https://source.unsplash.com/random/800x600/?coach,${data.armada.nama}`,
-            `https://source.unsplash.com/random/800x600/?transport,${data.armada.nama}`
-          ];
-      
-      // Set langsung fasilitas hotel dari database
-      const hotelFacs = data.hotel?.fasilitas || [];
-      
-      // Set langsung kapasitas armada dari database
-      const armadaKaps = data.armada?.kapasitas || [];
-      
-      // Set menu makanan dari field lauk di model consume
-      const lauk = data.consume?.lauk || [];
-      
-      setGalleryImages(packageImages);
-      setHotelImages(hotelImgs);
-      setArmadaImages(armadaImgs);
-      setHotelFacilities(hotelFacs);
-      setArmadaKapasitas(armadaKaps);
-      setMenuMakanan(lauk);
-      setPaketWisata(data);
-    } catch (error) {
-      console.error("Error fetching package detail:", error)
-      setError("Gagal mengambil data paket wisata")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    };
 
-  fetchPackageDetail()
-}, [id])
+    fetchPackageDetail();
+  }, [id]);
 
   // Fungsi navigasi galeri
   const nextImage = useCallback(() => {
     setIsImageLoading(true);
-    setCurrentImageIndex((prev) => (prev === (galleryImages.length - 1) ? 0 : prev + 1))
+    setCurrentImageIndex((prev) => (prev === (galleryImages.length - 1) ? 0 : prev + 1));
   }, [galleryImages.length]);
 
   const prevImage = useCallback(() => {
     setIsImageLoading(true);
-    setCurrentImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1))
+    setCurrentImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
   }, [galleryImages.length]);
 
-  // Hitung total harga
-  const calculateTotal = useCallback(() => {
-    if (!selectedSchedule || !paketWisata) return 0
-    return paketWisata.harga * jumlahPeserta
-  }, [jumlahPeserta, paketWisata, selectedSchedule]);
+  // Fungsi untuk navigasi ke halaman booking
+  const handleBooking = useCallback(() => {
+    if (!selectedSchedule || !id) return;
+    navigate(`/booking/${id}/${selectedSchedule}`);
+  }, [id, navigate, selectedSchedule]);
 
   // Mendapatkan jadwal yang dipilih
   const getSelectedSchedule = useCallback(() => {
-    if (!selectedSchedule || !paketWisata) return null
-    return paketWisata.jadwal.find((j) => `${j.tanggalAwal}-${j.tanggalAkhir}` === selectedSchedule)
+    if (!selectedSchedule || !paketWisata) return null;
+    return paketWisata.jadwal.find((j) => `${j.tanggalAwal}-${j.tanggalAkhir}` === selectedSchedule);
   }, [paketWisata, selectedSchedule]);
 
   // Handle image load complete
@@ -394,7 +295,7 @@ useEffect(() => {
 
   // Jika masih loading, tampilkan skeleton
   if (isLoading) {
-    return <DetailSkeleton />
+    return <DetailSkeleton />;
   }
 
   // Jika terjadi error, tampilkan pesan error
@@ -410,7 +311,7 @@ useEffect(() => {
           Kembali ke Daftar Paket Wisata
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -441,12 +342,6 @@ useEffect(() => {
             <Calendar className="mr-1 h-4 w-4" />
             <span>{paketWisata.durasi}</span>
           </div>
-          <div className="flex items-center">
-            <Star className="mr-1 h-4 w-4 fill-yellow-500 text-yellow-500" />
-            <span>
-              {placeholderData.ratingStats.average} ({placeholderData.ratingStats.total} ulasan)
-            </span>
-          </div>
         </div>
       </div>
 
@@ -455,7 +350,7 @@ useEffect(() => {
         <div className="relative aspect-[16/9] w-full overflow-hidden">
           {isImageLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-muted">
-              <Skeleton className="h-full w-full" />
+              <div className="h-12 w-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin"></div>
             </div>
           )}
           <img
@@ -463,9 +358,9 @@ useEffect(() => {
             alt={`${paketWisata.nama} - Foto ${currentImageIndex + 1}`}
             className="h-full w-full object-cover"
             onLoad={handleImageLoad}
-            onError={(e) => {
+            onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
               // Fallback image if error
-              (e.target as HTMLImageElement).src = "/placeholder.svg?height=600&width=1200";
+              (e.currentTarget).src = ``;
               setIsImageLoading(false);
             }}
           />
@@ -473,38 +368,43 @@ useEffect(() => {
         </div>
 
         {/* Navigasi Galeri */}
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white"
-          onClick={prevImage}
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white"
-          onClick={nextImage}
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
+        {galleryImages.length > 1 && (
+          <>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white"
+              onClick={prevImage}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white"
+              onClick={nextImage}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
 
-        {/* Indikator Foto */}
-        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
-          {galleryImages.map((_, index) => (
-            <button
-              key={index}
-              className={`h-2 w-2 rounded-full ${
-                index === currentImageIndex ? "bg-white" : "bg-white/50"
-              } transition-all`}
-              onClick={() => {
-                setIsImageLoading(true);
-                setCurrentImageIndex(index);
-              }}
-            />
-          ))}
-        </div>
+            {/* Indikator Foto */}
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
+              {galleryImages.map((_, index) => (
+                <button
+                  key={index}
+                  className={`h-2 w-2 rounded-full ${
+                    index === currentImageIndex ? "bg-white" : "bg-white/50"
+                  } transition-all`}
+                  onClick={() => {
+                    setIsImageLoading(true);
+                    setCurrentImageIndex(index);
+                  }}
+                  aria-label={`Lihat foto ${index + 1}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Tombol Aksi */}
         <div className="absolute right-4 top-4 flex space-x-2">
@@ -533,182 +433,140 @@ useEffect(() => {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Konten Utama */}
         <div className="lg:col-span-2">
-          <Tabs defaultValue="overview">
-            <TabsList className="mb-6 grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Ikhtisar</TabsTrigger>
-              <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-              <TabsTrigger value="info">Info Penting</TabsTrigger>
-              <TabsTrigger value="reviews">Ulasan</TabsTrigger>
+          <Tabs defaultValue="overview" className="space-y-6">
+            <TabsList className="mb-6 grid w-full grid-cols-3 bg-muted/60 p-1 rounded-xl">
+              <TabsTrigger value="overview" className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <Info className="h-4 w-4" />
+                <span>Ikhtisar</span>
+              </TabsTrigger>
+              <TabsTrigger value="info" className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <AlertCircle className="h-4 w-4" />
+                <span>Info Penting</span>
+              </TabsTrigger>
+              <TabsTrigger value="facilities" className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Fasilitas</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
               <div className="space-y-6">
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Tentang Paket Wisata</h2>
-                  <div className="text-muted-foreground whitespace-pre-line">{paketWisata.deskripsi}</div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <Info className="h-5 w-5 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-semibold">Tentang Paket Wisata</h2>
+                  </div>
+                  <div className="bg-muted/20 rounded-lg p-4 text-muted-foreground whitespace-pre-line">{paketWisata.deskripsi}</div>
                 </div>
 
                 <Separator />
 
                 {/* Informasi Akomodasi dan Transportasi */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="md:w-1/2">
-                  <div className="bg-muted/30 p-4 rounded-lg h-full">
+                <div className="md:w-full">
+                  <div className="bg-muted/30 p-4 rounded-lg h-full border border-muted/50 hover:shadow-sm transition-shadow">
                     <div className="mb-3">
-                      <h3 className="font-semibold text-lg">{paketWisata.hotel.nama}</h3>
                       <div className="flex items-center gap-2 mb-2">
+                        <Hotel className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-lg">{paketWisata.hotel.nama}</h3>
+                      </div>
+                      <div className="flex items-center gap-2 mb-2 pl-7">
                         <HotelStars rating={paketWisata.hotel.bintang} />
                         <span className="text-sm text-muted-foreground">Hotel {paketWisata.hotel.bintang} Bintang</span>
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2 pl-7">
                         <MapPin className="h-3.5 w-3.5" />
                         <span>{paketWisata.hotel.alamat}</span>
                       </div>
                     </div>
 
-                    <h4 className="font-medium mb-2">Fasilitas Hotel:</h4>
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {hotelFacilities.map((facility, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          <div className="bg-primary/10 p-1.5 rounded-full">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <div className="bg-primary/5 rounded-md p-3 mt-4">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                        Fasilitas Hotel:
+                      </h4>
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        {paketWisata.hotel.fasilitas && paketWisata.hotel.fasilitas.length > 0 ? (
+                          paketWisata.hotel.fasilitas.map((facility, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm pl-6">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                              <span>{facility}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-2 text-sm text-muted-foreground pl-6">
+                            Informasi fasilitas tidak tersedia
                           </div>
-                          <span>{facility}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-2">
-                      <h4 className="font-medium mb-1">Harga Hotel:</h4>
-                      <div className="text-sm text-muted-foreground">
-                        <div>{formatCurrency(paketWisata.hotel.harga)} per malam</div>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="md:w-1/2">
-                  <div className="bg-muted/30 p-4 rounded-lg h-full">
+                <div className="md:w-full">
+                  <div className="bg-muted/30 p-4 rounded-lg h-full border border-muted/50 hover:shadow-sm transition-shadow">
                     <div className="mb-3">
-                      <h3 className="font-semibold text-lg">{paketWisata.armada.nama}</h3>
-                      <div className="mb-2 flex flex-wrap gap-2">
-                        <Badge variant="outline">{paketWisata.armada.merek}</Badge>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Bus className="h-5 w-5 text-primary" />
+                        <h3 className="font-semibold text-lg">{paketWisata.armada.nama}</h3>
+                      </div>
+                      <div className="mb-2 flex flex-wrap gap-2 pl-7">
+                        <Badge variant="outline" className="bg-primary/5">{paketWisata.armada.merek}</Badge>
                       </div>
                     </div>
 
-                    <h4 className="font-medium mb-2">Kapasitas Armada:</h4>
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      {armadaKapasitas.map((kapasitas, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          <div className="bg-primary/10 p-1.5 rounded-full">
-                            <Users className="h-4 w-4 text-primary" />
-                          </div>
-                          <span>{kapasitas}</span>
+                    <div className="bg-primary/5 rounded-md p-3 mt-4">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Users className="h-4 w-4 text-primary" />
+                        Kapasitas Armada:
+                      </h4>
+                      <div className="flex items-center gap-2 text-sm mb-2 pl-6">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        <span>Maksimal {paketWisata.armada.kapasitas} orang</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {menuMakanan.length > 0 && (
+                  <div className="md:col-span-2">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        <Utensils className="h-5 w-5 text-primary" />
+                      </div>
+                      <h2 className="text-xl font-semibold">Menu Makanan</h2>
+                    </div>
+                    <div className="bg-muted/30 p-4 rounded-lg border border-muted/50 hover:shadow-sm transition-shadow">
+                      <p className="text-muted-foreground mb-4">
+                        Berikut adalah menu makanan yang disediakan dalam paket {paketWisata.consume.nama}:
+                      </p>
+                      
+                      <div className="bg-primary/5 rounded-md p-3">
+                        <h3 className="font-medium mb-3 flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-primary" />
+                          Daftar Menu:
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
+                          {menuMakanan.map((menu, index) => (
+                            <div key={index} className="flex items-start gap-2 pl-2">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+                              <span className="text-sm">{menu}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-2">
-                      <h4 className="font-medium mb-1">Harga Armada:</h4>
-                      <div className="text-sm text-muted-foreground">
-                        <div>{formatCurrency(paketWisata.armada.harga)} per hari</div>
+                      </div>
+                      
+                      <div className="mt-4 text-sm text-muted-foreground">
+                        <p className="flex items-center gap-2">
+                          <Info className="h-4 w-4 text-primary" />
+                          Menu dapat berubah sesuai dengan ketersediaan bahan makanan di lokasi
+                        </p>
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <h2 className="mb-3 text-xl font-semibold">Menu Makanan</h2>
-                  <p className="text-muted-foreground mb-4">
-                    Berikut adalah menu makanan yang disediakan dalam paket {paketWisata.consume.nama}:
-                  </p>
-                  
-                  <div className="bg-muted/30 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">Daftar Menu:</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
-                      {menuMakanan.map((menu, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <Utensils className="h-4 w-4 text-primary mt-0.5" />
-                          <span className="text-sm">{menu}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 text-sm text-muted-foreground">
-                    <p>* Menu dapat berubah sesuai dengan ketersediaan bahan makanan di lokasi</p>
-                    <p>* Harga paket konsumsi: {formatCurrency(paketWisata.consume.harga)} per orang per hari</p>
-                  </div>
-                </div>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="mb-3 flex items-center gap-2">
-                        <Tag className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold">Kategori</h3>
-                      </div>
-                      <div className="text-sm">
-                        <Badge variant="secondary">{paketWisata.kategori.title}</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h2 className="mb-3 text-xl font-semibold">Fasilitas</h2>
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                      <h3 className="mb-2 font-medium">Yang Termasuk:</h3>
-                      <ul className="space-y-2">
-                        {paketWisata.include.map((item, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
-                            <span className="text-sm text-muted-foreground">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="mb-2 font-medium">Yang Tidak Termasuk:</h3>
-                      <ul className="space-y-2">
-                        {paketWisata.exclude.map((item, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <Minus className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                            <span className="text-sm text-muted-foreground">{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="itinerary">
-              <div className="space-y-6">
-                <h2 className="mb-3 text-xl font-semibold">Itinerary {paketWisata.durasi}</h2>
-
-                <div className="space-y-8">
-                  {placeholderData.itinerary.map((hari) => (
-                    <div key={hari.hari} className="relative border-l-2 border-primary/30 pl-6">
-                      <div className="absolute -left-3 top-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-white">
-                        {hari.hari}
-                      </div>
-                      <h3 className="mb-4 text-lg font-medium">Hari {hari.hari}</h3>
-
-                      <div className="space-y-4">
-                        {hari.aktivitas.map((aktivitas, index) => (
-                          <div key={index} className="relative rounded-lg border p-4">
-                            <div className="mb-2 font-medium">{aktivitas.kegiatan}</div>
-                            <div className="mb-2 text-sm text-muted-foreground">{aktivitas.waktu}</div>
-                            <div className="text-sm text-muted-foreground">{aktivitas.deskripsi}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                )}
                 </div>
               </div>
             </TabsContent>
@@ -716,135 +574,170 @@ useEffect(() => {
             <TabsContent value="info">
               <div className="space-y-6">
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Yang Termasuk dalam Paket</h2>
-                  <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
-                    {paketWisata.include.map((item, index) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <AlertCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-semibold">Syarat & Ketentuan</h2>
+                  </div>
+                  <div className="bg-muted/20 rounded-lg p-4">
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        <span>Harga dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        <span>Minimal peserta {paketWisata.minimalPeserta || 2} orang</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        <span>Pembayaran DP 50% untuk konfirmasi booking</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        <span>Pembatalan 7 hari sebelum keberangkatan dikenakan biaya 50%</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        <span>Pembatalan 3 hari sebelum keberangkatan dikenakan biaya 100%</span>
+                      </li>
+                      <li className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        </div>
+                        <span>Itinerary dapat berubah menyesuaikan kondisi lapangan</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Yang Tidak Termasuk dalam Paket</h2>
-                  <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
-                    {paketWisata.exclude.map((item, index) => (
-                      <li key={index}>{item}</li>
-                    ))}
-                  </ul>
+                  <h2 className="mb-3 text-xl font-semibold">Informasi Tambahan</h2>
+                  <div className="space-y-4 text-muted-foreground">
+                    <p>
+                      Paket wisata ini mencakup perjalanan selama {paketWisata.durasi} ke {paketWisata.destination.nama}, 
+                      {paketWisata.destination.lokasi}.
+                    </p>
+                    <p>
+                      Anda akan menginap di {paketWisata.hotel.nama}, hotel berbintang {paketWisata.hotel.bintang} 
+                      yang berlokasi di {paketWisata.hotel.alamat}.
+                    </p>
+                    <p>
+                      Transportasi menggunakan {paketWisata.armada.nama} dengan kapasitas maksimal 
+                      {paketWisata.armada.kapasitas} orang.
+                    </p>
+                    {paketWisata.deskripsiTambahan && (
+                      <p>{paketWisata.deskripsiTambahan}</p>
+                    )}
+                  </div>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Syarat & Ketentuan</h2>
-                  <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
-                    <li>Harga dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya</li>
-                    <li>Minimal peserta 2 orang</li>
-                    <li>Pembayaran DP 50% untuk konfirmasi booking</li>
-                    <li>Pembatalan 7 hari sebelum keberangkatan dikenakan biaya 50%</li>
-                    <li>Pembatalan 3 hari sebelum keberangkatan dikenakan biaya 100%</li>
-                    <li>Itinerary dapat berubah menyesuaikan kondisi lapangan</li>
-                  </ul>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h2 className="mb-3 text-xl font-semibold">Pertanyaan Umum</h2>
-                  <Accordion type="single" collapsible className="w-full">
-                    {placeholderData.faq.map((item, index) => (
-                      <AccordionItem key={index} value={`item-${index}`}>
-                        <AccordionTrigger>{item.pertanyaan}</AccordionTrigger>
-                        <AccordionContent>{item.jawaban}</AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <Info className="h-5 w-5 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-semibold">Jadwal Keberangkatan</h2>
+                  </div>
+                  <div className="space-y-4">
+                    {paketWisata.jadwal.length > 0 ? (
+                      paketWisata.jadwal.map((jadwal, index) => (
+                        <div key={index} className="flex justify-between items-center p-4 border border-muted/60 rounded-md bg-muted/10 hover:shadow-sm transition-shadow">
+                          <div>
+                            <div className="font-medium flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-primary" />
+                              {formatDate(jadwal.tanggalAwal)} - {formatDate(jadwal.tanggalAkhir)}
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1 pl-6">
+                              {jadwal.keterangan || paketWisata.durasi}
+                            </div>
+                          </div>
+                          <Badge className={`${jadwal.status === "tersedia" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}>
+                            {jadwal.status === "tersedia" ? "Tersedia" : "Penuh"}
+                          </Badge>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center p-6 border border-dashed border-muted rounded-lg">
+                        <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+                        <div className="text-muted-foreground">
+                          Tidak ada jadwal keberangkatan yang tersedia saat ini. Silakan hubungi customer service kami untuk informasi lebih lanjut.
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-3"
+                          onClick={() => {
+                            const phone = "628123456789";
+                            const text = `Halo, saya ingin informasi jadwal keberangkatan paket wisata ${paketWisata.nama}.`;
+                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                          }}
+                        >
+                          Hubungi Kami
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="reviews">
+            <TabsContent value="facilities">
               <div className="space-y-6">
-                <div className="flex flex-col gap-6 md:flex-row">
-                  {/* Rating Summary */}
-                  <div className="md:w-1/3">
-                    <div className="rounded-lg bg-muted/50 p-4">
-                      <div className="mb-2 text-center text-4xl font-bold">{placeholderData.ratingStats.average}</div>
-                      <div className="mb-4 flex justify-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-5 w-5 ${
-                              i < Math.floor(placeholderData.ratingStats.average)
-                                ? "fill-yellow-500 text-yellow-500"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <div className="text-center text-sm text-muted-foreground">
-                        Berdasarkan {placeholderData.ratingStats.total} ulasan
-                      </div>
-
-                      <div className="mt-4 space-y-2">
-                        {[5, 4, 3, 2, 1].map((rating) => (
-                          <div key={rating} className="flex items-center gap-2">
-                            <div className="w-8 text-sm">{rating} ★</div>
-                            <Progress
-                              value={
-                                (placeholderData.ratingStats.distribution[5 - rating] /
-                                  placeholderData.ratingStats.total) *
-                                100
-                              }
-                              className="h-2"
-                            />
-                            <div className="w-8 text-right text-sm text-muted-foreground">
-                              {placeholderData.ratingStats.distribution[5 - rating]}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
                     </div>
+                    <h2 className="text-xl font-semibold">Fasilitas</h2>
                   </div>
-
-                  {/* Reviews List */}
-                  <div className="md:w-2/3">
-                    <h2 className="mb-4 text-xl font-semibold">Ulasan Peserta Tour</h2>
-                    <div className="space-y-4">
-                      {placeholderData.ulasan.map((ulasan) => (
-                        <Card key={ulasan.id}>
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <Avatar>
-                                  <AvatarImage src={ulasan.foto || "/placeholder.svg"} alt={ulasan.nama} />
-                                  <AvatarFallback>{ulasan.nama.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium">{ulasan.nama}</div>
-                                  <div className="text-sm text-muted-foreground">{ulasan.tanggal}</div>
-                                </div>
-                              </div>
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-4 w-4 ${
-                                      i < ulasan.rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="bg-green-50/50 rounded-lg p-4 border border-green-100">
+                      <h3 className="mb-3 font-medium flex items-center gap-2 text-green-800">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <span>Yang Termasuk</span>
+                      </h3>
+                      <ul className="space-y-3">
+                        {paketWisata.include.map((item, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                             </div>
-                            <div className="mt-3 text-muted-foreground">{ulasan.komentar}</div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            <span className="text-sm text-green-900">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="mt-4 text-center">
-                      <Button variant="outline">Lihat Semua Ulasan</Button>
+                    <div className="bg-red-50/50 rounded-lg p-4 border border-red-100">
+                      <h3 className="mb-3 font-medium flex items-center gap-2 text-red-800">
+                        <Minus className="h-5 w-5 text-red-600" />
+                        <span>Yang Tidak Termasuk</span>
+                      </h3>
+                      <ul className="space-y-3">
+                        {paketWisata.exclude.map((item, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Minus className="h-3.5 w-3.5 text-red-600" />
+                            </div>
+                            <span className="text-sm text-red-900">{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -871,10 +764,13 @@ useEffect(() => {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tanggal">Pilih Jadwal Keberangkatan</Label>
+                    <Label htmlFor="tanggal" className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      Pilih Jadwal Keberangkatan
+                    </Label>
                     <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
-                      <SelectTrigger id="tanggal">
-                        <SelectValue placeholder="Pilih jadwal" />
+                      <SelectTrigger id="tanggal" className="bg-white">
+                        <SelectValue placeholder="Pilih jadwal perjalanan" />
                       </SelectTrigger>
                       <SelectContent>
                       {paketWisata.jadwal.map((jadwal) => (
@@ -900,83 +796,16 @@ useEffect(() => {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="jumlah">Jumlah Peserta</Label>
-                    <div className="flex items-center">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setJumlahPeserta(Math.max(1, jumlahPeserta - 1))}
-                        disabled={jumlahPeserta <= 1}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        id="jumlah"
-                        type="number"
-                        min="1"
-                        max={paketWisata.armada.kapasitas}
-                        value={jumlahPeserta}
-                        onChange={(e) => setJumlahPeserta(Number.parseInt(e.target.value) || 1)}
-                        className="mx-2 text-center"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setJumlahPeserta(Math.min(paketWisata.armada.kapasitas, jumlahPeserta + 1))}
-                        disabled={jumlahPeserta >= paketWisata.armada.kapasitas}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Maksimal {paketWisata.armada.kapasitas} peserta per grup
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Metode Pembayaran</Label>
-                    <RadioGroup defaultValue="full">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="full" id="full" />
-                        <Label htmlFor="full">Bayar Penuh</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="dp" id="dp" />
-                        <Label htmlFor="dp">DP 50%</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </div>
-
-                <Separator className="my-4" />
-
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{formatCurrency(calculateTotal())}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Pajak & Biaya Layanan</span>
-                    <span>Termasuk</span>
-                  </div>
-                  <div className="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span className="text-primary">{formatCurrency(calculateTotal())}</span>
-                  </div>
                 </div>
 
                 <div className="mt-6 space-y-3">
                   <Button
                     className="w-full"
                     size="lg"
-                    disabled={!selectedSchedule || jumlahPeserta < 1 || paketWisata.status !== "available"}
-                    onClick={() => navigate(`/booking/${id}/${selectedSchedule}`)}
+                    disabled={!selectedSchedule || paketWisata.status !== "available"}
+                    onClick={handleBooking}
                   >
-                    Pesan Sekarang
+                    Lanjut ke Pemesanan
                   </Button>
                   <Button 
                     variant="outline" 
@@ -1041,37 +870,48 @@ useEffect(() => {
                       <div className="text-sm text-muted-foreground">{paketWisata.armada.nama}</div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">Kapasitas</div>
+                      <div className="text-sm text-muted-foreground">Maksimal {paketWisata.armada.kapasitas} orang</div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="mb-4 text-lg font-semibold">Paket Wisata Serupa</h3>
-                <div className="space-y-4" id="similar-packages">
-                  {/* Placeholder - nanti akan diisi dengan paket-paket serupa */}
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors" 
-                      onClick={() => navigate(`/paket-wisata/similar-${i}`)}>
-                      <img
-                        src={`https://source.unsplash.com/random/60x60/?${paketWisata.destination.nama},travel,${i}`}
-                        alt={`Paket Wisata Serupa ${i}`}
-                        className="h-14 w-14 rounded-md object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder.svg?height=60&width=60";
-                        }}
-                      />
-                      <div>
-                        <div className="font-medium">
-                          Paket Wisata {paketWisata.destination.nama} {i}D{i - 1}N
+            {similarPackages.length > 0 && (
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="mb-4 text-lg font-semibold">Paket Wisata Serupa</h3>
+                  <div className="space-y-4" id="similar-packages">
+                    {similarPackages.map((pkg) => (
+                      <div 
+                        key={pkg._id} 
+                        className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors" 
+                        onClick={() => navigate(`/paket-wisata/${pkg._id}`)}
+                      >
+                        <img
+                          src={pkg.foto && pkg.foto.length > 0 ? pkg.foto[0] : ``}
+                          alt={pkg.nama}
+                          className="h-14 w-14 rounded-md object-cover"
+                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+                            (e.currentTarget).src = ``;
+                          }}
+                        />
+                        <div>
+                          <div className="font-medium line-clamp-2">{pkg.nama}</div>
+                          <div className="text-sm text-primary font-medium">{formatCurrency(pkg.harga)}</div>
                         </div>
-                        <div className="text-sm text-primary font-medium">{formatCurrency(2000000 + i * 500000)}</div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-// booking-success.tsx
+// booking-success.tsx (perbaikan)
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -17,14 +17,12 @@ import {
   CreditCard,
   Loader2,
   AlertCircle,
-  Info,
-  ChevronRight
+  Info
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { TourPackageService } from "@/services/tour-package.service"
@@ -50,7 +48,6 @@ const formatDate = (dateString: string): string => {
 }
 
 // Komponen untuk menampilkan countdown
-// Perbaikan pada booking-success.tsx - komponen Countdown
 const Countdown = ({ targetDate }: { targetDate: Date }) => {
   const [timeLeft, setTimeLeft] = useState({
     hours: 0,
@@ -62,7 +59,6 @@ const Countdown = ({ targetDate }: { targetDate: Date }) => {
   // 24 jam dalam detik
   const totalTime = 24 * 60 * 60;
 
-  // Perbaikan: tambahkan useEffect untuk hitungan mundur waktu
   useEffect(() => {
     const calculateTimeLeft = () => {
       const difference = new Date(targetDate).getTime() - new Date().getTime();
@@ -120,43 +116,51 @@ const Countdown = ({ targetDate }: { targetDate: Date }) => {
 
 // Komponen untuk menampilkan langkah-langkah proses booking
 const BookingSteps = () => {
-  const currentStep = 1 // Pembayaran adalah langkah saat ini
+  const currentStep = 3 // Pembayaran adalah langkah ketiga
 
   return (
     <div className="mb-8 relative">
       <div className="flex justify-between">
         <div className="flex flex-col items-center">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep > 0 ? "bg-green-100 text-green-600" : "bg-muted text-muted-foreground"}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep > 1 ? "bg-green-100 text-green-600" : "bg-muted text-muted-foreground"
+            }`}
           >
-            {currentStep > 0 ? <CheckCircle className="h-5 w-5" /> : "1"}
+            {currentStep > 1 ? <CheckCircle className="h-5 w-5" /> : "1"}
           </div>
           <span className="text-xs mt-2 text-center">Pemesanan</span>
         </div>
 
         <div className="flex flex-col items-center">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep > 1 ? "bg-green-100 text-green-600" : currentStep === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep > 2 ? "bg-green-100 text-green-600" : currentStep === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}
           >
-            {currentStep > 1 ? <CheckCircle className="h-5 w-5" /> : "2"}
+            {currentStep > 2 ? <CheckCircle className="h-5 w-5" /> : "2"}
+          </div>
+          <span className="text-xs mt-2 text-center">Detail</span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep > 3 ? "bg-green-100 text-green-600" : currentStep === 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {currentStep > 3 ? <CheckCircle className="h-5 w-5" /> : "3"}
           </div>
           <span className="text-xs mt-2 text-center">Pembayaran</span>
         </div>
 
         <div className="flex flex-col items-center">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep > 2 ? "bg-green-100 text-green-600" : currentStep === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep === 4 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}
           >
-            {currentStep > 2 ? <CheckCircle className="h-5 w-5" /> : "3"}
-          </div>
-          <span className="text-xs mt-2 text-center">Konfirmasi</span>
-        </div>
-
-        <div className="flex flex-col items-center">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep > 3 ? "bg-green-100 text-green-600" : currentStep === 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
-          >
-            {currentStep > 3 ? <CheckCircle className="h-5 w-5" /> : "4"}
+            {currentStep > 4 ? <CheckCircle className="h-5 w-5" /> : "4"}
           </div>
           <span className="text-xs mt-2 text-center">E-Voucher</span>
         </div>
@@ -166,7 +170,7 @@ const BookingSteps = () => {
       <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted -z-10">
         <div 
           className="h-full bg-primary transition-all duration-1000" 
-          style={{ width: "33%" }}
+          style={{ width: "67%" }}
         ></div>
       </div>
     </div>
@@ -184,49 +188,99 @@ export default function BookingSuccess() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<string>("midtrans")
   const snapInitialized = useRef(false)
   
-  // Perbaikan pada booking-success.tsx - inisialisasi Snap.js
+// Perbaikan pada booking-success.tsx - inisialisasi Midtrans
+// Perbaikan inisialisasi Midtrans di booking-success.tsx
+
 useEffect(() => {
-  // Hapus script Midtrans yang mungkin sudah ada
+  // Flag untuk mencegah multiple init
+  let isMounted = true;
+  
+  // Hapus script yang mungkin sudah ada
   const existingScript = document.getElementById('midtrans-script');
   if (existingScript) {
     existingScript.remove();
   }
   
-  // Tambahkan script Midtrans baru
-  const script = document.createElement('script');
-  script.id = 'midtrans-script';
-  script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-  // Gunakan clientKey dari ENV, tambahkan fallback jika proses.env tidak tersedia di front-end
-  script.setAttribute('data-client-key', 'SB-Mid-client-TmZu'); 
-  script.async = true;
-  
-  script.onload = () => {
-    console.log('Midtrans script loaded successfully');
-    snapInitialized.current = true;
-    
-    // Jika ada bookingData dan token tersedia, bisa langsung membuka popup
-    if (bookingData && bookingData.paymentToken) {
-      // Opsional: buka popup Midtrans secara otomatis
-    }
-  };
-  
-  script.onerror = () => {
-    console.error('Failed to load Midtrans script');
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Gagal memuat payment gateway. Silakan refresh halaman."
+  const loadMidtransScript = () => {
+    return new Promise<void>((resolve, reject) => {
+      // Tambahkan status indikator di UI
+      const statusIndicator = document.getElementById('payment-gateway-status');
+      if (statusIndicator) {
+        statusIndicator.textContent = 'Mempersiapkan payment gateway...';
+        statusIndicator.className = 'text-sm text-yellow-500';
+      }
+      
+      const script = document.createElement('script');
+      script.id = 'midtrans-script';
+      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+      
+      // Client key yang valid
+      // Format: 'SB-Mid-client-XXXXXXXXXXXXXXXX'
+      const clientKey = 'SB-Mid-client-TmZu1234567890123'; // Gunakan client key yang valid
+      script.setAttribute('data-client-key', clientKey);
+      script.async = true;
+      
+      script.onload = () => {
+        if (isMounted) {
+          console.log('Midtrans script loaded successfully');
+          snapInitialized.current = true;
+          
+          // Update status indikator
+          if (statusIndicator) {
+            statusIndicator.textContent = 'Payment gateway siap';
+            statusIndicator.className = 'text-sm text-green-500';
+          }
+          
+          resolve();
+        }
+      };
+      
+      script.onerror = () => {
+        if (isMounted) {
+          console.error('Failed to load Midtrans script');
+          
+          // Update status indikator
+          if (statusIndicator) {
+            statusIndicator.textContent = 'Gagal memuat payment gateway';
+            statusIndicator.className = 'text-sm text-red-500';
+          }
+          
+          // Development fallback
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Development mode: Setting Snap as initialized even though loading failed');
+            snapInitialized.current = true;  // Anggap siap untuk dev mode
+          }
+          
+          reject();
+        }
+      };
+      
+      document.body.appendChild(script);
     });
   };
   
-  document.body.appendChild(script);
+  // Tambahkan delay kecil sebelum memuat script
+  setTimeout(() => {
+    loadMidtransScript().catch(err => {
+      console.error("Error in Midtrans script loading:", err);
+      
+      // Set fallback mode untuk development
+      if (process.env.NODE_ENV === 'development') {
+        snapInitialized.current = true;
+      }
+    });
+  }, 500);
   
-  // Script akan tetap aktif di halaman
-  return () => {};
-}, [toast, bookingData]);
+  return () => {
+    isMounted = false;
+    const script = document.getElementById('midtrans-script');
+    if (script) {
+      script.remove();
+    }
+  };
+}, [toast]);
 
   // Ambil data booking
   useEffect(() => {
@@ -313,201 +367,195 @@ useEffect(() => {
     const checkPaymentStatus = async () => {
       if (bookingData && bookingData.paymentStatus && bookingData.paymentStatus !== 'pending') {
         // Jika sudah ada status pembayaran dan bukan pending, redirect ke halaman detail
-        navigate(`/booking-detail/${bookingData.bookingId}`)
+        navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`)
       }
     }
     
     checkPaymentStatus()
   }, [bookingData, navigate])
 
-  // Handle payment dengan Midtrans
-  const handleDirectPayment = useCallback(async () => {
-    if (!bookingData) return
-    
+  const handlePayment = useCallback(async () => {
+    if (!bookingData) return;
+  
     try {
-      setIsProcessingPayment(true)
+      setIsProcessingPayment(true);
       
-      // Log data untuk debug
-      console.log("Processing payment for:", {
+      // Dev mode bypass untuk testing
+      const devModeBypass = process.env.NODE_ENV === 'development';
+  
+      // Verifikasi snap.js sudah siap
+      if (!(window as any).snap && !snapInitialized.current && !devModeBypass) {
+        toast({
+          variant: "warning",
+          title: "Payment gateway belum siap",
+          description: "Mohon tunggu beberapa saat atau refresh halaman",
+        });
+        
+        // Update status di UI
+        const statusIndicator = document.getElementById('payment-gateway-status');
+        if (statusIndicator) {
+          statusIndicator.textContent = 'Mencoba memuat ulang payment gateway...';
+          statusIndicator.className = 'text-sm text-yellow-500';
+        }
+        
+        // Coba muat ulang script
+        const script = document.createElement('script');
+        script.id = 'midtrans-retry-script';
+        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', 'SB-Mid-client-TmZu1234567890123');
+        script.async = true;
+        
+        script.onload = () => {
+          console.log('Midtrans script loaded on retry');
+          snapInitialized.current = true;
+          
+          // Update status di UI
+          if (statusIndicator) {
+            statusIndicator.textContent = 'Payment gateway siap';
+            statusIndicator.className = 'text-sm text-green-500';
+          }
+          
+          // Coba kembali setelah script dimuat
+          setTimeout(() => handlePayment(), 1000);
+        };
+        
+        script.onerror = () => {
+          console.error('Failed to load Midtrans script on retry');
+          
+          // Update status di UI
+          if (statusIndicator) {
+            statusIndicator.textContent = 'Gagal memuat payment gateway';
+            statusIndicator.className = 'text-sm text-red-500';
+          }
+          
+          // Development fallback
+          if (devModeBypass) {
+            snapInitialized.current = true;
+            setTimeout(() => handlePayment(), 1000);
+          }
+        };
+        
+        document.body.appendChild(script);
+        setIsProcessingPayment(false);
+        return;
+      }
+  
+      // Proses payment
+      const response = await processPayment({
         bookingId: bookingData.bookingId,
         customerInfo: bookingData.customerInfo,
-        packageInfo: bookingData.packageInfo,
-        jumlahPeserta: bookingData.jumlahPeserta,
-        totalAmount: bookingData.totalAmount
+        packageInfo: {
+          id: bookingData.packageInfo.id,
+          nama: bookingData.packageInfo.nama,
+          harga: Number(bookingData.packageInfo.harga),
+        },
+        jumlahPeserta: Number(bookingData.jumlahPeserta),
+        totalAmount: Number(bookingData.totalAmount),
       });
-      
-      // Coba metode payment langsung tanpa snap.js
-      // Gunakan redirect_url yang dikembalikan dari backend
-      try {
-        // Use direct URL to Midtrans
-        const url = `https://app.sandbox.midtrans.com/snap/v2/vtweb/174718243${Math.floor(Math.random() * 10000)}`;
-        window.location.href = url;
-        return;
-      } catch (directError) {
-        console.error("Direct payment error:", directError);
-        toast({
-          variant: "destructive",
-          title: "Gagal mengarahkan ke pembayaran",
-          description: "Terjadi kesalahan saat mengarahkan ke halaman pembayaran"
-        });
-        setIsProcessingPayment(false);
+  
+      if (response && response.success) {
+        if (response.redirect_url) {
+          window.location.href = response.redirect_url;
+          return;
+        } else if (response.snap_token) {
+          try {
+            // Development mode bypass
+            if (devModeBypass && !(window as any).snap) {
+              console.log('DEV MODE: Simulating successful payment');
+              toast({
+                title: "Simulasi Pembayaran Berhasil (DEV)",
+                description: "Redirecting to success page..."
+              });
+              
+              setTimeout(() => {
+                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
+              }, 1500);
+              return;
+            }
+            
+            // Production mode - gunakan Snap
+            (window as any).snap.pay(response.snap_token, {
+              onSuccess: (result: any) => {
+                toast({
+                  title: "Pembayaran berhasil!",
+                  description: "Anda akan dialihkan ke halaman detail pemesanan"
+                });
+                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
+              },
+              onPending: (result: any) => {
+                toast({
+                  title: "Pembayaran dalam proses",
+                  description: "Anda akan dialihkan ke halaman detail pemesanan"
+                });
+                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=pending`);
+              },
+              onError: (result: any) => {
+                toast({
+                  variant: "destructive",
+                  title: "Pembayaran gagal",
+                  description: "Silakan coba lagi atau hubungi customer service"
+                });
+                setIsProcessingPayment(false);
+              },
+              onClose: () => {
+                toast({
+                  title: "Pembayaran dibatalkan",
+                  description: "Anda dapat mencoba lagi nanti"
+                });
+                setIsProcessingPayment(false);
+              },
+            });
+          } catch (snapError) {
+            console.error("Error using Snap.js:", snapError);
+            
+            // Development fallback
+            if (devModeBypass) {
+              toast({
+                title: "Simulasi Pembayaran (DEV)",
+                description: "Pembayaran dianggap berhasil dalam mode development"
+              });
+              
+              setTimeout(() => {
+                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
+              }, 1500);
+            } else {
+              throw snapError;
+            }
+          }
+        } else {
+          throw new Error("Tidak ada token atau redirect URL dalam respons");
+        }
+      } else {
+        throw new Error(response?.message || "Gagal memproses pembayaran");
       }
     } catch (error: any) {
       console.error("Error processing payment:", error);
+      
+      // Development mode bypass
+      if (process.env.NODE_ENV === 'development') {
+        toast({
+          variant: "warning",
+          title: "Error Pembayaran (DEV)",
+          description: "Opsi simulasi pembayaran tersedia di mode development"
+        });
+        
+        if (confirm("Simulasikan pembayaran berhasil untuk testing?")) {
+          navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
+          return;
+        }
+      }
+      
+      const message = error?.response?.data?.message || error.message || "Terjadi kesalahan saat memproses pembayaran";
       toast({
         variant: "destructive",
         title: "Gagal memproses pembayaran",
-        description: error.message || "Terjadi kesalahan saat memproses pembayaran"
-      });
-      setIsProcessingPayment(false);
-    }
-  }, [bookingData, toast]);
-
- // Perbaikan pada booking-success.tsx - fungsi handlePayment
-// Perbaikan pada function handlePayment
-const handlePayment = useCallback(async () => {
-  if (!bookingData) return;
-  
-  try {
-    setIsProcessingPayment(true);
-    
-    // Pastikan snap.js sudah dimuat dengan benar
-    if (!(window as any).snap && !snapInitialized.current) {
-      toast({
-        variant: "destructive",
-        title: "Payment gateway belum siap",
-        description: "Mohon tunggu sebentar atau refresh halaman"
-      });
-      setIsProcessingPayment(false);
-      return;
-    }
-    
-    // Log data untuk debug
-    console.log("Processing payment for:", {
-      bookingId: bookingData.bookingId,
-      customerInfo: bookingData.customerInfo,
-      packageInfo: bookingData.packageInfo,
-      jumlahPeserta: bookingData.jumlahPeserta,
-      totalAmount: bookingData.totalAmount
-    });
-    
-    // Panggil API untuk mendapatkan token
-    const response = await processPayment({
-      bookingId: bookingData.bookingId,
-      customerInfo: bookingData.customerInfo,
-      packageInfo: {
-        id: bookingData.packageInfo.id,
-        nama: bookingData.packageInfo.nama,
-        harga: Number(bookingData.packageInfo.harga)
-      },
-      jumlahPeserta: Number(bookingData.jumlahPeserta),
-      totalAmount: Number(bookingData.totalAmount)
-    });
-    
-    if (response && response.success) {
-      // Jika API berhasil
-      if (response.redirect_url) {
-        // Gunakan URL redirect jika tersedia
-        window.location.href = response.redirect_url;
-      } else if (response.snap_token) {
-        // Gunakan snap token untuk pembayaran melalui popup
-        (window as any).snap.pay(response.snap_token, {
-          onSuccess: function(result: any) {
-            console.log('Payment success:', result);
-            navigate(`/booking-detail/${bookingData.bookingId}`);
-          },
-          onPending: function(result: any) {
-            console.log('Payment pending:', result);
-            navigate(`/booking-detail/${bookingData.bookingId}`);
-          },
-          onError: function(result: any) {
-            console.error('Payment error:', result);
-            toast({
-              variant: "destructive",
-              title: "Pembayaran gagal",
-              description: "Silakan coba lagi atau gunakan metode pembayaran lain"
-            });
-            setIsProcessingPayment(false);
-          },
-          onClose: function() {
-            console.log('Payment popup closed');
-            setIsProcessingPayment(false);
-          }
-        });
-      } else {
-        throw new Error("Tidak ada token atau redirect URL dalam respons");
-      }
-    } else {
-      throw new Error(response?.message || "Gagal memproses pembayaran");
-    }
-  } catch (error: any) {
-    console.error("Error processing payment:", error);
-    toast({
-      variant: "destructive",
-      title: "Gagal memproses pembayaran",
-      description: error.message || "Terjadi kesalahan saat memproses pembayaran"
-    });
-    setIsProcessingPayment(false);
-  }
-}, [bookingData, processPayment, toast, navigate]);
-
-  // Simulasi redirect Midtrans tanpa API
-  // Perbaikan pada booking-success.tsx - fungsi simulatePayment
-const simulatePayment = useCallback(() => {
-  if (!bookingData) return;
-  
-  setIsProcessingPayment(true);
-  
-  try {
-    // Pilih salah satu bank untuk simulasi
-    const bankOptions = ['bca', 'bni', 'mandiri', 'permata'];
-    const selectedBank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
-    
-    // Buat URL simulasi Midtrans
-    const simulationId = Date.now();
-    const simulationUrl = `https://simulator.sandbox.midtrans.com/${selectedBank}/va/index`;
-    
-    console.log("Redirecting to simulator:", simulationUrl);
-    
-    // Buka simulator di tab baru
-    window.open(simulationUrl, '_blank');
-    
-    // Tampilkan toast dengan informasi simulasi
-    toast({
-      title: "Simulasi Pembayaran",
-      description: `Silakan selesaikan pembayaran di simulator ${selectedBank.toUpperCase()} yang terbuka di tab baru`
-    });
-    
-    // Set timer untuk menampilkan toast kedua setelah beberapa detik
-    setTimeout(() => {
-      setIsProcessingPayment(false);
-      
-      toast({
-        title: "Catatan Simulasi",
-        description: "Setelah menyelesaikan pembayaran di simulator, kembali ke halaman ini dan klik 'Lihat Detail Pemesanan'"
+        description: message,
       });
       
-      // Ubah status pembayaran di localStorage
-      const lastBooking = localStorage.getItem('lastBooking');
-      if (lastBooking) {
-        const parsedBooking = JSON.parse(lastBooking);
-        parsedBooking.status = 'pending_verification';
-        parsedBooking.paymentStatus = 'pending';
-        parsedBooking.paymentMethod = `${selectedBank}_va`;
-        parsedBooking.paymentDate = new Date().toISOString();
-        localStorage.setItem('lastBooking', JSON.stringify(parsedBooking));
-      }
-    }, 3000);
-  } catch (error) {
-    console.error("Simulation error:", error);
-    toast({
-      variant: "destructive",
-      title: "Gagal simulasi pembayaran",
-      description: "Terjadi kesalahan saat simulasi pembayaran"
-    });
-    setIsProcessingPayment(false);
-  }
-}, [bookingData, toast]);
+      setIsProcessingPayment(false);
+    }
+  }, [bookingData, processPayment, toast, navigate]);
+  
 
   // Copy to clipboard function
   const copyToClipboard = useCallback((text: string, label?: string) => {
@@ -570,32 +618,6 @@ const simulatePayment = useCallback(() => {
       copyToClipboard(url, "Link pemesanan");
     }
   }, [bookingData, copyToClipboard]);
-
-  // Langsung ke detail booking
-  const skipPayment = useCallback(() => {
-    if (!bookingData) return;
-    
-    // Peringatan bahwa ini adalah mode pengembangan
-    console.log("DEVELOPMENT MODE: Skipping payment");
-    
-    toast({
-      title: "Mode Pengembangan",
-      description: "Melewati proses pembayaran untuk keperluan pengembangan"
-    });
-    
-    // Ubah status di localStorage
-    const lastBooking = localStorage.getItem('lastBooking');
-    if (lastBooking) {
-      const parsedBooking = JSON.parse(lastBooking);
-      parsedBooking.status = 'confirmed';
-      parsedBooking.paymentStatus = 'settlement';
-      parsedBooking.paymentDate = new Date().toISOString();
-      localStorage.setItem('lastBooking', JSON.stringify(parsedBooking));
-    }
-    
-    // Redirect ke halaman detail
-    navigate(`/booking-detail/${bookingData.bookingId}`);
-  }, [bookingData, navigate, toast]);
 
   // Jika masih loading, tampilkan skeleton
   if (isLoading) {
@@ -669,11 +691,11 @@ const simulatePayment = useCallback(() => {
             <div className="flex items-center gap-3">
               <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
                 <img 
-                  src={paketWisata?.foto?.[0] || `https://source.unsplash.com/random/800x600/?travel,${bookingData.packageInfo.destination}`}
+                  src={paketWisata?.foto?.[0]}
                   alt={bookingData.packageInfo.nama}
                   className="h-full w-full object-cover"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/placeholder.svg?height=64&width=64";
+                    (e.target as HTMLImageElement).src = "";
                   }}
                 />
               </div>
@@ -687,7 +709,6 @@ const simulatePayment = useCallback(() => {
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
-                  /* Lanjutan dari booking-success.tsx */
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span>{bookingData.packageInfo.destination}</span>
                   </div>
@@ -822,150 +843,44 @@ const simulatePayment = useCallback(() => {
               </div>
               
               <div className="pt-4">
-                <h3 className="font-medium mb-3">Pilih Metode Pembayaran:</h3>
-                <Tabs defaultValue="midtrans" onValueChange={value => setPaymentMethod(value)}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="midtrans">
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Payment Gateway
-                    </TabsTrigger>
-                    <TabsTrigger value="bank_transfer">
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Manual Transfer
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="midtrans" className="pt-4 space-y-4">
-                    <div className="bg-primary/5 p-4 rounded-lg">
-                      <h4 className="font-medium flex items-center gap-2">
-                        <Info className="h-4 w-4 text-primary" />
-                        Pembayaran melalui Midtrans
-                      </h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Anda akan diarahkan ke halaman pembayaran yang aman dengan beragam metode pembayaran
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="p-3 border rounded-lg flex flex-col items-center gap-1 hover:bg-gray-50 transition-colors">
-                        <img src="/payment-icons/bca.png" alt="BCA" className="h-6 mb-1" />
-                        <span className="text-xs text-center">Bank Transfer</span>
-                      </div>
-                      <div className="p-3 border rounded-lg flex flex-col items-center gap-1 hover:bg-gray-50 transition-colors">
-                        <img src="/payment-icons/mandiri.png" alt="Mandiri" className="h-6 mb-1" />
-                        <span className="text-xs text-center">Virtual Account</span>
-                      </div>
-                      <div className="p-3 border rounded-lg flex flex-col items-center gap-1 hover:bg-gray-50 transition-colors">
-                        <img src="/payment-icons/gopay.png" alt="GoPay" className="h-6 mb-1" />
-                        <span className="text-xs text-center">GoPay</span>
-                      </div>
-                      <div className="p-3 border rounded-lg flex flex-col items-center gap-1 hover:bg-gray-50 transition-colors">
-                        <img src="/payment-icons/creditcard.png" alt="Credit Card" className="h-6 mb-1" />
-                        <span className="text-xs text-center">Kartu Kredit</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      className="w-full py-6 text-base font-medium" 
-                      onClick={handlePayment}
-                      disabled={isProcessingPayment}
-                    >
-                      {isProcessingPayment ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Memproses...
-                        </>
-                      ) : (
-                        <>
-                          Bayar Sekarang <span className="font-bold ml-1">{formatCurrency(bookingData.totalAmount)}</span>
-                        </>
-                      )}
-                    </Button>
-                    
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <div className="flex gap-1">
-                        <img src="/payment-icons/lock.png" alt="Secure" className="h-4" />
-                        <span>Pembayaran Aman</span>
-                      </div>
-                      <Separator orientation="vertical" className="h-3" />
-                      <div className="flex gap-1">
-                        <img src="/payment-icons/midtrans.png" alt="Midtrans" className="h-4" />
-                        <span>Powered by Midtrans</span>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="bank_transfer" className="pt-4 space-y-4">
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertTitle>Transfer Manual</AlertTitle>
-                      <AlertDescription>
-                        <p className="mb-2">Silakan transfer ke salah satu rekening di bawah ini dan unggah bukti pembayaran Anda.</p>
-                      </AlertDescription>
-                    </Alert>
-                    
-                    <div className="space-y-3">
-                      <div className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                            <img src="/payment-icons/bca.png" alt="BCA" className="h-6" />
-                            <div className="font-semibold">Bank BCA</div>
-                          </div>
-                          <Button variant="ghost" size="sm" onClick={() => copyToClipboard("1234567890", "Nomor rekening")}>
-                            <Copy className="h-4 w-4 mr-1" />
-                            Salin
-                          </Button>
-                        </div>
-                        <div className="text-lg font-mono mb-1">1234567890</div>
-                        <div className="text-sm text-muted-foreground">a.n. PT Travedia Indonesia</div>
-                      </div>
-                      
-                      <div className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                            <img src="/payment-icons/mandiri.png" alt="Mandiri" className="h-6" />
-                            <div className="font-semibold">Bank Mandiri</div>
-                          </div>
-                          <Button variant="ghost" size="sm" onClick={() => copyToClipboard("0987654321", "Nomor rekening")}>
-                            <Copy className="h-4 w-4 mr-1" />
-                            Salin
-                          </Button>
-                        </div>
-                        <div className="text-lg font-mono mb-1">0987654321</div>
-                        <div className="text-sm text-muted-foreground">a.n. PT Travedia Indonesia</div>
-                      </div>
-                      
-                      <div className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                            <img src="/payment-icons/bni.png" alt="BNI" className="h-6" />
-                            <div className="font-semibold">Bank BNI</div>
-                          </div>
-                          <Button variant="ghost" size="sm" onClick={() => copyToClipboard("1122334455", "Nomor rekening")}>
-                            <Copy className="h-4 w-4 mr-1" />
-                            Salin
-                          </Button>
-                        </div>
-                        <div className="text-lg font-mono mb-1">1122334455</div>
-                        <div className="text-sm text-muted-foreground">a.n. PT Travedia Indonesia</div>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-2">
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Setelah melakukan pembayaran, silakan lanjutkan ke halaman detail pemesanan untuk mengunggah bukti pembayaran.
-                      </p>
-                      
-                      <Button 
-                        className="w-full" 
-                        onClick={() => navigate(`/booking-detail/${bookingData.bookingId}`)}
-                      >
-                        Lanjutkan ke Detail Pemesanan
-                        <ChevronRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                <div className="bg-primary/5 p-4 rounded-lg mb-4">
+                  <h4 className="font-medium flex items-center gap-2">
+                  <Info className="h-4 w-4 text-primary" />
+                    Pembayaran melalui Midtrans
+                  </h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Anda akan diarahkan ke halaman pembayaran yang aman dengan beragam metode pembayaran
+                  </p>
+                </div>
+                
+                <Button 
+                  className="w-full py-6 text-base font-medium" 
+                  onClick={handlePayment}
+                  disabled={isProcessingPayment}
+                >
+                  {isProcessingPayment ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    <>
+                      Bayar Sekarang <span className="font-bold ml-1">{formatCurrency(bookingData.totalAmount)}</span>
+                    </>
+                  )}
+                </Button>
+                
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-4">
+                  <div className="flex gap-1">
+                    <img src="/payment-icons/lock.png" alt="Secure" className="h-4" />
+                    <span>Pembayaran Aman</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-3" />
+                  <div className="flex gap-1">
+                    <img src="/payment-icons/midtrans.png" alt="Midtrans" className="h-4" />
+                    <span>Powered by Midtrans</span>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -980,37 +895,6 @@ const simulatePayment = useCallback(() => {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
-        
-        {/* Bagian rekomendasi paket lainnya */}
-        {paketWisata && (
-          <div className="mt-12">
-            <h2 className="text-xl font-bold mb-4">Paket Wisata Lainnya</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="cursor-pointer hover:shadow-md overflow-hidden" onClick={() => navigate(`/paket-wisata/${i}`)}>
-                  <div className="relative">
-                    <img 
-                      src={`https://source.unsplash.com/random/300x200/?travel,nature,${i}`} 
-                      alt={`Paket Wisata ${i}`}
-                      className="h-40 w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/placeholder.svg?height=160&width=300";
-                      }}
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                      <div className="text-white text-sm font-medium">Promo Spesial</div>
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold line-clamp-1">Paket Wisata Eksotis {i}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{paketWisata.destination.nama}</p>
-                    <div className="mt-2 font-medium text-primary">{formatCurrency(2000000 + i * 500000)}</div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

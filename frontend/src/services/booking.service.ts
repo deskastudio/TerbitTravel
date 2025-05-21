@@ -365,16 +365,22 @@ export class BookingService {
     }
   }
   
-  /**
-   * Proses pembayaran dengan Midtrans
-   */
-  // Perbaikan pada booking.service.ts - fungsi processPayment
-// Perbaikan pada booking.service.ts - fungsi processPayment
+
+// Perbaikan pada booking.service.ts - processPayment
 static async processPayment(data: PaymentRequestData): Promise<PaymentResponse> {
   try {
     return await this.callWithRetry(async () => {
       try {
         console.log("Mengirim permintaan pembayaran ke API:", JSON.stringify(data));
+        
+        // Pastikan total amount sesuai dengan jumlah peserta * harga per orang
+        const calculatedAmount = data.jumlahPeserta * data.packageInfo.harga;
+        
+        // Jika ada perbedaan antara total yang dikirim dan kalkulasi, gunakan hasil kalkulasi
+        if (data.totalAmount !== calculatedAmount) {
+          console.warn(`Total amount tidak sesuai kalkulasi. Menggunakan nilai kalkulasi: ${calculatedAmount}`);
+          data.totalAmount = calculatedAmount;
+        }
         
         // Coba endpoint API untuk proses pembayaran
         const response = await axios.post('/api/Payments/create', data, {
@@ -389,7 +395,8 @@ static async processPayment(data: PaymentRequestData): Promise<PaymentResponse> 
         if (response.data.success && (response.data.redirect_url || response.data.snap_token)) {
           this.updateLocalStorage(data.bookingId, { 
             paymentToken: response.data.snap_token,
-            paymentOrderId: response.data.order_id
+            paymentOrderId: response.data.order_id || `ORDER-${data.bookingId}`,
+            paymentStatus: 'pending'
           });
         }
         
@@ -398,32 +405,32 @@ static async processPayment(data: PaymentRequestData): Promise<PaymentResponse> 
         console.error("API call failed for payment processing:", apiError);
         console.error("Error details:", apiError.response?.data || apiError.message);
         
-        // Cek apakah kita perlu retry atau fallback
-        if (apiError.response && apiError.response.status >= 500) {
-          // Server error, bisa retry
-          throw apiError; // Lempar keluar untuk retry oleh callWithRetry
-        }
-        
-        // Fallback untuk pengembangan
+        // Perbaikan fallback mode:
+        // 1. Verifikasi bahwa kita berada di environment development
+        // 2. Berikan feedback yang lebih jelas kepada user
         if (process.env.NODE_ENV === 'development') {
-          // Fallback: Return dummy data untuk keperluan demo
+          console.log("Menggunakan fallback payment response untuk development");
+          
+          // Fallback: Return dummy data untuk keperluan demo dengan token yang lebih valid
           const dummyResponse: PaymentResponse = {
             success: true,
-            snap_token: `SNAP-${Date.now()}`,
-            redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${Date.now()}`
+            snap_token: `SNAP-${Date.now()}-DEMO`,
+            redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${Date.now()}-DEMO`
           };
           
-          // Update data di localStorage
+          // Update data di localStorage untuk menjaga konsistensi
           this.updateLocalStorage(data.bookingId, { 
             paymentToken: dummyResponse.snap_token,
-            paymentOrderId: `ORDER-${data.bookingId}-${Date.now()}`
+            paymentOrderId: `ORDER-${data.bookingId}-${Date.now()}`,
+            paymentStatus: 'pending'
           });
           
           return dummyResponse;
         }
         
-        // Jika bukan development dan bukan server error, teruskan response error
-        throw apiError;
+        // Tambahkan informasi lebih detail tentang error
+        const errorMessage = apiError.response?.data?.message || apiError.message || 'Terjadi kesalahan saat memproses pembayaran';
+        throw new Error(errorMessage);
       }
     }, 3, 1500); // 3 percobaan dengan delay 1.5 detik antar percobaan
   } catch (error) {

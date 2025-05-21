@@ -29,6 +29,7 @@ import VerifyOtp from '@/pages/verify-otp/Index';
 // Detail Pages
 import DestinationDetail from '@/components/partials/mainPartials/destination/detailDestination';
 import ArticleDetail from '@/components/partials/mainPartials/article/detailArticle';
+import EVoucherPage from '@/components/partials/mainPartials/booking/e-voucher';
 
 
 function MainRoutes() {
@@ -103,6 +104,7 @@ function MainRoutes() {
             </ProtectedRoute>
           }
         />
+      <Route path="/e-voucher/:bookingId" element={<EVoucherPage />} />
       <Route path="/booking-pending/:bookingId" element={<BookingPending />} />
       <Route path="/booking-error/:bookingId" element={<BookingError />} />
       </Routes>

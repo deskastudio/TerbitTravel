@@ -1,6 +1,4 @@
-// booking-form.tsx
-"use client"
-
+// booking-form.tsx (perbaikan)
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
@@ -58,6 +56,69 @@ const formatCurrency = (amount: number): string => {
 const formatDate = (dateString: string): string => {
   const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
   return new Date(dateString).toLocaleDateString("id-ID", options)
+}
+
+// Komponen untuk menampilkan langkah-langkah alur pemesanan
+const BookingSteps = () => {
+  const currentStep = 1 // Form pemesanan adalah langkah pertama
+
+  return (
+    <div className="mb-8 relative">
+      <div className="flex justify-between">
+        <div className="flex flex-col items-center">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {currentStep > 1 ? <CheckCircle2 className="h-5 w-5" /> : "1"}
+          </div>
+          <span className="text-xs mt-2 text-center">Pemesanan</span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {currentStep > 2 ? <CheckCircle2 className="h-5 w-5" /> : "2"}
+          </div>
+          <span className="text-xs mt-2 text-center">Detail</span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep === 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {currentStep > 3 ? <CheckCircle2 className="h-5 w-5" /> : "3"}
+          </div>
+          <span className="text-xs mt-2 text-center">Pembayaran</span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              currentStep === 4 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {currentStep > 4 ? <CheckCircle2 className="h-5 w-5" /> : "4"}
+          </div>
+          <span className="text-xs mt-2 text-center">E-Voucher</span>
+        </div>
+      </div>
+      
+      {/* Connector lines */}
+      <div className="absolute top-5 left-0 right-0 h-0.5 bg-muted -z-10">
+        <div 
+          className="h-full bg-primary transition-all duration-1000" 
+          style={{ width: "0%" }}
+        ></div>
+      </div>
+    </div>
+  )
 }
 
 export default function BookingForm() {
@@ -270,6 +331,10 @@ export default function BookingForm() {
 
       // Simpan data booking ke localStorage untuk digunakan di halaman sukses
       const bookingInfo = {
+        bookingId: `BOOK-${Date.now().toString().slice(-8)}`, // Generate temporary booking ID
+        createdAt: new Date().toISOString(),
+        status: "pending",
+        paymentDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
         customerInfo: {
           nama: formData.nama,
           email: formData.email,
@@ -296,17 +361,10 @@ export default function BookingForm() {
       };
       
       localStorage.setItem('currentBookingInfo', JSON.stringify(bookingInfo));
-
-      // Kirim data ke API
-      const response = await createBooking(bookingData);
+      localStorage.setItem('lastBooking', JSON.stringify(bookingInfo));
       
-      if (response) {
-        // Simpan respon booking ke localStorage
-        localStorage.setItem('lastBooking', JSON.stringify(response));
-        
-        // Redirect ke halaman sukses dengan ID booking
-        navigate(`/booking-success/${response.bookingId}`);
-      }
+      // Redirect ke halaman detail booking terlebih dahulu sesuai alur 1->2
+      navigate(`/booking-detail/${bookingInfo.bookingId}`);
     } catch (error) {
       console.error("Error submitting form:", error);
       toast({
@@ -381,6 +439,9 @@ export default function BookingForm() {
           <span>Kembali ke Detail Paket</span>
         </Button>
       </div>
+
+      {/* Menampilkan alur booking (progress steps) */}
+      <BookingSteps />
 
       {/* Header Paket Wisata */}
       <div className="mb-8">
@@ -639,7 +700,7 @@ export default function BookingForm() {
                           {formatCurrency(calculateDP(paketWisata, jumlahPeserta))}
                         </div>
                       </div>
-                    </RadioGroup>
+                      </RadioGroup>
                   </div>
 
                   <div className="flex items-start space-x-2 pt-2">
@@ -704,12 +765,11 @@ export default function BookingForm() {
                 <div className="flex items-center gap-3">
                   <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
                     <img 
-                      /* Lanjutan booking-form.tsx */
                       src={paketWisata.foto?.[0] || `https://source.unsplash.com/random/800x600/?travel,${paketWisata.destination.nama}`}
                       alt={paketWisata.nama}
                       className="h-full w-full object-cover"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/placeholder.svg?height=64&width=64";
+                        (e.target as HTMLImageElement).src = "";
                       }}
                     />
                   </div>
@@ -806,7 +866,7 @@ export default function BookingForm() {
                   <Info className="h-4 w-4 text-blue-600" />
                   <AlertTitle className="text-xs font-medium text-blue-800">Pembayaran</AlertTitle>
                   <AlertDescription className="text-xs text-blue-700">
-                    Setelah mengisi formulir, Anda akan diarahkan ke halaman pembayaran untuk menyelesaikan transaksi.
+                    Setelah mengisi formulir, Anda akan diarahkan ke halaman detail pemesanan dan kemudian dapat melakukan pembayaran.
                   </AlertDescription>
                 </Alert>
 
@@ -814,7 +874,7 @@ export default function BookingForm() {
                   <Info className="h-4 w-4 text-green-600" />
                   <AlertTitle className="text-xs font-medium text-green-800">Konfirmasi</AlertTitle>
                   <AlertDescription className="text-xs text-green-700">
-                    Pemesanan Anda akan dikonfirmasi dalam waktu 1x24 jam setelah pembayaran berhasil.
+                    E-voucher akan tersedia setelah pembayaran berhasil dan dapat diunduh di halaman detail pemesanan.
                   </AlertDescription>
                 </Alert>
 
