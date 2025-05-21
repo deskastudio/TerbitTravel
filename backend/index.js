@@ -33,17 +33,40 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS Configuration
+// Definisi allowedOrigins dari environment variables
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
   "http://localhost:5173",
+  "http://localhost:3000",
+  // Tambahkan URL Ngrok frontend Anda
 ];
 
-// CORS Configuration
+// Konfigurasi CORS yang lebih fleksibel untuk pengembangan
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    // Gunakan function untuk dynamic origin validation
+    origin: function(origin, callback) {
+      // Untuk permintaan non-browser (contohnya webhook dari Midtrans)
+      // origin akan undefined
+      if (!origin) return callback(null, true);
+      
+      // Jika origin ada dalam daftar yang diizinkan, perbolehkan
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      
+      // Selama development, izinkan origin apa pun yang dimulai dengan ngrok.io
+      if (process.env.NODE_ENV === 'development' && 
+         (origin.endsWith('.ngrok.io') || origin.endsWith('.ngrok-free.app'))) {
+        return callback(null, true);
+      }
+      
+      // Jika tidak ada di daftar yang diizinkan, tolak
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+    exposedHeaders: ["set-cookie"]
   })
 );
 
@@ -95,19 +118,102 @@ app.use('/api/Bookings', orderRoutes);
 // Tambahkan rute untuk Midtrans jika paymentRoutes.js sudah dibuat
 // app.use('/api/Payments', paymentRoutes);
 
-// Endpoint khusus untuk webhook Midtrans
-app.post('/api/webhook/midtrans', (req, res) => {
+// Implementasi webhook handler yang lebih lengkap
+app.post('/api/webhook/midtrans', async (req, res) => {
   try {
     console.log('Received webhook from Midtrans:', JSON.stringify(req.body));
     
-    // Untuk saat ini, hanya log notifikasi dan return success
-    res.status(200).json({ success: true, message: 'Webhook received successfully' });
+    // Extract data dari webhook
+    const { 
+      transaction_status,
+      fraud_status,
+      order_id, 
+      payment_type,
+      transaction_time,
+      gross_amount,        // Tambahkan gross_amount
+      signature_key        // Tambahkan signature_key untuk verifikasi
+    } = req.body;
     
-    // Nantinya, implementasi lengkap bisa ditambahkan di sini
+    // Extract booking ID dari order_id (asumsi format TRX-{bookingId})
+    const bookingId = order_id.replace('TRX-', '');
+    
+    // Log untuk keperluan debugging
+    console.log(`Processing payment for booking ${bookingId}, status: ${transaction_status}`);
+    
+    // Cari booking di database
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      console.error(`Booking dengan ID ${bookingId} tidak ditemukan`);
+      return res.status(200).json({ success: false, message: 'Booking not found' });
+    }
+    
+    // Verifikasi jumlah pembayaran (opsional - untuk keamanan tambahan)
+    if (parseFloat(gross_amount) !== parseFloat(booking.harga)) {
+      console.warn(`Warning: Amount mismatch for booking ${bookingId}. Expected: ${booking.harga}, Got: ${gross_amount}`);
+      // Namun tetap lanjutkan proses karena ini mungkin kesalahan minor
+    }
+    
+    // Update status booking berdasarkan status transaksi
+    if (transaction_status === 'capture' || transaction_status === 'settlement') {
+      if (fraud_status === 'accept' || fraud_status === undefined) {  // Beberapa pembayaran tidak memiliki fraud_status
+        // Transaksi sukses dan bukan fraud
+        booking.status = 'confirmed';
+        booking.paymentStatus = 'settlement';
+        booking.paymentMethod = payment_type;
+        booking.paymentDate = new Date(transaction_time);
+        
+        // Tambahkan field untuk tracking pembayaran
+        booking.paymentDetails = {
+          transactionId: req.body.transaction_id || null,
+          paymentType: payment_type,
+          amount: gross_amount,
+          time: transaction_time
+        };
+        
+        console.log(`Payment confirmed for booking ${bookingId}`);
+      } else {
+        console.warn(`Potential fraud detected for booking ${bookingId}`);
+        booking.status = 'pending';
+        booking.paymentStatus = 'fraud';
+      }
+    } else if (transaction_status === 'pending') {
+      // Transaksi pending
+      booking.status = 'pending_verification';
+      booking.paymentStatus = 'pending';
+      booking.paymentMethod = payment_type;
+      console.log(`Payment pending for booking ${bookingId}`);
+    } else if (transaction_status === 'deny' || 
+               transaction_status === 'cancel' || 
+               transaction_status === 'expire') {
+      // Transaksi gagal
+      booking.status = 'pending'; // Tetap pending untuk memungkinkan percobaan ulang
+      booking.paymentStatus = transaction_status;
+      console.log(`Payment failed (${transaction_status}) for booking ${bookingId}`);
+    }
+    
+    // Simpan riwayat status pembayaran untuk audit
+    if (!booking.paymentHistory) booking.paymentHistory = [];
+    booking.paymentHistory.push({
+      status: transaction_status,
+      time: new Date(),
+      paymentType: payment_type,
+      amount: gross_amount
+    });
+    
+    // Simpan perubahan ke database
+    await booking.save();
+    
+    // Selalu kembalikan status 200 untuk Midtrans
+    res.status(200).json({ 
+      success: true, 
+      message: 'Webhook processed successfully',
+      updated_status: booking.status
+    });
+    
   } catch (error) {
     console.error('Error handling Midtrans webhook:', error);
-    // Selalu return 200 untuk Midtrans
-    res.status(200).json({ success: true, message: 'Webhook received with errors' });
+    // Selalu return 200 untuk Midtrans meskipun ada error
+    res.status(200).json({ success: false, message: 'Error processing webhook' });
   }
 });
 

@@ -185,88 +185,114 @@ export default function BookingDetail() {
   const [error, setError] = useState<string | null>(null)
 
   // Ambil data booking dan paket wisata
-  useEffect(() => {
-    const fetchBookingDetail = async () => {
+  // Perbaikan di useEffect pada booking-detail.tsx
+useEffect(() => {
+  const fetchBookingDetail = async () => {
+    try {
+      setIsLoading(true)
+
+      if (!bookingId) {
+        throw new Error("ID booking tidak ditemukan")
+      }
+
+      // Coba ambil data booking dari API
       try {
-        setIsLoading(true)
-
-        if (!bookingId) {
-          throw new Error("ID booking tidak ditemukan")
+        const bookingDetail = await getBookingById(bookingId)
+        if (bookingDetail) {
+          // Update status ke confirmed jika datang dari halaman payment success
+          const isFromPayment = new URLSearchParams(window.location.search).get('payment_success');
+          if (isFromPayment === 'true' && (bookingDetail.status === 'pending' || bookingDetail.status === 'pending_verification')) {
+            bookingDetail.status = 'confirmed';
+            bookingDetail.paymentDate = new Date().toISOString();
+            
+            // Dalam kasus nyata, ini akan diupdate melalui API
+            // Karena ini simulasi, kita akan langsung update localStorage juga
+            const lastBooking = localStorage.getItem('lastBooking');
+            if (lastBooking) {
+              const parsedBooking = JSON.parse(lastBooking);
+              parsedBooking.status = 'confirmed';
+              parsedBooking.paymentStatus = 'settlement';
+              parsedBooking.paymentDate = new Date().toISOString();
+              localStorage.setItem('lastBooking', JSON.stringify(parsedBooking));
+            }
+            
+            // Set data booking dulu, lalu segera redirect ke e-voucher
+            setBookingData(bookingDetail);
+            
+            // Jika proses ini dipanggil karena redirect dari payment success,
+            // arahkan pengguna ke halaman e-voucher
+            if (isFromPayment === 'true') {
+              setTimeout(() => {
+                navigate(`/e-voucher/${bookingId}`);
+              }, 500);
+              return;
+            }
+          }
+          
+          setBookingData(bookingDetail)
+          
+          // Jika ada ID paket, ambil detail paket
+          if (bookingDetail.packageInfo && bookingDetail.packageInfo.id) {
+            const packageData = await TourPackageService.getPackageById(bookingDetail.packageInfo.id)
+            setPaketWisata(packageData)
+          }
+          return
         }
-
-        // Coba ambil data booking dari API
-        try {
-          const bookingDetail = await getBookingById(bookingId)
-          if (bookingDetail) {
-            // Update status ke confirmed jika datang dari halaman payment success
-            const isFromPayment = new URLSearchParams(window.location.search).get('payment_success');
-            if (isFromPayment === 'true' && (bookingDetail.status === 'pending' || bookingDetail.status === 'pending_verification')) {
-              bookingDetail.status = 'confirmed';
-              bookingDetail.paymentDate = new Date().toISOString();
-              // Dalam kasus nyata, ini akan diupdate melalui API
-              // Karena ini simulasi, kita akan langsung update localStorage juga
-              const lastBooking = localStorage.getItem('lastBooking');
-              if (lastBooking) {
-                const parsedBooking = JSON.parse(lastBooking);
+      } catch (err) {
+        console.error("Error fetching booking detail from API:", err)
+        
+        // Fallback ke data dummy/localStorage
+        const lastBooking = localStorage.getItem('lastBooking')
+        if (lastBooking) {
+          try {
+            const parsedBooking = JSON.parse(lastBooking)
+            if (parsedBooking.bookingId === bookingId) {
+              // Update status ke confirmed jika datang dari halaman payment success
+              const isFromPayment = new URLSearchParams(window.location.search).get('payment_success');
+              if (isFromPayment === 'true' && (parsedBooking.status === 'pending' || parsedBooking.status === 'pending_verification')) {
                 parsedBooking.status = 'confirmed';
-                parsedBooking.paymentStatus = 'settlement';
                 parsedBooking.paymentDate = new Date().toISOString();
                 localStorage.setItem('lastBooking', JSON.stringify(parsedBooking));
-              }
-            }
-            
-            setBookingData(bookingDetail)
-            
-            // Jika ada ID paket, ambil detail paket
-            if (bookingDetail.packageInfo && bookingDetail.packageInfo.id) {
-              const packageData = await TourPackageService.getPackageById(bookingDetail.packageInfo.id)
-              setPaketWisata(packageData)
-            }
-            return
-          }
-        } catch (err) {
-          console.error("Error fetching booking detail from API:", err)
-          
-          // Fallback ke data dummy/localStorage
-          const lastBooking = localStorage.getItem('lastBooking')
-          if (lastBooking) {
-            try {
-              const parsedBooking = JSON.parse(lastBooking)
-              if (parsedBooking.bookingId === bookingId) {
-                // Update status ke confirmed jika datang dari halaman payment success
-                const isFromPayment = new URLSearchParams(window.location.search).get('payment_success');
-                if (isFromPayment === 'true' && (parsedBooking.status === 'pending' || parsedBooking.status === 'pending_verification')) {
-                  parsedBooking.status = 'confirmed';
-                  parsedBooking.paymentDate = new Date().toISOString();
-                  localStorage.setItem('lastBooking', JSON.stringify(parsedBooking));
-                }
                 
-                setBookingData(parsedBooking)
+                // Set data booking dulu
+                setBookingData(parsedBooking);
                 
-                // Jika ada ID paket, ambil detail paket
-                if (parsedBooking.packageInfo && parsedBooking.packageInfo.id) {
-                  const packageData = await TourPackageService.getPackageById(parsedBooking.packageInfo.id)
-                  setPaketWisata(packageData)
+                // Jika proses ini dipanggil karena redirect dari payment success,
+                // arahkan pengguna ke halaman e-voucher
+                if (isFromPayment === 'true') {
+                  setTimeout(() => {
+                    navigate(`/e-voucher/${bookingId}`);
+                  }, 500);
+                  return;
                 }
-                return
               }
-            } catch (e) {
-              console.error("Error parsing lastBooking:", e)
+              
+              setBookingData(parsedBooking)
+              
+              // Jika ada ID paket, ambil detail paket
+              if (parsedBooking.packageInfo && parsedBooking.packageInfo.id) {
+                const packageData = await TourPackageService.getPackageById(parsedBooking.packageInfo.id)
+                setPaketWisata(packageData)
+              }
+              return
             }
+          } catch (e) {
+            console.error("Error parsing lastBooking:", e)
           }
-          
-          throw new Error("Data booking tidak ditemukan");
         }
-      } catch (error) {
-        console.error("Error fetching booking detail:", error)
-        setError("Gagal mengambil data pemesanan")
-      } finally {
-        setIsLoading(false)
+        
+        throw new Error("Data booking tidak ditemukan");
       }
+    } catch (error) {
+      console.error("Error fetching booking detail:", error)
+      setError("Gagal mengambil data pemesanan")
+    } finally {
+      setIsLoading(false)
     }
+  }
 
-    fetchBookingDetail()
-  }, [bookingId, getBookingById, user])
+  fetchBookingDetail()
+}, [bookingId, getBookingById, user, navigate])
 
   // Copy to clipboard function
   const copyToClipboard = (text: string) => {

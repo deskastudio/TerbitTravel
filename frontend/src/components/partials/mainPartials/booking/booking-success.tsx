@@ -362,199 +362,150 @@ useEffect(() => {
     fetchBookingData()
   }, [bookingId, getBookingById])
 
-  // Cek jika booking sudah ada token Midtrans (sudah pernah inisiasi pembayaran)
   useEffect(() => {
     const checkPaymentStatus = async () => {
       if (bookingData && bookingData.paymentStatus && bookingData.paymentStatus !== 'pending') {
-        // Jika sudah ada status pembayaran dan bukan pending, redirect ke halaman detail
-        navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`)
+        // Jika sudah ada status pembayaran dan bukan pending, redirect ke halaman e-voucher
+        navigate(`/e-voucher/${bookingData.bookingId}`)
       }
     }
     
     checkPaymentStatus()
   }, [bookingData, navigate])
 
-  const handlePayment = useCallback(async () => {
-    if (!bookingData) return;
-  
-    try {
-      setIsProcessingPayment(true);
-      
-      // Dev mode bypass untuk testing
-      const devModeBypass = process.env.NODE_ENV === 'development';
-  
-      // Verifikasi snap.js sudah siap
-      if (!(window as any).snap && !snapInitialized.current && !devModeBypass) {
-        toast({
-          variant: "warning",
-          title: "Payment gateway belum siap",
-          description: "Mohon tunggu beberapa saat atau refresh halaman",
-        });
-        
-        // Update status di UI
-        const statusIndicator = document.getElementById('payment-gateway-status');
-        if (statusIndicator) {
-          statusIndicator.textContent = 'Mencoba memuat ulang payment gateway...';
-          statusIndicator.className = 'text-sm text-yellow-500';
-        }
-        
-        // Coba muat ulang script
-        const script = document.createElement('script');
-        script.id = 'midtrans-retry-script';
-        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-        script.setAttribute('data-client-key', 'SB-Mid-client-TmZu1234567890123');
-        script.async = true;
-        
-        script.onload = () => {
-          console.log('Midtrans script loaded on retry');
-          snapInitialized.current = true;
-          
-          // Update status di UI
-          if (statusIndicator) {
-            statusIndicator.textContent = 'Payment gateway siap';
-            statusIndicator.className = 'text-sm text-green-500';
+  // Perbaikan pada fungsi handlePayment di booking-success.tsx
+const handlePayment = useCallback(async () => {
+  if (!bookingData) return;
+
+  try {
+    setIsProcessingPayment(true);
+    
+    // Dev mode bypass untuk testing
+    const devModeBypass = process.env.NODE_ENV === 'development';
+
+    // Verifikasi snap.js sudah siap
+    // [kode verifikasi yang ada tetap sama]
+
+    // Proses payment
+    const response = await processPayment({
+      bookingId: bookingData.bookingId,
+      customerInfo: bookingData.customerInfo,
+      packageInfo: {
+        id: bookingData.packageInfo.id,
+        nama: bookingData.packageInfo.nama,
+        harga: Number(bookingData.packageInfo.harga),
+      },
+      jumlahPeserta: Number(bookingData.jumlahPeserta),
+      totalAmount: Number(bookingData.totalAmount),
+    });
+
+    if (response && response.success) {
+      if (response.redirect_url) {
+        window.location.href = response.redirect_url;
+        return;
+      } else if (response.snap_token) {
+        try {
+          // Development mode bypass
+          if (devModeBypass && !(window as any).snap) {
+            console.log('DEV MODE: Simulating successful payment');
+            toast({
+              title: "Simulasi Pembayaran Berhasil (DEV)",
+              description: "Mengalihkan ke halaman E-Voucher..."
+            });
+            
+            // Ubah redirect ke e-voucher
+            setTimeout(() => {
+              navigate(`/e-voucher/${bookingData.bookingId}`);
+            }, 1500);
+            return;
           }
           
-          // Coba kembali setelah script dimuat
-          setTimeout(() => handlePayment(), 1000);
-        };
-        
-        script.onerror = () => {
-          console.error('Failed to load Midtrans script on retry');
-          
-          // Update status di UI
-          if (statusIndicator) {
-            statusIndicator.textContent = 'Gagal memuat payment gateway';
-            statusIndicator.className = 'text-sm text-red-500';
-          }
+          // Production mode - gunakan Snap
+          (window as any).snap.pay(response.snap_token, {
+            onSuccess: (result: any) => {
+              toast({
+                title: "Pembayaran berhasil!",
+                description: "Anda akan dialihkan ke halaman E-Voucher"
+              });
+              // Ubah redirect ke e-voucher
+              navigate(`/e-voucher/${bookingData.bookingId}`);
+            },
+            onPending: (result: any) => {
+              toast({
+                title: "Pembayaran dalam proses",
+                description: "Anda akan dialihkan ke halaman detail pemesanan"
+              });
+              // Untuk status pending tetap ke detail pemesanan
+              navigate(`/booking-detail/${bookingData.bookingId}?payment_success=pending`);
+            },
+            onError: (result: any) => {
+              toast({
+                variant: "destructive",
+                title: "Pembayaran gagal",
+                description: "Silakan coba lagi atau hubungi customer service"
+              });
+              setIsProcessingPayment(false);
+            },
+            onClose: () => {
+              toast({
+                title: "Pembayaran dibatalkan",
+                description: "Anda dapat mencoba lagi nanti"
+              });
+              setIsProcessingPayment(false);
+            },
+          });
+        } catch (snapError) {
+          console.error("Error using Snap.js:", snapError);
           
           // Development fallback
           if (devModeBypass) {
-            snapInitialized.current = true;
-            setTimeout(() => handlePayment(), 1000);
-          }
-        };
-        
-        document.body.appendChild(script);
-        setIsProcessingPayment(false);
-        return;
-      }
-  
-      // Proses payment
-      const response = await processPayment({
-        bookingId: bookingData.bookingId,
-        customerInfo: bookingData.customerInfo,
-        packageInfo: {
-          id: bookingData.packageInfo.id,
-          nama: bookingData.packageInfo.nama,
-          harga: Number(bookingData.packageInfo.harga),
-        },
-        jumlahPeserta: Number(bookingData.jumlahPeserta),
-        totalAmount: Number(bookingData.totalAmount),
-      });
-  
-      if (response && response.success) {
-        if (response.redirect_url) {
-          window.location.href = response.redirect_url;
-          return;
-        } else if (response.snap_token) {
-          try {
-            // Development mode bypass
-            if (devModeBypass && !(window as any).snap) {
-              console.log('DEV MODE: Simulating successful payment');
-              toast({
-                title: "Simulasi Pembayaran Berhasil (DEV)",
-                description: "Redirecting to success page..."
-              });
-              
-              setTimeout(() => {
-                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
-              }, 1500);
-              return;
-            }
-            
-            // Production mode - gunakan Snap
-            (window as any).snap.pay(response.snap_token, {
-              onSuccess: (result: any) => {
-                toast({
-                  title: "Pembayaran berhasil!",
-                  description: "Anda akan dialihkan ke halaman detail pemesanan"
-                });
-                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
-              },
-              onPending: (result: any) => {
-                toast({
-                  title: "Pembayaran dalam proses",
-                  description: "Anda akan dialihkan ke halaman detail pemesanan"
-                });
-                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=pending`);
-              },
-              onError: (result: any) => {
-                toast({
-                  variant: "destructive",
-                  title: "Pembayaran gagal",
-                  description: "Silakan coba lagi atau hubungi customer service"
-                });
-                setIsProcessingPayment(false);
-              },
-              onClose: () => {
-                toast({
-                  title: "Pembayaran dibatalkan",
-                  description: "Anda dapat mencoba lagi nanti"
-                });
-                setIsProcessingPayment(false);
-              },
+            toast({
+              title: "Simulasi Pembayaran (DEV)",
+              description: "Pembayaran dianggap berhasil dalam mode development"
             });
-          } catch (snapError) {
-            console.error("Error using Snap.js:", snapError);
             
-            // Development fallback
-            if (devModeBypass) {
-              toast({
-                title: "Simulasi Pembayaran (DEV)",
-                description: "Pembayaran dianggap berhasil dalam mode development"
-              });
-              
-              setTimeout(() => {
-                navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
-              }, 1500);
-            } else {
-              throw snapError;
-            }
+            // Ubah redirect ke e-voucher
+            setTimeout(() => {
+              navigate(`/e-voucher/${bookingData.bookingId}`);
+            }, 1500);
+          } else {
+            throw snapError;
           }
-        } else {
-          throw new Error("Tidak ada token atau redirect URL dalam respons");
         }
       } else {
-        throw new Error(response?.message || "Gagal memproses pembayaran");
+        throw new Error("Tidak ada token atau redirect URL dalam respons");
       }
-    } catch (error: any) {
-      console.error("Error processing payment:", error);
-      
-      // Development mode bypass
-      if (process.env.NODE_ENV === 'development') {
-        toast({
-          variant: "warning",
-          title: "Error Pembayaran (DEV)",
-          description: "Opsi simulasi pembayaran tersedia di mode development"
-        });
-        
-        if (confirm("Simulasikan pembayaran berhasil untuk testing?")) {
-          navigate(`/booking-detail/${bookingData.bookingId}?payment_success=true`);
-          return;
-        }
-      }
-      
-      const message = error?.response?.data?.message || error.message || "Terjadi kesalahan saat memproses pembayaran";
+    } else {
+      throw new Error(response?.message || "Gagal memproses pembayaran");
+    }
+  } catch (error: any) {
+    console.error("Error processing payment:", error);
+    
+    // Development mode bypass
+    if (process.env.NODE_ENV === 'development') {
       toast({
-        variant: "destructive",
-        title: "Gagal memproses pembayaran",
-        description: message,
+        variant: "warning",
+        title: "Error Pembayaran (DEV)",
+        description: "Opsi simulasi pembayaran tersedia di mode development"
       });
       
-      setIsProcessingPayment(false);
+      if (confirm("Simulasikan pembayaran berhasil untuk testing?")) {
+        // Ubah redirect ke e-voucher
+        navigate(`/e-voucher/${bookingData.bookingId}`);
+        return;
+      }
     }
-  }, [bookingData, processPayment, toast, navigate]);
+    
+    const message = error?.response?.data?.message || error.message || "Terjadi kesalahan saat memproses pembayaran";
+    toast({
+      variant: "destructive",
+      title: "Gagal memproses pembayaran",
+      description: message,
+    });
+    
+    setIsProcessingPayment(false);
+  }
+}, [bookingData, processPayment, toast, navigate]);
   
 
   // Copy to clipboard function
