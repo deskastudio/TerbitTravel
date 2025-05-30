@@ -1,91 +1,394 @@
-// hooks/use-booking.ts
+// hooks/use-booking.ts - Fixed for Midtrans Integration
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { BookingService, BookingFormData, BookingResponse, PaymentRequestData, PaymentResponse } from "@/services/booking.service";
+import {
+  BookingService,
+  BookingFormData,
+  BookingResponse,
+  PaymentRequestData,
+  PaymentResponse,
+  PaymentStatusResponse,
+} from "@/services/booking.service";
 import { ITourPackage } from "@/types/tour-package.types";
 import { useAuth } from "@/hooks/use-auth";
 
-export function useBooking() {
+export interface UseBookingReturn {
+  // States
+  isLoading: boolean;
+  isSubmitting: boolean;
+  isPolling: boolean;
+  error: string | null;
+  bookingData: BookingResponse | null;
+
+  // Booking Operations
+  createBooking: (formData: BookingFormData) => Promise<BookingResponse | null>;
+  getBookingById: (id: string) => Promise<any>;
+  getUserBookings: () => Promise<BookingResponse[]>;
+
+  // Payment Operations
+  processPayment: (
+    params: PaymentRequestData
+  ) => Promise<PaymentResponse | null>;
+  checkPaymentStatus: (id: string) => Promise<PaymentStatusResponse | null>;
+  simulatePaymentSuccess: (id: string) => Promise<boolean>;
+  startPollingPaymentStatus: (id: string) => void;
+  stopPollingPaymentStatus: () => void;
+
+  // Enhanced Payment Operations (New)
+  checkPaymentStatusManual: (id: string) => Promise<boolean>;
+  getBookingByIdWithRefresh: (id: string) => Promise<any>;
+  startEnhancedPollingPaymentStatus: (id: string) => void;
+  checkVoucherAvailability: (id: string) => Promise<boolean>;
+  generateBookingVoucher: (id: string) => Promise<any | null>;
+
+  // Booking Management
+  cancelBooking: (id: string) => Promise<boolean>;
+  uploadPaymentProof?: (id: string, file: File) => Promise<boolean>;
+
+  // Voucher Operations
+  getBookingVoucher: (
+    id: string
+  ) => Promise<{ voucherUrl: string; voucherCode: string } | null>;
+
+  // Utility Functions
+  validateBookingForm: (formData: any) => {
+    isValid: boolean;
+    errors: Record<string, string>;
+  };
+  calculateTotal: (paketWisata: ITourPackage, jumlahPeserta: number) => number;
+  calculateDP: (paketWisata: ITourPackage, jumlahPeserta: number) => number;
+  getBankAccounts: () => Promise<any[]>;
+
+  // Auth Data
+  user: any;
+  isAuthenticated: boolean;
+
+  // State Management
+  setBookingData: (data: BookingResponse | null) => void;
+  clearError: () => void;
+}
+
+export function useBooking(): UseBookingReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bookingData, setBookingData] = useState<BookingResponse | null>(null);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
 
+  // Ref untuk polling interval
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear error
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // ✅ ENHANCED METHOD 1: Manual webhook check
+  const checkPaymentStatusManual = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        console.log(`🔄 Manual payment status check for: ${id}`);
+
+        const response = await BookingService.checkPaymentStatus(id);
+
+        if (response.success && response.booking) {
+          console.log(`✅ Manual check result: ${response.status}`);
+
+          // Update booking data with latest status
+          if (
+            bookingData?.data &&
+            (bookingData.data.bookingId === id || bookingData.data._id === id)
+          ) {
+            const currentStatus = bookingData.data.status;
+            const newStatus = response.booking.status;
+
+            if (currentStatus !== newStatus) {
+              console.log(`🔄 Status updated: ${currentStatus} → ${newStatus}`);
+
+              setBookingData((prev) =>
+                prev?.data
+                  ? {
+                      ...prev,
+                      data: {
+                        ...prev.data,
+                        status: newStatus as any,
+                        paymentStatus: response.booking.paymentStatus as any,
+                        paymentMethod: response.booking.paymentMethod,
+                        paymentDate: response.booking.paymentDate,
+                        lastWebhookUpdate: response.booking.lastWebhookUpdate,
+                      },
+                    }
+                  : prev
+              );
+
+              // Show toast for successful confirmation
+              if (newStatus === "confirmed" && currentStatus !== "confirmed") {
+                toast({
+                  title: "Pembayaran Dikonfirmasi!",
+                  description:
+                    "Pembayaran Anda telah berhasil dikonfirmasi. E-voucher sudah tersedia.",
+                });
+              }
+            }
+          }
+
+          return response.status === "confirmed";
+        }
+
+        return false;
+      } catch (err: any) {
+        console.error(`❌ Error in manual payment check for ${id}:`, err);
+        const errorMessage = err.message || "Gagal memeriksa status pembayaran";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [bookingData, toast]
+  );
+
+  // ✅ ENHANCED METHOD 2: Get booking with status refresh
+  const getBookingByIdWithRefresh = useCallback(
+    async (id: string): Promise<any> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        console.log("📦 Fetching booking with status refresh:", id);
+
+        const response = await BookingService.getBookingWithStatusRefresh(id);
+
+        if (response.success && response.data) {
+          setBookingData(response);
+          return response.data;
+        } else {
+          throw new Error(response.message || "Booking tidak ditemukan");
+        }
+      } catch (err: any) {
+        console.error(`❌ Error fetching booking with refresh ${id}:`, err);
+
+        // Fallback ke localStorage
+        try {
+          const lastBooking = localStorage.getItem("lastBooking");
+          if (lastBooking) {
+            const parsedBooking = JSON.parse(lastBooking);
+            if (parsedBooking.bookingId === id || parsedBooking._id === id) {
+              console.log("📱 Using localStorage fallback for booking:", id);
+              return parsedBooking;
+            }
+          }
+        } catch (fallbackError) {
+          console.error("❌ Fallback error:", fallbackError);
+        }
+
+        const errorMessage =
+          err.message || "Gagal mendapatkan detail pemesanan";
+        setError(errorMessage);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // ✅ ENHANCED METHOD 3: Enhanced polling dengan webhook check
+  const startEnhancedPollingPaymentStatus = useCallback(
+    (id: string) => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+
+      setIsPolling(true);
+      console.log("🔄 Starting enhanced payment status polling for:", id);
+
+      pollingIntervalRef.current = setInterval(async () => {
+        try {
+          const isConfirmed = await checkPaymentStatusManual(id);
+
+          if (isConfirmed) {
+            console.log("🎉 Payment confirmed via enhanced polling!");
+            stopPollingPaymentStatus();
+          }
+        } catch (error) {
+          console.error("❌ Enhanced polling error:", error);
+        }
+      }, 10000); // Poll every 10 seconds
+    },
+    [checkPaymentStatusManual]
+  );
+
+  // ✅ ENHANCED METHOD 4: Check voucher availability
+  const checkVoucherAvailability = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        const isAvailable = await BookingService.isVoucherAvailable(id);
+        return isAvailable;
+      } catch (error) {
+        console.error(
+          `❌ Error checking voucher availability for ${id}:`,
+          error
+        );
+        return false;
+      }
+    },
+    []
+  );
+
+  // ✅ ENHANCED METHOD 5: Generate voucher
+  const generateBookingVoucher = useCallback(
+    async (id: string): Promise<any | null> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        console.log(`🎫 Generating voucher for booking: ${id}`);
+
+        const result = await BookingService.generateVoucher(id);
+
+        if (result.success && result.voucher) {
+          toast({
+            title: "E-Voucher Dibuat!",
+            description:
+              "E-voucher Anda telah berhasil dibuat dan siap digunakan.",
+          });
+
+          return result.voucher;
+        } else {
+          throw new Error(result.message || "Gagal membuat e-voucher");
+        }
+      } catch (err: any) {
+        console.error(`❌ Error generating voucher for ${id}:`, err);
+
+        const errorMessage = err.message || "Gagal membuat e-voucher";
+
+        toast({
+          variant: "destructive",
+          title: "Gagal Membuat E-Voucher",
+          description: errorMessage,
+        });
+
+        setError(errorMessage);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [toast]
+  );
+
   // Membuat booking baru
-  const createBooking = useCallback(async (formData: BookingFormData): Promise<BookingResponse | null> => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
+  const createBooking = useCallback(
+    async (formData: BookingFormData): Promise<BookingResponse | null> => {
+      try {
+        setIsSubmitting(true);
+        setError(null);
 
-      // Log data yang akan dikirim
-      console.log("Submitting booking data:", formData);
+        console.log("🚀 Creating booking with data:", formData);
 
-      // Verifikasi data booking sebelum dikirim
-      const { isValid, errors } = validateBookingForm(formData);
-      if (!isValid) {
-        const errorMessage = "Data pemesanan tidak valid. Silakan periksa kembali.";
+        const { isValid, errors } = validateBookingForm(formData);
+        if (!isValid) {
+          const errorMessage =
+            "Data pemesanan tidak valid. Silakan periksa kembali.";
+          console.error("❌ Validation errors:", errors);
+
+          toast({
+            variant: "destructive",
+            title: "Gagal membuat pemesanan",
+            description: errorMessage,
+          });
+          setError(errorMessage);
+          return null;
+        }
+
+        const response = await BookingService.createBooking(formData);
+
+        if (response.success && response.data) {
+          setBookingData(response);
+
+          console.log(
+            "✅ Booking created successfully:",
+            response.data.bookingId
+          );
+
+          toast({
+            title: "Pemesanan berhasil!",
+            description: `Booking ID: ${response.data.bookingId}. Silakan lakukan pembayaran.`,
+          });
+
+          return response;
+        } else {
+          throw new Error(response.message || "Gagal membuat booking");
+        }
+      } catch (err: any) {
+        console.error("❌ Error creating booking:", err);
+
+        let errorMessage = "Gagal membuat pemesanan";
+        if (err.response?.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+
         toast({
           variant: "destructive",
           title: "Gagal membuat pemesanan",
-          description: errorMessage
+          description: errorMessage,
         });
+
         setError(errorMessage);
         return null;
+      } finally {
+        setIsSubmitting(false);
       }
-
-      // Kirim data ke API
-      const response = await BookingService.createBooking(formData);
-      
-      // Simpan data booking ke state
-      setBookingData(response);
-      
-      toast({
-        title: "Pemesanan berhasil!",
-        description: "Silakan lakukan pembayaran untuk menyelesaikan transaksi"
-      });
-      
-      return response;
-    } catch (err: any) {
-      console.error("Error creating booking:", err);
-      
-      let errorMessage = "Gagal membuat pemesanan";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Gagal membuat pemesanan",
-        description: errorMessage
-      });
-      
-      setError(errorMessage);
-      return null;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [toast]);
+    },
+    [toast]
+  );
 
   // Mendapatkan detail booking
-  const getBookingById = useCallback(async (id: string): Promise<BookingResponse | null> => {
+  const getBookingById = useCallback(async (id: string): Promise<any> => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
+      console.log("📦 Fetching booking:", id);
+
       const response = await BookingService.getBookingById(id);
-      setBookingData(response);
-      return response;
-    } catch (err: any) {
-      console.error(`Error fetching booking with id ${id}:`, err);
-      
-      let errorMessage = "Gagal mendapatkan detail pemesanan";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
+
+      if (response.success && response.data) {
+        setBookingData(response);
+        return response.data;
+      } else {
+        throw new Error(response.message || "Booking tidak ditemukan");
       }
-      
+    } catch (err: any) {
+      console.error(`❌ Error fetching booking ${id}:`, err);
+
+      // Fallback ke localStorage
+      try {
+        const lastBooking = localStorage.getItem("lastBooking");
+        if (lastBooking) {
+          const parsedBooking = JSON.parse(lastBooking);
+          if (parsedBooking.bookingId === id || parsedBooking._id === id) {
+            console.log("📱 Using localStorage fallback for booking:", id);
+            return parsedBooking;
+          }
+        }
+      } catch (fallbackError) {
+        console.error("❌ Fallback error:", fallbackError);
+      }
+
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Gagal mendapatkan detail pemesanan";
       setError(errorMessage);
       return null;
     } finally {
@@ -93,377 +396,515 @@ export function useBooking() {
     }
   }, []);
 
-  // Mendapatkan daftar booking user
+  // Get user bookings
   const getUserBookings = useCallback(async (): Promise<BookingResponse[]> => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      return await BookingService.getUserBookings();
+
+      const userId = isAuthenticated && user ? user.id : undefined;
+      return await BookingService.getUserBookings(userId);
     } catch (err: any) {
-      console.error("Error fetching user bookings:", err);
-      
-      let errorMessage = "Gagal mendapatkan daftar pemesanan";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      }
-      
+      console.error("❌ Error fetching user bookings:", err);
+
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Gagal mendapatkan daftar pemesanan";
       setError(errorMessage);
       return [];
     } finally {
       setIsLoading(false);
     }
+  }, [isAuthenticated, user]);
+
+  // Process payment
+  const processPayment = useCallback(
+    async (params: PaymentRequestData): Promise<PaymentResponse | null> => {
+      try {
+        setIsSubmitting(true);
+        setError(null);
+
+        console.log("💳 Processing payment:", params);
+
+        const response = await BookingService.processPayment(params);
+
+        if (response.success) {
+          console.log("✅ Payment processing initiated:", response.snap_token);
+
+          if (response.snap_token && bookingData) {
+            setBookingData((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    data: prev.data
+                      ? {
+                          ...prev.data,
+                          status: "pending_verification" as any,
+                          paymentToken: response.snap_token,
+                        }
+                      : prev.data,
+                  }
+                : prev
+            );
+          }
+
+          return response;
+        } else {
+          throw new Error(response.message || "Gagal memproses pembayaran");
+        }
+      } catch (err: any) {
+        console.error("❌ Error processing payment:", err);
+
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Gagal memproses pembayaran";
+
+        toast({
+          variant: "destructive",
+          title: "Gagal memproses pembayaran",
+          description: errorMessage,
+        });
+
+        setError(errorMessage);
+        return null;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [toast, bookingData]
+  );
+
+  // Check payment status (original method)
+  const checkPaymentStatus = useCallback(
+    async (id: string): Promise<PaymentStatusResponse | null> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await BookingService.getPaymentStatus(id);
+
+        if (response.success && response.data) {
+          if (
+            bookingData?.data &&
+            (bookingData.data.bookingId === id || bookingData.data._id === id)
+          ) {
+            const currentStatus = bookingData.data.status;
+            const newStatus = response.data.status;
+
+            if (currentStatus !== newStatus) {
+              console.log(`🔄 Status updated: ${currentStatus} → ${newStatus}`);
+
+              setBookingData((prev) =>
+                prev?.data
+                  ? {
+                      ...prev,
+                      data: {
+                        ...prev.data,
+                        status: newStatus as any,
+                        paymentStatus: response.data!.paymentStatus as any,
+                        paymentMethod: response.data!.paymentMethod,
+                        paymentDate: response.data!.paymentDate,
+                      },
+                    }
+                  : prev
+              );
+            }
+          }
+
+          return response;
+        }
+
+        return null;
+      } catch (err: any) {
+        console.error(`❌ Error checking payment status for ${id}:`, err);
+
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Gagal mengecek status pembayaran";
+        setError(errorMessage);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [bookingData]
+  );
+
+  // Start polling payment status
+  const startPollingPaymentStatus = useCallback(
+    (id: string) => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+
+      setIsPolling(true);
+      console.log("🔄 Starting payment status polling for:", id);
+
+      pollingIntervalRef.current = setInterval(async () => {
+        try {
+          const response = await BookingService.getPaymentStatus(id);
+
+          if (response.success && response.data) {
+            const status = response.data.status;
+
+            if (
+              bookingData?.data &&
+              (bookingData.data.bookingId === id || bookingData.data._id === id)
+            ) {
+              const currentStatus = bookingData.data.status;
+
+              if (currentStatus !== status) {
+                console.log(
+                  `✅ Polling detected status change: ${currentStatus} → ${status}`
+                );
+
+                setBookingData((prev) =>
+                  prev?.data
+                    ? {
+                        ...prev,
+                        data: {
+                          ...prev.data,
+                          status: status as any,
+                          paymentStatus: response.data!.paymentStatus as any,
+                          paymentMethod: response.data!.paymentMethod,
+                          paymentDate: response.data!.paymentDate,
+                        },
+                      }
+                    : prev
+                );
+
+                if (status === "confirmed" || status === "cancelled") {
+                  stopPollingPaymentStatus();
+
+                  if (status === "confirmed") {
+                    toast({
+                      title: "Pembayaran Berhasil!",
+                      description:
+                        "Pembayaran Anda telah dikonfirmasi. E-voucher sudah tersedia.",
+                    });
+                  }
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("❌ Polling error:", error);
+        }
+      }, 5000);
+    },
+    [bookingData, toast]
+  );
+
+  // Stop polling payment status
+  const stopPollingPaymentStatus = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    setIsPolling(false);
+    console.log("⏹️ Stopped payment status polling");
   }, []);
 
-  // Mengunggah bukti pembayaran
-  const uploadPaymentProof = useCallback(async (id: string, file: File): Promise<boolean> => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      
-      const response = await BookingService.uploadPaymentProof(id, file);
-      
-      if (response.success) {
-        toast({
-          title: "Bukti pembayaran terkirim",
-          description: "Bukti pembayaran Anda sedang diverifikasi"
-        });
-        
-        // Perbarui bookingData jika ada
-        if (bookingData && bookingData.bookingId === id) {
-          setBookingData(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              status: "pending_verification"
-            };
-          });
-        }
-        
-        return true;
-      } else {
-        throw new Error(response.message || "Gagal mengunggah bukti pembayaran");
+  // Simulate payment success
+  const simulatePaymentSuccess = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (process.env.NODE_ENV !== "development") {
+        console.warn("⚠️ simulatePaymentSuccess only available in development");
+        return false;
       }
-    } catch (err: any) {
-      console.error(`Error uploading payment proof for booking ${id}:`, err);
-      
-      let errorMessage = "Gagal mengunggah bukti pembayaran";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Gagal mengunggah bukti pembayaran",
-        description: errorMessage
-      });
-      
-      setError(errorMessage);
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [toast, bookingData]);
 
-  // Membatalkan booking
-  const cancelBooking = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      
-      const response = await BookingService.cancelBooking(id);
-      
-      if (response.success) {
+      try {
+        setIsSubmitting(true);
+        setError(null);
+
+        const response = await BookingService.simulatePaymentSuccess(id);
+
+        if (response.success) {
+          toast({
+            title: "Pembayaran Disimulasikan",
+            description: "Pembayaran berhasil disimulasikan untuk testing",
+          });
+
+          if (
+            bookingData?.data &&
+            (bookingData.data.bookingId === id || bookingData.data._id === id)
+          ) {
+            setBookingData((prev) =>
+              prev?.data
+                ? {
+                    ...prev,
+                    data: {
+                      ...prev.data,
+                      status: "confirmed" as any,
+                      paymentStatus: "settlement" as any,
+                      paymentDate: new Date().toISOString(),
+                    },
+                  }
+                : prev
+            );
+          }
+
+          return true;
+        } else {
+          throw new Error(
+            response.message || "Gagal mensimulasikan pembayaran"
+          );
+        }
+      } catch (err: any) {
+        console.error(`❌ Error simulating payment for ${id}:`, err);
+
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Gagal mensimulasikan pembayaran";
+
+        toast({
+          variant: "destructive",
+          title: "Gagal mensimulasikan pembayaran",
+          description: errorMessage,
+        });
+
+        setError(errorMessage);
+        return false;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [toast, bookingData]
+  );
+
+  // Cancel booking
+  const cancelBooking = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        setIsSubmitting(true);
+        setError(null);
+
         toast({
           title: "Pemesanan dibatalkan",
-          description: "Pemesanan Anda telah berhasil dibatalkan"
+          description: "Pemesanan Anda telah berhasil dibatalkan",
         });
-        
-        // Perbarui bookingData jika ada
-        if (bookingData && bookingData.bookingId === id) {
-          setBookingData(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              status: "cancelled"
-            };
-          });
+
+        if (
+          bookingData?.data &&
+          (bookingData.data.bookingId === id || bookingData.data._id === id)
+        ) {
+          setBookingData((prev) =>
+            prev?.data
+              ? {
+                  ...prev,
+                  data: {
+                    ...prev.data,
+                    status: "cancelled" as any,
+                  },
+                }
+              : prev
+          );
         }
-        
+
         return true;
-      } else {
-        throw new Error(response.message || "Gagal membatalkan pemesanan");
-      }
-    } catch (err: any) {
-      console.error(`Error cancelling booking ${id}:`, err);
-      
-      let errorMessage = "Gagal membatalkan pemesanan";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Gagal membatalkan pemesanan",
-        description: errorMessage
-      });
-      
-      setError(errorMessage);
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [toast, bookingData]);
+      } catch (err: any) {
+        console.error(`❌ Error cancelling booking ${id}:`, err);
 
-  // Proses pembayaran dengan Midtrans
-  const processPayment = useCallback(async (params: PaymentRequestData): Promise<PaymentResponse | null> => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      
-      const response = await BookingService.processPayment(params);
-      
-      if (!response.success) {
-        throw new Error(response.message || "Gagal memproses pembayaran");
-      }
-      
-      return response;
-    } catch (err: any) {
-      console.error("Error processing payment:", err);
-      
-      let errorMessage = "Gagal memproses pembayaran";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Gagal memproses pembayaran",
-        description: errorMessage
-      });
-      
-      setError(errorMessage);
-      return null;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [toast]);
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Gagal membatalkan pemesanan";
 
-  // Cek status pembayaran
-  const checkPaymentStatus = useCallback(async (id: string): Promise<string | null> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const response = await BookingService.getPaymentStatus(id);
-      
-      if (response.success && response.status) {
-        // Update bookingData jika status berubah
-        if (bookingData && bookingData.bookingId === id) {
-          let newBookingStatus = bookingData.status;
-          
-          // Jika status pembayaran adalah settlement atau capture, update status booking menjadi confirmed
-          if (response.status === 'settlement' || response.status === 'capture') {
-            newBookingStatus = 'confirmed';
-          }
-          
-          setBookingData(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              status: newBookingStatus,
-              paymentStatus: response.status,
-              paymentMethod: response.paymentMethod || prev.paymentMethod,
-              paymentDate: response.paymentDate || prev.paymentDate
-            };
-          });
-        }
-        
-        return response.status;
-      }
-      
-      return null;
-    } catch (err: any) {
-      console.error(`Error checking payment status for booking ${id}:`, err);
-      
-      let errorMessage = "Gagal mengecek status pembayaran";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [bookingData]);
-
-  // Simulasi pembayaran berhasil (untuk testing)
-  const completePayment = useCallback(async (id: string): Promise<boolean> => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-      
-      const response = await BookingService.completePayment(id);
-      
-      if (response.success) {
         toast({
-          title: "Pembayaran berhasil",
-          description: "Pembayaran Anda telah berhasil dikonfirmasi"
+          variant: "destructive",
+          title: "Gagal membatalkan pemesanan",
+          description: errorMessage,
         });
-        
-        // Update bookingData
-        if (bookingData && bookingData.bookingId === id) {
-          setBookingData(prev => {
-            if (!prev) return null;
-            return {
-              ...prev,
-              status: 'confirmed',
-              paymentStatus: 'settlement',
-              paymentDate: new Date().toISOString()
-            };
-          });
-        }
-        
-        return true;
-      } else {
-        throw new Error(response.message || "Gagal menyelesaikan pembayaran");
-      }
-    } catch (err: any) {
-      console.error(`Error completing payment for booking ${id}:`, err);
-      
-      let errorMessage = "Gagal menyelesaikan pembayaran";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Gagal menyelesaikan pembayaran",
-        description: errorMessage
-      });
-      
-      setError(errorMessage);
-      return false;
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [toast, bookingData]);
 
-  // Mendapatkan rekening bank untuk pembayaran
+        setError(errorMessage);
+        return false;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [toast, bookingData]
+  );
+
+  // Get booking voucher
+  const getBookingVoucher = useCallback(
+    async (
+      id: string
+    ): Promise<{ voucherUrl: string; voucherCode: string } | null> => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        return await BookingService.getBookingVoucher(id);
+      } catch (err: any) {
+        console.error(`❌ Error fetching voucher for booking ${id}:`, err);
+
+        const errorMessage =
+          err.response?.data?.message ||
+          err.message ||
+          "Gagal mendapatkan voucher pemesanan";
+        setError(errorMessage);
+        return null;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // Get bank accounts
   const getBankAccounts = useCallback(async () => {
     try {
-      return await BookingService.getBankAccounts();
-    } catch (error) {
-      console.error("Error fetching bank accounts:", error);
-      // Return default data jika API belum siap
       return [
-        { bank: "BCA", accountNumber: "1234567890", accountName: "PT Travedia Indonesia" },
-        { bank: "Mandiri", accountNumber: "0987654321", accountName: "PT Travedia Indonesia" },
-        { bank: "BNI", accountNumber: "1122334455", accountName: "PT Travedia Indonesia" },
+        {
+          bank: "BCA",
+          accountNumber: "1234567890",
+          accountName: "PT Travedia Indonesia",
+        },
+        {
+          bank: "Mandiri",
+          accountNumber: "0987654321",
+          accountName: "PT Travedia Indonesia",
+        },
+        {
+          bank: "BNI",
+          accountNumber: "1122334455",
+          accountName: "PT Travedia Indonesia",
+        },
       ];
+    } catch (error) {
+      console.error("❌ Error fetching bank accounts:", error);
+      return [];
     }
   }, []);
 
-  // Mendapatkan voucher booking
-  const getBookingVoucher = useCallback(async (id: string): Promise<{
-    voucherUrl: string;
-    voucherCode: string;
-  } | null> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      return await BookingService.getBookingVoucher(id);
-    } catch (err: any) {
-      console.error(`Error fetching voucher for booking ${id}:`, err);
-      
-      let errorMessage = "Gagal mendapatkan voucher pemesanan";
-      if (err.response && err.response.data && err.response.data.message) {
-        errorMessage = err.response.data.message;
+  // Validate booking form
+  const validateBookingForm = useCallback(
+    (formData: any): { isValid: boolean; errors: Record<string, string> } => {
+      const errors: Record<string, string> = {};
+
+      if (!formData.customerInfo?.nama?.trim()) {
+        errors.nama = "Nama lengkap harus diisi";
       }
-      
-      setError(errorMessage);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
-  // Validasi form booking
-  const validateBookingForm = useCallback((formData: Omit<BookingFormData, 'paketId' | 'jadwalId' | 'jumlahPeserta' | 'totalHarga'>): { isValid: boolean; errors: Partial<BookingFormData> } => {
-    const errors: Partial<BookingFormData> = {};
+      if (!formData.customerInfo?.email?.trim()) {
+        errors.email = "Email harus diisi";
+      } else if (!/\S+@\S+\.\S+/.test(formData.customerInfo.email)) {
+        errors.email = "Format email tidak valid";
+      }
 
-    if (!formData.nama || formData.nama.trim() === "") {
-      errors.nama = "Nama lengkap harus diisi";
-    }
+      if (!formData.customerInfo?.telepon?.trim()) {
+        errors.telepon = "Nomor telepon harus diisi";
+      } else if (
+        !/^(\+62|62|0)[0-9]{9,12}$/.test(
+          formData.customerInfo.telepon.replace(/\s/g, "")
+        )
+      ) {
+        errors.telepon = "Format nomor telepon tidak valid";
+      }
 
-    if (!formData.email || formData.email.trim() === "") {
-      errors.email = "Email harus diisi";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = "Format email tidak valid";
-    }
+      if (!formData.customerInfo?.alamat?.trim()) {
+        errors.alamat = "Alamat harus diisi";
+      }
 
-    if (!formData.telepon || formData.telepon.trim() === "") {
-      errors.telepon = "Nomor telepon harus diisi";
-    } else if (!/^[0-9]{10,13}$/.test(formData.telepon.replace(/\D/g, ""))) {
-      errors.telepon = "Nomor telepon tidak valid (10-13 digit)";
-    }
+      if (!formData.packageId?.trim()) {
+        errors.packageId = "ID paket harus diisi";
+      }
 
-    if (!formData.alamat || formData.alamat.trim() === "") {
-      errors.alamat = "Alamat harus diisi";
-    }
+      if (!formData.jumlahPeserta || formData.jumlahPeserta < 1) {
+        errors.jumlahPeserta = "Jumlah peserta minimal 1 orang";
+      }
 
-    if (!formData.setuju) {
-      errors.setuju = "Anda harus menyetujui syarat dan ketentuan";
-    }
+      if (
+        !formData.selectedSchedule?.tanggalAwal ||
+        !formData.selectedSchedule?.tanggalAkhir
+      ) {
+        errors.selectedSchedule = "Jadwal keberangkatan harus dipilih";
+      }
 
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors
+      return {
+        isValid: Object.keys(errors).length === 0,
+        errors,
+      };
+    },
+    []
+  );
+
+  // Calculate total
+  const calculateTotal = useCallback(
+    (paketWisata: ITourPackage, jumlahPeserta: number): number => {
+      if (!paketWisata?.harga || !jumlahPeserta) return 0;
+      return paketWisata.harga * jumlahPeserta;
+    },
+    []
+  );
+
+  // Calculate DP
+  const calculateDP = useCallback(
+    (paketWisata: ITourPackage, jumlahPeserta: number): number => {
+      if (!paketWisata?.harga || !jumlahPeserta) return 0;
+      return Math.round(paketWisata.harga * jumlahPeserta * 0.5);
+    },
+    []
+  );
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
   }, []);
 
-  // Menghitung total harga
-  const calculateTotal = useCallback((paketWisata: ITourPackage, jumlahPeserta: number): number => {
-    return paketWisata.harga * jumlahPeserta;
-  }, []);
-
-  // Menghitung DP (50% dari total)
-  const calculateDP = useCallback((paketWisata: ITourPackage, jumlahPeserta: number): number => {
-    return (paketWisata.harga * jumlahPeserta) * 0.5;
-  }, []);
-
   return {
+    // States
     isLoading,
     isSubmitting,
+    isPolling,
     error,
     bookingData,
+
+    // Booking Operations
     createBooking,
     getBookingById,
     getUserBookings,
-    uploadPaymentProof,
-    cancelBooking,
+
+    // Payment Operations
     processPayment,
     checkPaymentStatus,
-    completePayment,
-    getBankAccounts,
+    simulatePaymentSuccess,
+    startPollingPaymentStatus,
+    stopPollingPaymentStatus,
+
+    // Enhanced Payment Operations
+    checkPaymentStatusManual,
+    getBookingByIdWithRefresh,
+    startEnhancedPollingPaymentStatus,
+    checkVoucherAvailability,
+    generateBookingVoucher,
+
+    // Booking Management
+    cancelBooking,
+
+    // Voucher Operations
     getBookingVoucher,
+
+    // Utility Functions
     validateBookingForm,
     calculateTotal,
     calculateDP,
-    // Expose user data dari useAuth
+    getBankAccounts,
+
+    // Auth Data
     user,
-    isAuthenticated
+    isAuthenticated,
+
+    // State Management
+    setBookingData,
+    clearError,
   };
 }

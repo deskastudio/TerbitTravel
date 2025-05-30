@@ -1,61 +1,74 @@
-// booking.service.ts
-import axios from "@/lib/axios";
+// services/booking.service.ts
 
+// Updated interfaces untuk konsistensi dengan backend
 export interface BookingFormData {
-  nama: string;
-  email: string;
-  telepon: string;
-  instansi?: string;
-  alamat: string;
-  catatan?: string;
-  metodePembayaran: "full" | "dp";
-  setuju: boolean;
+  packageId: string; // Ubah dari paketId
   jumlahPeserta: number;
-  jadwalId: string;
-  paketId: string;
-  totalHarga: number;
-}
-
-export interface BookingResponse {
-  bookingId: string;
-  status: "pending" | "pending_verification" | "confirmed" | "completed" | "cancelled";
-  totalAmount: number;
-  createdAt: string;
-  paymentDeadline: string;
   customerInfo: {
     nama: string;
     email: string;
     telepon: string;
-    alamat: string;
+    alamat?: string;
     instansi?: string;
     catatan?: string;
   };
-  packageInfo: {
-    id: string;
-    nama: string;
-    harga: number;
-    destination: string;
-  };
-  schedule: {
+  selectedSchedule?: {
     tanggalAwal: string;
     tanggalAkhir: string;
   };
-  jumlahPeserta: number;
-  metodePembayaran: "full" | "dp";
-  paymentMethod?: string;
-  bankName?: string;
-  bankAccountNumber?: string;
-  paymentDate?: string;
-  paymentStatus?: string;
-  paymentToken?: string;
-  paymentOrderId?: string;
-  pickupLocation?: string;
-  pickupTime?: string;
-  tourGuide?: {
-    name: string;
-    phone: string;
-    photo: string;
+  userId?: string; // Optional untuk guest booking
+  metodePembayaran?: "full" | "dp"; // Optional, handled di frontend saja
+}
+
+export interface BookingResponse {
+  success: boolean;
+  data?: {
+    bookingId: string; // customId dari backend
+    _id: string; // MongoDB ObjectId
+    userId?: string;
+    packageInfo: {
+      id: string;
+      nama: string;
+      harga: number;
+      destination?: string;
+      armada?: {
+        nama: string;
+        kapasitas: number;
+        merek: string;
+      };
+    };
+    selectedSchedule: {
+      tanggalAwal: string;
+      tanggalAkhir: string;
+    };
+    customerInfo: {
+      nama: string;
+      email: string;
+      telepon: string;
+      alamat?: string;
+      instansi?: string;
+      catatan?: string;
+    };
+    jumlahPeserta: number;
+    harga: number;
+    status:
+      | "pending"
+      | "pending_verification"
+      | "confirmed"
+      | "completed"
+      | "cancelled";
+    paymentStatus:
+      | "pending"
+      | "settlement"
+      | "capture"
+      | "deny"
+      | "cancel"
+      | "expire";
+    createdAt: string;
+    createdBy?: string;
   };
+  message?: string;
+  error?: string;
 }
 
 export interface PaymentRequestData {
@@ -64,7 +77,7 @@ export interface PaymentRequestData {
     nama: string;
     email: string;
     telepon: string;
-    alamat: string;
+    alamat?: string;
   };
   packageInfo: {
     id: string;
@@ -77,13 +90,35 @@ export interface PaymentRequestData {
 
 export interface PaymentResponse {
   success: boolean;
-  message?: string;
-  redirect_url?: string;
   snap_token?: string;
+  redirect_url?: string;
+  order_id?: string;
+  message?: string;
+  error?: string;
+}
+
+export interface PaymentStatusResponse {
+  success: boolean;
+  data?: {
+    bookingId: string;
+    customId: string;
+    status: string;
+    paymentStatus: string;
+    paymentMethod?: string;
+    paymentDate?: string;
+    canAccessVoucher: boolean;
+  };
+  message?: string;
 }
 
 export class BookingService {
-  // Tambahkan retry mechanism untuk API calls
+  private static readonly API_BASE_URL =
+    import.meta.env.VITE_BACKEND_URL || // ✅ Use VITE_BACKEND_URL
+    (process.env.NODE_ENV === "development"
+      ? "http://localhost:5000" // ✅ Consistent dengan backend
+      : "https://your-production-api.com");
+
+  // Retry mechanism
   private static async callWithRetry<T>(
     apiCall: () => Promise<T>,
     maxRetries: number = 3,
@@ -94,11 +129,15 @@ export class BookingService {
       try {
         return await apiCall();
       } catch (error) {
-        console.error(`API call failed (attempt ${attempt + 1}/${maxRetries}):`, error);
+        console.error(
+          `API call failed (attempt ${attempt + 1}/${maxRetries}):`,
+          error
+        );
         lastError = error;
-        // Only delay if we're going to retry
         if (attempt < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, delayMs * (attempt + 1)));
+          await new Promise((resolve) =>
+            setTimeout(resolve, delayMs * (attempt + 1))
+          );
         }
       }
     }
@@ -106,475 +145,637 @@ export class BookingService {
   }
 
   /**
-   * Buat booking baru
+   * Buat booking baru (Updated untuk backend baru)
    */
   static async createBooking(data: BookingFormData): Promise<BookingResponse> {
     try {
-      return await this.callWithRetry(async () => {
-        // Generate a random bookingId for testing if needed
-        const bookingId = `BK-${Date.now().toString().slice(-8)}`;
+      console.log("🔄 Creating booking with data:", data);
 
+      return await this.callWithRetry(async () => {
         try {
-          // Coba endpoint API/Bookings
-          const response = await axios.post("/api/Bookings", data);
-          
-          // Jika berhasil, simpan data booking ke localStorage untuk fallback
-          if (response.data) {
-            localStorage.setItem('lastBooking', JSON.stringify(response.data));
-            return response.data;
-          } else {
-            throw new Error("API returned empty response");
+          // Call backend endpoint yang baru
+          const response = await fetch(
+            `${this.API_BASE_URL}/api/payments/create`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(data),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
-        } catch (apiError) {
-          console.error("API call failed:", apiError);
-          
-          // Fallback: Buat dummy booking untuk development
-          const dummyBooking: BookingResponse = {
-            bookingId: bookingId,
-            status: "pending",
-            totalAmount: data.totalHarga,
-            createdAt: new Date().toISOString(),
-            paymentDeadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 jam dari sekarang
-            customerInfo: {
-              nama: data.nama,
-              email: data.email,
-              telepon: data.telepon,
-              alamat: data.alamat,
-              instansi: data.instansi,
-              catatan: data.catatan
-            },
-            packageInfo: {
-              id: data.paketId,
-              nama: "Loading...", // Will be updated later
-              harga: parseInt(data.totalHarga.toString()) / data.jumlahPeserta,
-              destination: "Loading..."
-            },
-            schedule: {
-              tanggalAwal: data.jadwalId.split('-')[0],
-              tanggalAkhir: data.jadwalId.split('-')[1]
-            },
-            jumlahPeserta: data.jumlahPeserta,
-            metodePembayaran: data.metodePembayaran
-          };
-          
-          localStorage.setItem('lastBooking', JSON.stringify(dummyBooking));
-          return dummyBooking;
+
+          const result = await response.json();
+
+          if (result.success && result.data) {
+            // Simpan ke localStorage untuk fallback
+            localStorage.setItem("lastBooking", JSON.stringify(result.data));
+            console.log(
+              "✅ Booking created successfully:",
+              result.data.bookingId
+            );
+            return result;
+          } else {
+            throw new Error(result.message || "Failed to create booking");
+          }
+        } catch (apiError: any) {
+          console.error("❌ API call failed:", apiError);
+
+          // Fallback untuk development
+          if (process.env.NODE_ENV === "development") {
+            const dummyBooking = {
+              success: true,
+              data: {
+                bookingId: `BOOK-${Date.now().toString().slice(-8)}`,
+                _id: `dummy-${Date.now()}`,
+                userId: data.userId,
+                packageInfo: {
+                  id: data.packageId,
+                  nama: "Tour Package",
+                  harga: 1000000,
+                  destination: "Unknown Destination",
+                },
+                selectedSchedule: data.selectedSchedule || {
+                  tanggalAwal: new Date().toISOString(),
+                  tanggalAkhir: new Date(
+                    Date.now() + 3 * 24 * 60 * 60 * 1000
+                  ).toISOString(),
+                },
+                customerInfo: data.customerInfo,
+                jumlahPeserta: data.jumlahPeserta,
+                harga: 1000000 * data.jumlahPeserta,
+                status: "pending" as const,
+                paymentStatus: "pending" as const,
+                createdAt: new Date().toISOString(),
+                createdBy: "user",
+              },
+            };
+
+            localStorage.setItem(
+              "lastBooking",
+              JSON.stringify(dummyBooking.data)
+            );
+            return dummyBooking;
+          }
+
+          throw apiError;
         }
       });
     } catch (error) {
-      console.error("Error creating booking:", error);
+      console.error("💥 Error creating booking:", error);
       throw error;
     }
   }
 
   /**
-   * Mendapatkan detail booking berdasarkan ID
+   * Get booking by ID (Support customId dan MongoDB ObjectId)
    */
   static async getBookingById(id: string): Promise<BookingResponse> {
     try {
       return await this.callWithRetry(async () => {
         try {
-          // Coba endpoint API untuk mendapatkan detail booking
-          const response = await axios.get(`/api/Bookings/${id}`);
-          return response.data;
+          // Coba endpoint baru yang support customId
+          const response = await fetch(`${this.API_BASE_URL}/orders/${id}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success && result.data) {
+            return result;
+          } else {
+            throw new Error(result.message || "Booking not found");
+          }
         } catch (apiError) {
-          console.error(`API call failed for booking ID ${id}:`, apiError);
-          
-          // Fallback: Coba ambil data dari localStorage
-          const lastBooking = localStorage.getItem('lastBooking');
+          console.error(`❌ API call failed for booking ID ${id}:`, apiError);
+
+          // Fallback ke localStorage
+          const lastBooking = localStorage.getItem("lastBooking");
           if (lastBooking) {
             const parsedBooking = JSON.parse(lastBooking);
-            if (parsedBooking.bookingId === id) {
-              return parsedBooking;
+            if (parsedBooking.bookingId === id || parsedBooking._id === id) {
+              return {
+                success: true,
+                data: parsedBooking,
+              };
             }
           }
-          
-          // Jika tidak ada di localStorage, lempar error
+
           throw new Error(`Booking with ID ${id} not found`);
         }
       });
     } catch (error) {
-      console.error(`Error fetching booking with id ${id}:`, error);
+      console.error(`💥 Error fetching booking ${id}:`, error);
       throw error;
     }
   }
 
   /**
-   * Mendapatkan semua booking untuk user yang login
+   * Process payment dengan Midtrans (Updated endpoint)
    */
-  static async getUserBookings(): Promise<BookingResponse[]> {
+  static async processPayment(
+    data: PaymentRequestData
+  ): Promise<PaymentResponse> {
+    try {
+      console.log("💳 Processing payment:", data);
+
+      return await this.callWithRetry(async () => {
+        try {
+          const response = await fetch(
+            `${this.API_BASE_URL}/api/payments/create`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(data),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log("✅ Payment response:", result);
+
+          if (result.success) {
+            // Update localStorage dengan payment token
+            this.updateLocalStorage(data.bookingId, {
+              paymentToken: result.snap_token,
+              paymentOrderId: result.order_id,
+              paymentStatus: "pending",
+            });
+          }
+
+          return result;
+        } catch (apiError: any) {
+          console.error("❌ Payment API call failed:", apiError);
+
+          // Development fallback
+          if (process.env.NODE_ENV === "development") {
+            console.log("🧪 Using development payment fallback");
+            const dummyResponse: PaymentResponse = {
+              success: true,
+              snap_token: `SNAP-${Date.now()}-DEV`,
+              redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${Date.now()}`,
+              order_id: `TRX-${data.bookingId}-${Date.now()}`,
+            };
+
+            this.updateLocalStorage(data.bookingId, {
+              paymentToken: dummyResponse.snap_token,
+              paymentOrderId: dummyResponse.order_id,
+              paymentStatus: "pending",
+            });
+
+            return dummyResponse;
+          }
+
+          throw apiError;
+        }
+      });
+    } catch (error) {
+      console.error("💥 Error processing payment:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get payment status (Updated endpoint)
+   */
+  static async getPaymentStatus(
+    bookingId: string
+  ): Promise<PaymentStatusResponse> {
     try {
       return await this.callWithRetry(async () => {
         try {
-          // Coba endpoint API untuk mendapatkan daftar booking user
-          const response = await axios.get("/api/Bookings/user");
-          return response.data;
+          const response = await fetch(
+            `${this.API_BASE_URL}/api/payments/status/${bookingId}`
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success && result.data) {
+            // Update localStorage dengan status terbaru
+            this.updateLocalStorage(bookingId, {
+              status: result.data.status,
+              paymentStatus: result.data.paymentStatus,
+              paymentMethod: result.data.paymentMethod,
+              paymentDate: result.data.paymentDate,
+            });
+          }
+
+          return result;
         } catch (apiError) {
-          console.error("API call failed for user bookings:", apiError);
-          
-          // Fallback: Coba ambil data dari localStorage
-          const lastBooking = localStorage.getItem('lastBooking');
+          console.error(
+            `❌ Payment status API call failed for ${bookingId}:`,
+            apiError
+          );
+
+          // Fallback ke localStorage
+          const lastBooking = localStorage.getItem("lastBooking");
+          if (lastBooking) {
+            const parsedBooking = JSON.parse(lastBooking);
+            if (parsedBooking.bookingId === bookingId) {
+              return {
+                success: true,
+                data: {
+                  bookingId: parsedBooking._id,
+                  customId: parsedBooking.bookingId,
+                  status: parsedBooking.status || "pending",
+                  paymentStatus: parsedBooking.paymentStatus || "pending",
+                  paymentMethod: parsedBooking.paymentMethod,
+                  paymentDate: parsedBooking.paymentDate,
+                  canAccessVoucher: parsedBooking.status === "confirmed",
+                },
+              };
+            }
+          }
+
+          throw new Error(`Payment status for booking ${bookingId} not found`);
+        }
+      });
+    } catch (error) {
+      console.error(`💥 Error getting payment status for ${bookingId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Simulate payment success (Development only)
+   */
+  static async simulatePaymentSuccess(
+    bookingId: string
+  ): Promise<{ success: boolean; message: string }> {
+    if (process.env.NODE_ENV !== "development") {
+      throw new Error("Simulation only available in development mode");
+    }
+
+    try {
+      const response = await fetch(
+        `${this.API_BASE_URL}/api/payments/simulate-success/${bookingId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Update localStorage
+        this.updateLocalStorage(bookingId, {
+          status: "confirmed",
+          paymentStatus: "settlement",
+          paymentDate: new Date().toISOString(),
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`💥 Error simulating payment for ${bookingId}:`, error);
+
+      // Fallback untuk development
+      this.updateLocalStorage(bookingId, {
+        status: "confirmed",
+        paymentStatus: "settlement",
+        paymentDate: new Date().toISOString(),
+      });
+
+      return {
+        success: true,
+        message: "Payment simulation completed successfully (fallback)",
+      };
+    }
+  }
+
+  /**
+   * Get user bookings
+   */
+  static async getUserBookings(userId?: string): Promise<BookingResponse[]> {
+    try {
+      return await this.callWithRetry(async () => {
+        try {
+          const endpoint = userId
+            ? `${this.API_BASE_URL}/orders/user/${userId}`
+            : `${this.API_BASE_URL}/orders`;
+
+          const response = await fetch(endpoint);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          if (result.success && result.data) {
+            return result.data;
+          } else {
+            return [];
+          }
+        } catch (apiError) {
+          console.error("❌ Get user bookings API call failed:", apiError);
+
+          // Fallback ke localStorage
+          const lastBooking = localStorage.getItem("lastBooking");
           if (lastBooking) {
             return [JSON.parse(lastBooking)];
           }
-          
-          // Jika tidak ada di localStorage, return empty array
+
           return [];
         }
       });
     } catch (error) {
-      console.error("Error fetching user bookings:", error);
-      throw error;
+      console.error("💥 Error fetching user bookings:", error);
+      return [];
     }
   }
 
   /**
-   * Update status booking
-   */
-  static async updateBookingStatus(
-    id: string,
-    status: "pending" | "pending_verification" | "confirmed" | "completed" | "cancelled"
-  ): Promise<BookingResponse> {
-    try {
-      return await this.callWithRetry(async () => {
-        try {
-          // Coba endpoint API untuk update status booking
-          const response = await axios.patch(`/api/Bookings/${id}/status`, { status });
-          
-          // Update data di localStorage jika berhasil
-          this.updateLocalStorage(id, { status });
-          
-          return response.data;
-        } catch (apiError) {
-          console.error(`API call failed for updating booking ${id} status:`, apiError);
-          
-          // Fallback: Update data di localStorage saja
-          const updatedBooking = this.updateLocalStorage(id, { status });
-          if (updatedBooking) {
-            return updatedBooking;
-          }
-          
-          // Jika tidak ada di localStorage, lempar error
-          throw new Error(`Booking with ID ${id} not found`);
-        }
-      });
-    } catch (error) {
-      console.error(`Error updating booking status for id ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Simpan bukti pembayaran
-   */
-  static async uploadPaymentProof(
-    id: string,
-    file: File
-  ): Promise<{ success: boolean; message: string }> {
-    try {
-      return await this.callWithRetry(async () => {
-        const formData = new FormData();
-        formData.append("paymentProof", file);
-
-        try {
-          // Coba endpoint API untuk upload bukti pembayaran
-          const response = await axios.post(`/api/Bookings/${id}/payment-proof`, formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
-          
-          // Update status booking di localStorage
-          this.updateLocalStorage(id, { status: "pending_verification" });
-          
-          return response.data;
-        } catch (apiError) {
-          console.error(`API call failed for uploading payment proof for booking ${id}:`, apiError);
-          
-          // Fallback: Update status di localStorage saja
-          this.updateLocalStorage(id, { status: "pending_verification" });
-          
-          // Return success untuk keperluan demo
-          return { success: true, message: "Bukti pembayaran berhasil diunggah (mode demo)" };
-        }
-      });
-    } catch (error) {
-      console.error(`Error uploading payment proof for booking ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Batalkan booking
-   */
-  static async cancelBooking(id: string): Promise<{ success: boolean; message: string }> {
-    try {
-      return await this.callWithRetry(async () => {
-        try {
-          // Coba endpoint API untuk batalkan booking
-          const response = await axios.post(`/api/Bookings/${id}/cancel`);
-          
-          // Update status booking di localStorage
-          this.updateLocalStorage(id, { status: "cancelled" });
-          
-          return response.data;
-        } catch (apiError) {
-          console.error(`API call failed for cancelling booking ${id}:`, apiError);
-          
-          // Fallback: Update status di localStorage saja
-          this.updateLocalStorage(id, { status: "cancelled" });
-          
-          // Return success untuk keperluan demo
-          return { success: true, message: "Pemesanan berhasil dibatalkan (mode demo)" };
-        }
-      });
-    } catch (error) {
-      console.error(`Error cancelling booking ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get available bank accounts for payment
-   */
-  static async getBankAccounts(): Promise<Array<{
-    bank: string;
-    accountNumber: string;
-    accountName: string;
-  }>> {
-    try {
-      return await this.callWithRetry(async () => {
-        try {
-          // Coba endpoint API untuk mendapatkan rekening bank
-          const response = await axios.get("/api/Payments/bank-accounts");
-          return response.data;
-        } catch (apiError) {
-          console.error("API call failed for bank accounts:", apiError);
-          
-          // Return default data untuk keperluan demo
-          return [
-            { bank: "BCA", accountNumber: "1234567890", accountName: "PT Travedia Indonesia" },
-            { bank: "Mandiri", accountNumber: "0987654321", accountName: "PT Travedia Indonesia" },
-            { bank: "BNI", accountNumber: "1122334455", accountName: "PT Travedia Indonesia" },
-          ];
-        }
-      });
-    } catch (error) {
-      console.error("Error fetching bank accounts:", error);
-      throw error;
-    }
-  }
-  
-
-// Perbaikan pada booking.service.ts - processPayment
-static async processPayment(data: PaymentRequestData): Promise<PaymentResponse> {
-  try {
-    return await this.callWithRetry(async () => {
-      try {
-        console.log("Mengirim permintaan pembayaran ke API:", JSON.stringify(data));
-        
-        // Pastikan total amount sesuai dengan jumlah peserta * harga per orang
-        const calculatedAmount = data.jumlahPeserta * data.packageInfo.harga;
-        
-        // Jika ada perbedaan antara total yang dikirim dan kalkulasi, gunakan hasil kalkulasi
-        if (data.totalAmount !== calculatedAmount) {
-          console.warn(`Total amount tidak sesuai kalkulasi. Menggunakan nilai kalkulasi: ${calculatedAmount}`);
-          data.totalAmount = calculatedAmount;
-        }
-        
-        // Coba endpoint API untuk proses pembayaran
-        const response = await axios.post('/api/Payments/create', data, {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log("Respons dari API payment:", response.data);
-        
-        // Jika berhasil, update data di localStorage
-        if (response.data.success && (response.data.redirect_url || response.data.snap_token)) {
-          this.updateLocalStorage(data.bookingId, { 
-            paymentToken: response.data.snap_token,
-            paymentOrderId: response.data.order_id || `ORDER-${data.bookingId}`,
-            paymentStatus: 'pending'
-          });
-        }
-        
-        return response.data;
-      } catch (apiError: any) {
-        console.error("API call failed for payment processing:", apiError);
-        console.error("Error details:", apiError.response?.data || apiError.message);
-        
-        // Perbaikan fallback mode:
-        // 1. Verifikasi bahwa kita berada di environment development
-        // 2. Berikan feedback yang lebih jelas kepada user
-        if (process.env.NODE_ENV === 'development') {
-          console.log("Menggunakan fallback payment response untuk development");
-          
-          // Fallback: Return dummy data untuk keperluan demo dengan token yang lebih valid
-          const dummyResponse: PaymentResponse = {
-            success: true,
-            snap_token: `SNAP-${Date.now()}-DEMO`,
-            redirect_url: `https://app.sandbox.midtrans.com/snap/v2/vtweb/${Date.now()}-DEMO`
-          };
-          
-          // Update data di localStorage untuk menjaga konsistensi
-          this.updateLocalStorage(data.bookingId, { 
-            paymentToken: dummyResponse.snap_token,
-            paymentOrderId: `ORDER-${data.bookingId}-${Date.now()}`,
-            paymentStatus: 'pending'
-          });
-          
-          return dummyResponse;
-        }
-        
-        // Tambahkan informasi lebih detail tentang error
-        const errorMessage = apiError.response?.data?.message || apiError.message || 'Terjadi kesalahan saat memproses pembayaran';
-        throw new Error(errorMessage);
-      }
-    }, 3, 1500); // 3 percobaan dengan delay 1.5 detik antar percobaan
-  } catch (error) {
-    console.error('Error processing payment:', error);
-    throw error;
-  }
-}
-  
-  /**
-   * Get payment status
-   */
-  static async getPaymentStatus(bookingId: string): Promise<{
-    success: boolean;
-    status?: string;
-    paymentMethod?: string;
-    paymentDate?: string;
-    message?: string;
-  }> {
-    try {
-      return await this.callWithRetry(async () => {
-        try {
-          // Coba endpoint API untuk mendapatkan status pembayaran
-          const response = await axios.get(`/api/Payments/status/${bookingId}`);
-          
-          // Update data di localStorage jika berhasil
-          if (response.data.success && response.data.status) {
-            this.updateLocalStorage(bookingId, { 
-              paymentStatus: response.data.status,
-              paymentMethod: response.data.paymentMethod,
-              paymentDate: response.data.paymentDate
-            });
-            
-            // Jika status settlement atau capture, update status booking jadi confirmed
-            if (response.data.status === 'settlement' || response.data.status === 'capture') {
-              this.updateLocalStorage(bookingId, { status: 'confirmed' });
-            }
-          }
-          
-          return response.data;
-        } catch (apiError) {
-          console.error(`API call failed for payment status of booking ${bookingId}:`, apiError);
-          
-          // Fallback: Return dummy data untuk keperluan demo
-          return {
-            success: true,
-            status: 'pending',
-            message: 'Status pembayaran sedang diproses (mode demo)'
-          };
-        }
-      });
-    } catch (error) {
-      console.error(`Error getting payment status for booking ${bookingId}:`, error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Complete payment (simulate payment success for testing)
-   */
-  static async completePayment(bookingId: string): Promise<{
-    success: boolean;
-    message: string;
-  }> {
-    try {
-      return await this.callWithRetry(async () => {
-        try {
-          // Coba endpoint API untuk simulasi pembayaran berhasil
-          const response = await axios.post(`/api/Payments/complete/${bookingId}`);
-          
-          // Update data di localStorage jika berhasil
-          if (response.data.success) {
-            this.updateLocalStorage(bookingId, { 
-              status: 'confirmed',
-              paymentStatus: 'settlement',
-              paymentDate: new Date().toISOString()
-            });
-          }
-          
-          return response.data;
-        } catch (apiError) {
-          console.error(`API call failed for completing payment of booking ${bookingId}:`, apiError);
-          
-          // Fallback: Update data di localStorage saja
-          this.updateLocalStorage(bookingId, { 
-            status: 'confirmed',
-            paymentStatus: 'settlement',
-            paymentDate: new Date().toISOString()
-          });
-          
-          // Return success untuk keperluan demo
-          return {
-            success: true,
-            message: 'Pembayaran berhasil diselesaikan (mode demo)'
-          };
-        }
-      });
-    } catch (error) {
-      console.error(`Error completing payment for booking ${bookingId}:`, error);
-      throw error;
-    }
-  }
-  
-  /**
-   * Get booking voucher
+   * Get booking voucher/e-voucher
    */
   static async getBookingVoucher(bookingId: string): Promise<{
     voucherUrl: string;
     voucherCode: string;
   }> {
     try {
-      return await this.callWithRetry(async () => {
-        try {
-          // Coba endpoint API untuk mendapatkan voucher
-          const response = await axios.get(`/api/Bookings/${bookingId}/voucher`);
-          return response.data;
-        } catch (apiError) {
-          console.error(`API call failed for voucher of booking ${bookingId}:`, apiError);
-          
-          // Fallback: Return dummy data untuk keperluan demo
-          return {
-            voucherUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${bookingId}`,
-            voucherCode: bookingId
-          };
-        }
-      });
+      // Untuk sementara return dummy data karena backend belum implement voucher endpoint
+      return {
+        voucherUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${bookingId}`,
+        voucherCode: bookingId,
+      };
     } catch (error) {
-      console.error(`Error getting voucher for booking ${bookingId}:`, error);
+      console.error(`💥 Error getting voucher for ${bookingId}:`, error);
       throw error;
     }
   }
-  
+
   /**
-   * Helper function to update localStorage data
+   * Helper function to update localStorage
    */
-  private static updateLocalStorage(bookingId: string, updates: Record<string, any>): BookingResponse | null {
-    const lastBooking = localStorage.getItem('lastBooking');
+  private static updateLocalStorage(
+    bookingId: string,
+    updates: Record<string, any>
+  ): any {
+    const lastBooking = localStorage.getItem("lastBooking");
     if (lastBooking) {
       const parsedBooking = JSON.parse(lastBooking);
-      if (parsedBooking.bookingId === bookingId) {
+      if (
+        parsedBooking.bookingId === bookingId ||
+        parsedBooking._id === bookingId
+      ) {
         const updatedBooking = { ...parsedBooking, ...updates };
-        localStorage.setItem('lastBooking', JSON.stringify(updatedBooking));
+        localStorage.setItem("lastBooking", JSON.stringify(updatedBooking));
         return updatedBooking;
       }
     }
     return null;
+  }
+
+  /**
+   * Check payment status manual (untuk trigger webhook check)
+   */
+  static async checkPaymentStatus(bookingId: string): Promise<{
+    success: boolean;
+    status: string;
+    message: string;
+    booking?: any;
+  }> {
+    try {
+      console.log(`🔄 Manual payment status check for: ${bookingId}`);
+
+      return await this.callWithRetry(async () => {
+        try {
+          const response = await fetch(
+            `${this.API_BASE_URL}/api/booking/check-payment/${bookingId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log(`✅ Payment status check result:`, result);
+
+          // Update localStorage jika status berubah
+          if (result.success && result.booking) {
+            this.updateLocalStorage(bookingId, {
+              status: result.booking.status,
+              paymentStatus: result.booking.paymentStatus,
+              paymentDate: result.booking.paymentDate,
+              lastWebhookUpdate: result.booking.lastWebhookUpdate,
+            });
+          }
+
+          return result;
+        } catch (apiError) {
+          console.error(
+            `❌ Payment status check API failed for ${bookingId}:`,
+            apiError
+          );
+
+          // Fallback check localStorage
+          const lastBooking = localStorage.getItem("lastBooking");
+          if (lastBooking) {
+            const parsedBooking = JSON.parse(lastBooking);
+            if (
+              parsedBooking.bookingId === bookingId ||
+              parsedBooking._id === bookingId
+            ) {
+              return {
+                success: true,
+                status: parsedBooking.status || "pending",
+                message: "Status from localStorage",
+                booking: parsedBooking,
+              };
+            }
+          }
+
+          throw new Error(`Failed to check payment status for ${bookingId}`);
+        }
+      });
+    } catch (error) {
+      console.error(
+        `💥 Error checking payment status for ${bookingId}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Get booking dengan auto status refresh
+   */
+  static async getBookingWithStatusRefresh(
+    id: string
+  ): Promise<BookingResponse> {
+    try {
+      console.log(`📋 Fetching booking with status refresh: ${id}`);
+
+      // First get current booking
+      const bookingResponse = await this.getBookingById(id);
+
+      if (!bookingResponse.success || !bookingResponse.data) {
+        throw new Error("Booking not found");
+      }
+
+      const booking = bookingResponse.data;
+
+      // If payment is pending, try to refresh status
+      if (
+        booking.paymentStatus === "pending" ||
+        booking.status === "pending_verification"
+      ) {
+        console.log("⏳ Payment pending, checking latest status...");
+
+        try {
+          const statusCheck = await this.checkPaymentStatus(
+            booking.bookingId || booking._id || id
+          );
+          if (statusCheck.success && statusCheck.booking) {
+            // Return updated booking
+            return {
+              success: true,
+              data: statusCheck.booking,
+            };
+          }
+        } catch (statusError) {
+          console.warn(
+            "⚠️ Status refresh failed, using current booking data:",
+            statusError
+          );
+        }
+      }
+
+      return bookingResponse;
+    } catch (error) {
+      console.error(
+        `💥 Error fetching booking with status refresh ${id}:`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Generate voucher
+   */
+  static async generateVoucher(bookingId: string): Promise<{
+    success: boolean;
+    voucher?: any;
+    message: string;
+  }> {
+    try {
+      console.log(`🎫 Generating voucher for: ${bookingId}`);
+
+      // First check if payment is confirmed
+      const statusCheck = await this.checkPaymentStatus(bookingId);
+
+      if (statusCheck.status !== "confirmed") {
+        throw new Error(
+          `E-voucher tidak tersedia. Status pembayaran: ${statusCheck.status}`
+        );
+      }
+
+      return await this.callWithRetry(async () => {
+        try {
+          const response = await fetch(
+            `${this.API_BASE_URL}/api/voucher/generate/${bookingId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+          console.log(`✅ Voucher generated:`, result);
+
+          return result;
+        } catch (apiError) {
+          console.error(
+            `❌ Voucher generation API failed for ${bookingId}:`,
+            apiError
+          );
+
+          // Fallback voucher untuk development
+          if (process.env.NODE_ENV === "development") {
+            const fallbackVoucher = {
+              success: true,
+              voucher: {
+                bookingId: bookingId,
+                qrCode: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${bookingId}`,
+                voucherCode: bookingId,
+                validUntil: new Date(
+                  Date.now() + 30 * 24 * 60 * 60 * 1000
+                ).toISOString(),
+                customerName:
+                  statusCheck.booking?.customerInfo?.nama || "Customer",
+                packageName:
+                  statusCheck.booking?.packageInfo?.nama || "Tour Package",
+                participantCount: statusCheck.booking?.jumlahPeserta || 1,
+                totalAmount: statusCheck.booking?.harga || 0,
+              },
+              message: "Voucher generated successfully (development mode)",
+            };
+
+            return fallbackVoucher;
+          }
+
+          throw new Error("Failed to generate voucher");
+        }
+      });
+    } catch (error) {
+      console.error(`💥 Error generating voucher for ${bookingId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if voucher is available
+   */
+  static async isVoucherAvailable(bookingId: string): Promise<boolean> {
+    try {
+      const statusCheck = await this.checkPaymentStatus(bookingId);
+      return (
+        statusCheck.status === "confirmed" &&
+        statusCheck.booking?.paymentStatus === "settlement"
+      );
+    } catch (error) {
+      console.error(
+        `Error checking voucher availability for ${bookingId}:`,
+        error
+      );
+      return false;
+    }
   }
 }
