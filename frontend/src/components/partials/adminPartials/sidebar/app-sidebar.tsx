@@ -14,19 +14,16 @@ import {
   ShoppingCart,
   Users,
   UtensilsCrossed,
+  Image,
 } from "lucide-react";
 
 import NavMain from "../sidebar/nav-main";
 import NavProjects from "../sidebar/nav-project";
-import NavUser from "../sidebar/nav-user";
-import TeamSwitcher from "../sidebar/nav-switcher";
 import NavContent from "../sidebar/nav-content";
 import NavProfile from "../sidebar/nav-profile";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
 
@@ -115,24 +112,19 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
     ],
     NavContent: [
       { name: "Artikel", url: "/admin/article", icon: FileText },
+      { name: "Banner", url: "/admin/banner", icon: Image },
       { name: "Testimoni", url: "/admin/testimoni", icon: MessageSquare },
     ]
   }), []);
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-      </SidebarHeader>
       <SidebarContent>
         <NavProjects projects={data.projects} />
         <NavMain items={data.navMain} />
         <NavProfile items={data.navProfile} />
         <NavContent Contents={data.NavContent} />
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
-      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

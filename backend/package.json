@@ -7,7 +7,10 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "dev-ngrok": "concurrently \"npm run dev\" \"ngrok http 5000\"",
-    "ngrok": "ngrok http 5000 --log=stdout"
+    "ngrok": "ngrok http 5000 --log=stdout",
+    "create-admin": "node scripts/createSuperAdmin.js",
+    "list-admins": "node scripts/createSuperAdmin.js list",
+    "reset-admin": "node scripts/resetAdmin.js"
   },
   "keywords": [],
   "author": "",

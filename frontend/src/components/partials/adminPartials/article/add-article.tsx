@@ -7,12 +7,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -26,23 +24,42 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { ArrowLeft, ImagePlus, Loader2 } from 'lucide-react';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Upload, User, ImageIcon, X, Eye, Plus } from 'lucide-react';
 import { IArticleInput } from '@/types/article.types';
 import { useArticle, useCategory } from '@/hooks/use-article';
 import AddCategory from './AddCategory';
 import { useToast } from '@/hooks/use-toast';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 // Schema validasi untuk artikel
 const articleSchema = z.object({
   judul: z.string().min(1, "Judul artikel wajib diisi"),
   penulis: z.string().min(1, "Nama penulis wajib diisi"),
-  isi: z.string().min(1, "Konten artikel wajib diisi"),
+  isi: z.string().min(100, "Konten artikel minimal 100 karakter"),
   kategori: z.string().min(1, "Kategori wajib dipilih"),
+  gambarUtama: z.instanceof(File).refine(
+    (file) => file.size <= MAX_FILE_SIZE,
+    "Ukuran gambar maksimal 5MB"
+  ).refine(
+    (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
+    "Hanya format JPG, PNG, WEBP yang didukung"
+  ),
 });
 
 type FormData = z.infer<typeof articleSchema>;
@@ -54,11 +71,10 @@ export default function ArticleAddPage() {
   const { toast } = useToast();
   
   // State untuk gambar
-  const [mainImage, setMainImage] = useState<File | null>(null);
-  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
   const [mainImagePreview, setMainImagePreview] = useState<string>('');
+  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
   const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   // Form
   const form = useForm<FormData>({
@@ -71,116 +87,72 @@ export default function ArticleAddPage() {
     },
   });
 
-  // Proses submit form (revisi)
-const onSubmit = async (data: FormData) => {
-  try {
-    setIsSubmitting(true);
+  // Handle main image upload
+  const handleMainImageUpload = (files: FileList | File[]) => {
+    const file = Array.from(files)[0];
     
-    // Validasi panjang isi
-    if (data.isi.length < 100) {
-      toast({
-        variant: "destructive",
-        title: "Error!",
-        description: "Isi artikel minimal 100 karakter",
+    if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      form.setError("gambarUtama", {
+        message: "Ukuran gambar maksimal 5MB",
       });
-      setIsSubmitting(false);
       return;
     }
-    
-    // Validasi gambar utama
-    if (!mainImage) {
-      toast({
-        variant: "destructive",
-        title: "Error!",
-        description: "Gambar utama wajib diunggah",
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      form.setError("gambarUtama", {
+        message: "Format file tidak didukung"
       });
-      setIsSubmitting(false);
       return;
     }
-    
-    // Konversi data form ke format yang diharapkan API
-    const articleData: IArticleInput = {
-      ...data,
-      gambarUtama: mainImage,
-      gambarTambahan: additionalImages.length > 0 ? additionalImages : undefined,
+
+    form.setValue("gambarUtama", file);
+    form.clearErrors("gambarUtama");
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setMainImagePreview(event.target.result as string);
+      }
     };
-    
-    console.log("Submitting article data:", {
-      judul: articleData.judul,
-      penulis: articleData.penulis,
-      isi: articleData.isi.length > 20 ? articleData.isi.substring(0, 20) + "..." : articleData.isi,
-      kategori: articleData.kategori,
-      gambarUtama: articleData.gambarUtama ? "File terlampir" : null,
-      gambarTambahan: additionalImages.length + " files"
-    });
+    reader.readAsDataURL(file);
+  };
 
-    const success = await createArticle(articleData);
-    
-    if (success) {
-      toast({
-        title: "Sukses!",
-        description: "Artikel berhasil ditambahkan.",
-      });
-      navigate('/admin/article');
-    }
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    toast({
-      variant: "destructive",
-      title: "Error!",
-      description: `Gagal menambahkan artikel: ${error.message || "Terjadi kesalahan"}`,
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-  // Handler untuk upload gambar utama
-  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Validasi ukuran file (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          variant: "destructive",
-          title: "Error!",
-          description: "Ukuran gambar maksimal 5MB",
-        });
-        return;
-      }
-      
-      // Validasi tipe file
-      if (!file.type.startsWith("image/")) {
-        toast({
-          variant: "destructive",
-          title: "Error!",
-          description: "File harus berupa gambar",
-        });
-        return;
-      }
-      
-      setMainImage(file);
-      
-      // Membuat preview
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setMainImagePreview(event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleMainImageUpload(e.target.files);
     }
   };
 
-  // Handler untuk upload gambar tambahan
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files) {
+      handleMainImageUpload(e.dataTransfer.files);
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  // Handle additional images
   const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       
-      // Validasi ukuran dan tipe file
       const validFiles = filesArray.filter(file => {
-        if (file.size > 5 * 1024 * 1024) {
+        if (file.size > MAX_FILE_SIZE) {
           toast({
             variant: "destructive",
             title: "Error!",
@@ -189,7 +161,7 @@ const onSubmit = async (data: FormData) => {
           return false;
         }
         
-        if (!file.type.startsWith("image/")) {
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
           toast({
             variant: "destructive",
             title: "Error!",
@@ -205,7 +177,6 @@ const onSubmit = async (data: FormData) => {
       
       setAdditionalImages(prev => [...prev, ...validFiles]);
       
-      // Membuat preview untuk semua gambar
       validFiles.forEach(file => {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -221,272 +192,502 @@ const onSubmit = async (data: FormData) => {
     }
   };
 
-  // Hapus gambar tambahan
+  const removeMainImage = () => {
+    form.setValue("gambarUtama", undefined as any);
+    setMainImagePreview('');
+  };
+
   const removeAdditionalImage = (index: number) => {
     setAdditionalImages(additionalImages.filter((_, i) => i !== index));
     setAdditionalImagePreviews(additionalImagePreviews.filter((_, i) => i !== index));
   };
 
-  // Handle kategori baru ditambahkan
+  // Handle category added
   const handleCategoryAdded = () => {
     refreshCategories();
   };
 
-  // Load kategori pertama kali
+  // Load categories on mount
   useEffect(() => {
     refreshCategories();
-  }, []);
+  }, [refreshCategories]);
 
-  // Komponen untuk preview gambar
-  const ImagePreview = ({ 
-    src, 
-    alt, 
-    onRemove 
-  }: { 
-    src: string; 
-    alt: string;
-    onRemove?: () => void;
-  }) => {
-    return (
-      <div className="relative group">
-        <div className="w-24 h-24 border rounded-md overflow-hidden">
-          <img src={src} alt={alt} className="w-full h-full object-cover" />
-        </div>
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1
-                      opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        )}
-      </div>
-    );
+  // Submit form
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (!data.gambarUtama) {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: "Gambar utama wajib diunggah",
+        });
+        return;
+      }
+      
+      const articleData: IArticleInput = {
+        ...data,
+        gambarUtama: data.gambarUtama,
+        gambarTambahan: additionalImages.length > 0 ? additionalImages : undefined,
+      };
+
+      const success = await createArticle(articleData);
+      
+      if (success) {
+        toast({
+          title: "Sukses!",
+          description: "Artikel berhasil ditambahkan.",
+        });
+        navigate('/admin/article');
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast({
+        variant: "destructive",
+        title: "Error!",
+        description: `Gagal menambahkan artikel: ${error.message || "Terjadi kesalahan"}`,
+      });
+    }
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-6">
-      <div className="flex items-center mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => navigate('/admin/article')}
-          className="mr-2"
+    <div className="container mx-auto py-6 space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <Button 
+              variant="link" 
+              onClick={() => navigate("/admin/article")}
+              className="p-0 text-blue-600 hover:text-blue-800"
+            >
+              Artikel
+            </Button>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="text-gray-600">Tambah Artikel</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Tambah Artikel Baru</h1>
+          <p className="text-gray-600 mt-1">Buat artikel blog dan konten menarik untuk website</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/admin/article")}
+          className="flex items-center gap-2"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="h-4 w-4" />
           Kembali
         </Button>
-        <h1 className="text-2xl font-bold">Tambah Artikel Baru</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Form Artikel</CardTitle>
-          <CardDescription>
-            Isi semua informasi artikel di bawah ini. Pastikan gambar utama disertakan.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Form */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Form */}
+        <div className="lg:col-span-2 space-y-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="judul"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Judul Artikel</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan judul artikel" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Basic Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-2 h-6 bg-blue-600 rounded"></div>
+                    Informasi Artikel
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="judul"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Judul Artikel</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="contoh: Tips Traveling ke Bali yang Menarik" 
+                            {...field} 
+                            className="focus:ring-2 focus:ring-blue-500"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="penulis"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Penulis</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan nama penulis" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="kategori"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex justify-between items-center">
-                      <FormLabel>Kategori</FormLabel>
-                      <AddCategory 
-                        variant="inline" 
-                        onSuccess={handleCategoryAdded} 
-                      />
-                    </div>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value} 
-                      disabled={isLoadingCategories}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih kategori artikel" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {isLoadingCategories ? (
-                          <div className="flex items-center justify-center p-2">
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                            <span>Memuat kategori...</span>
-                          </div>
-                        ) : categories && categories.length > 0 ? (
-                          categories.map((category) => (
-                            <SelectItem key={category._id} value={category._id}>
-                              {category.title}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="text-center p-2 text-muted-foreground">
-                            Tidak ada kategori. Klik "Tambah Kategori Baru".
-                          </div>
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="isi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Isi Artikel</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Tulis isi artikel di sini" 
-                        rows={10} 
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="mainImage">Gambar Utama <span className="text-destructive">*</span></Label>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById('mainImage')?.click()}
-                        className="h-24 w-24 flex flex-col items-center justify-center"
-                      >
-                        <ImagePlus className="h-6 w-6 mb-1" />
-                        <span className="text-xs">Pilih Gambar</span>
-                      </Button>
-                      <input
-                        type="file"
-                        id="mainImage"
-                        onChange={handleMainImageChange}
-                        className="hidden"
-                        accept="image/*"
-                      />
-                      {mainImagePreview && (
-                        <ImagePreview 
-                          src={mainImagePreview} 
-                          alt="Gambar utama" 
-                          onRemove={() => {
-                            setMainImage(null);
-                            setMainImagePreview('');
-                          }}
-                        />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="penulis"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Nama Penulis</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Input 
+                                placeholder="contoh: John Doe" 
+                                {...field} 
+                                className="focus:ring-2 focus:ring-blue-500"
+                              />
+                              <User className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
-                    <p className={`text-sm ${!mainImage ? "text-destructive" : "text-muted-foreground"}`}>
-                      Gambar utama wajib diunggah (Max: 5MB)
-                    </p>
-                  </div>
-                </div>
+                    />
 
-                <div className="space-y-3">
-                  <Label htmlFor="additionalImages">Gambar Tambahan</Label>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-wrap gap-4">
+                    <FormField
+                      control={form.control}
+                      name="kategori"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between items-center">
+                            <FormLabel className="text-sm font-medium">Kategori</FormLabel>
+                            <AddCategory 
+                              variant="inline" 
+                              onSuccess={handleCategoryAdded} 
+                            />
+                          </div>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value} 
+                            disabled={isLoadingCategories}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="focus:ring-2 focus:ring-blue-500">
+                                <SelectValue placeholder="Pilih kategori artikel" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {isLoadingCategories ? (
+                                <div className="flex items-center justify-center p-2">
+                                  <span>Memuat kategori...</span>
+                                </div>
+                              ) : categories && categories.length > 0 ? (
+                                categories.map((category) => (
+                                  <SelectItem key={category._id} value={category._id}>
+                                    {category.title}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <div className="text-center p-2 text-muted-foreground">
+                                  Tidak ada kategori. Klik "Tambah Kategori Baru".
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-2 h-6 bg-green-600 rounded"></div>
+                    Konten Artikel
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FormField
+                    control={form.control}
+                    name="isi"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium">Isi Artikel</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Tulis konten artikel yang menarik dan informatif..." 
+                            rows={12} 
+                            {...field} 
+                            className="focus:ring-2 focus:ring-green-500"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Minimal 100 karakter. Saat ini: {field.value?.length || 0} karakter
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="w-2 h-6 bg-purple-600 rounded"></div>
+                    Gambar Artikel
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Main Image */}
+                  <div>
+                    <FormField
+                      control={form.control}
+                      name="gambarUtama"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">
+                            Gambar Utama <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <div className="space-y-4">
+                              {/* Upload Area */}
+                              <div
+                                className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                                  dragActive 
+                                    ? 'border-purple-500 bg-purple-50' 
+                                    : !field.value 
+                                      ? 'border-gray-300 hover:border-gray-400' 
+                                      : 'border-gray-200 bg-gray-50'
+                                }`}
+                                onDragEnter={handleDrag}
+                                onDragLeave={handleDrag}
+                                onDragOver={handleDrag}
+                                onDrop={handleDrop}
+                              >
+                                {!field.value ? (
+                                  <>
+                                    <div className="flex flex-col items-center gap-2">
+                                      <Upload className="h-8 w-8 text-gray-400" />
+                                      <div>
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          onClick={() => document.getElementById('main-image-upload')?.click()}
+                                          className="mb-2"
+                                        >
+                                          Pilih Gambar Utama
+                                        </Button>
+                                        <p className="text-sm text-gray-600">
+                                          atau seret dan lepas gambar di sini
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <input
+                                      id="main-image-upload"
+                                      type="file"
+                                      accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                                      onChange={handleFileInputChange}
+                                      className="hidden"
+                                    />
+                                  </>
+                                ) : (
+                                  <div className="flex flex-col items-center gap-2 text-gray-500">
+                                    <ImageIcon className="h-8 w-8" />
+                                    <p>Gambar utama telah dipilih</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Preview Main Image */}
+                              {mainImagePreview && (
+                                <div className="relative group inline-block">
+                                  <div className="w-32 h-32 rounded-lg overflow-hidden bg-gray-100">
+                                    <img
+                                      src={mainImagePreview}
+                                      alt="Preview gambar utama"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute -right-2 -top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={removeMainImage}
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                  <Badge 
+                                    variant="secondary" 
+                                    className="absolute bottom-1 left-1 text-xs"
+                                  >
+                                    Utama
+                                  </Badge>
+                                </div>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Gambar utama wajib (maks. 5MB, format: JPG, PNG, WEBP)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Additional Images */}
+                  <div>
+                    <FormLabel className="text-sm font-medium">Gambar Tambahan (Opsional)</FormLabel>
+                    <div className="flex flex-wrap gap-4 mt-4">
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => document.getElementById('additionalImages')?.click()}
-                        className="h-24 w-24 flex flex-col items-center justify-center"
+                        onClick={() => document.getElementById('additional-images')?.click()}
+                        className="h-24 w-24 flex flex-col items-center justify-center border-dashed"
                       >
-                        <ImagePlus className="h-6 w-6 mb-1" />
-                        <span className="text-xs">Tambahkan</span>
+                        <Plus className="h-6 w-6 mb-1" />
+                        <span className="text-xs">Tambah</span>
                       </Button>
                       <input
                         type="file"
-                        id="additionalImages"
+                        id="additional-images"
                         onChange={handleAdditionalImagesChange}
                         className="hidden"
                         multiple
-                        accept="image/*"
+                        accept={ACCEPTED_IMAGE_TYPES.join(',')}
                       />
                       {additionalImagePreviews.map((preview, index) => (
-                        <ImagePreview 
-                          key={index} 
-                          src={preview} 
-                          alt={`Gambar tambahan ${index + 1}`} 
-                          onRemove={() => removeAdditionalImage(index)}
-                        />
+                        <div key={index} className="relative group">
+                          <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
+                            <img
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute -right-2 -top-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeAdditionalImage(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                          <Badge 
+                            variant="outline" 
+                            className="absolute bottom-1 left-1 text-xs"
+                          >
+                            {index + 1}
+                          </Badge>
+                        </div>
                       ))}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Bisa menambahkan beberapa gambar (opsional, Max: 5MB per gambar)
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Gambar pendukung untuk artikel (maks. 5MB per gambar)
                     </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Submit Button */}
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex justify-end space-x-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigate("/admin/article")}
+                      disabled={isCreating}
+                    >
+                      Batal
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isCreating || !form.watch("gambarUtama")}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Simpan Artikel
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </form>
+          </Form>
+        </div>
+
+        {/* Sidebar Info */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Tips Artikel</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-sm text-gray-600">Gunakan judul yang menarik dan SEO-friendly</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-sm text-gray-600">Tulis konten yang informatif dan engaging</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-sm text-gray-600">Pilih gambar berkualitas tinggi yang relevan</p>
+              </div>
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 bg-orange-600 rounded-full mt-2 flex-shrink-0"></div>
+                <p className="text-sm text-gray-600">Kategorikan artikel dengan tepat</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</label>
+                  <p className="text-sm font-medium">
+                    {form.watch("judul") || "Belum diisi"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Penulis</label>
+                  <p className="text-sm">
+                    {form.watch("penulis") || "Belum diisi"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</label>
+                  <p className="text-sm">
+                    {form.watch("kategori") 
+                      ? categories?.find(c => c._id === form.watch("kategori"))?.title 
+                      : "Belum dipilih"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Konten</label>
+                  <p className="text-sm">
+                    {form.watch("isi")?.length || 0} karakter
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Gambar</label>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={form.watch("gambarUtama") ? "default" : "secondary"}>
+                      Utama: {form.watch("gambarUtama") ? "✓" : "✗"}
+                    </Badge>
+                    <Badge variant="outline">
+                      +{additionalImages.length}
+                    </Badge>
                   </div>
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => navigate('/admin/article')}
-                  disabled={isCreating || isSubmitting}
-                >
-                  Batal
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isCreating || isSubmitting || !mainImage}
-                >
-                  {(isCreating || isSubmitting) ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Menyimpan...
-                    </>
-                  ) : 'Simpan Artikel'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

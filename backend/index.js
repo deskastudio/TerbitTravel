@@ -2,8 +2,9 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRoutes from "./src/routes/userRoutes.js";
-import adminRoutes from "./src/routes/adminRoutes.js";
+// import adminRoutes from "./src/routes/adminRoutes.js";
 import setupSwagger from "./src/swagger.js";
+import adminAuthRoutes from "./src/routes/adminAuthRoutes.js";
 import contactRoutes from "./src/routes/contactRoutes.js";
 import destinationRoutes from "./src/routes/destinationRoutes.js";
 import hotelRoutes from "./src/routes/hotelRoutes.js";
@@ -34,80 +35,150 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS Configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+// ===== CORS CONFIGURATION - PERBAIKAN LENGKAP =====
+const allowedOrigins = [
   "http://localhost:5173",
-  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5173", 
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  // ✅ PERBAIKAN: URL ngrok yang benar dari error log
+  "https://7957-180-254-75-63.ngrok-free.app"
 ];
+
+// ✅ TAMBAHAN: Dinamis ngrok dari environment
+if (process.env.NGROK_URL) {
+  allowedOrigins.push(process.env.NGROK_URL);
+}
+
+// ✅ TAMBAHAN: Parse dari ALLOWED_ORIGINS env
+if (process.env.ALLOWED_ORIGINS) {
+  const envOrigins = process.env.ALLOWED_ORIGINS.split(",");
+  allowedOrigins.push(...envOrigins);
+}
+
+console.log('🌐 CORS Debug - Allowed Origins:', allowedOrigins);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log(`🔍 CORS Check - Request Origin: "${origin}"`);
+      
+      // ✅ Allow no origin (Postman, mobile apps, server-to-server)
+      if (!origin) {
+        console.log("✅ CORS allowed: No origin (server-to-server request)");
         return callback(null, true);
       }
 
+      // ✅ Check exact match in allowed origins
+      if (allowedOrigins.includes(origin)) {
+        console.log(`✅ CORS allowed: Exact match - ${origin}`);
+        return callback(null, true);
+      }
+
+      // ✅ PERBAIKAN: Allow ALL ngrok domains in development
       if (
-        process.env.NODE_ENV === "development" &&
-        (origin.endsWith(".ngrok.io") ||
-          origin.endsWith(".ngrok-free.app") ||
-          origin.endsWith(".ngrok.app"))
+        process.env.NODE_ENV !== "production" &&
+        (origin.includes(".ngrok.io") ||
+          origin.includes(".ngrok-free.app") ||
+          origin.includes(".ngrok.app") ||
+          origin.includes("ngrok"))
       ) {
+        console.log(`✅ CORS allowed: Ngrok domain - ${origin}`);
         return callback(null, true);
       }
 
+      // ✅ Allow localhost variations in development  
       if (
         process.env.NODE_ENV !== "production" &&
         (origin.startsWith("http://localhost:") ||
-          origin.startsWith("http://127.0.0.1:"))
+          origin.startsWith("http://127.0.0.1:") ||
+          origin.startsWith("https://localhost:") ||
+          origin.startsWith("https://127.0.0.1:"))
       ) {
-        console.log(`✅ CORS allowed for development origin: ${origin}`);
+        console.log(`✅ CORS allowed: Localhost - ${origin}`);
         return callback(null, true);
       }
 
-      console.log(`❌ CORS rejected origin: ${origin}`);
+      // ❌ Reject other origins
+      console.log(`❌ CORS rejected: ${origin}`);
       console.log(`📝 Allowed origins: ${allowedOrigins.join(", ")}`);
-      callback(new Error("Not allowed by CORS"));
+      const corsError = new Error(`CORS Error: Origin ${origin} not allowed`);
+      corsError.status = 403;
+      callback(corsError);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
       "Content-Type",
-      "Authorization",
+      "Authorization", 
       "X-Requested-With",
       "Accept",
+      "Origin",
+      "Access-Control-Request-Method",
+      "Access-Control-Request-Headers",
+      "ngrok-skip-browser-warning" // ✅ TAMBAHAN untuk ngrok
     ],
     exposedHeaders: ["set-cookie"],
+    preflightContinue: false,
+    optionsSuccessStatus: 200
   })
 );
 
-// Session configuration
-app.use(
-  session({
-    secret: process.env.JWT_SECRET || "jwbcjwbcjw",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-  })
-);
+// ✅ PERBAIKAN: Middleware tambahan untuk ngrok headers
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  // ✅ Set CORS headers secara manual untuk ngrok
+  if (origin && origin.includes('ngrok')) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS,PATCH");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, ngrok-skip-browser-warning");
+    console.log(`🔧 Manual CORS headers set for ngrok: ${origin}`);
+  }
+  
+  // ✅ Handle preflight OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    console.log(`✅ Handling OPTIONS preflight for ${req.path}`);
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Debug middleware untuk tracking requests
+// ✅ DEBUG: Request logging middleware
 app.use((req, res, next) => {
-  if (req.path.includes("voucher") || req.path.includes("BOOK-")) {
-    console.log(`🔄 ${req.method} ${req.path} - ${new Date().toISOString()}`);
+  if (req.path.includes("admin") || req.path.includes("login")) {
+    console.log(`\n📨 ${req.method} ${req.path}`);
+    console.log(`🌐 Origin: ${req.headers.origin}`);
+    console.log(`📋 Headers:`, JSON.stringify({
+      'content-type': req.headers['content-type'],
+      'authorization': req.headers['authorization'] ? 'Bearer ***' : 'None',
+      'origin': req.headers['origin']
+    }, null, 2));
+    if (req.body && Object.keys(req.body).length > 0) {
+      console.log(`📤 Body:`, JSON.stringify(req.body, null, 2));
+    }
   }
+  next();
+});
+
+// ✅ TAMBAHAN: Middleware khusus untuk admin routes
+app.use('/admin', (req, res, next) => {
+  console.log(`\n🔑 Admin route accessed: ${req.method} ${req.path}`);
+  console.log(`🌐 Origin: ${req.headers.origin}`);
+  console.log(`📋 Content-Type: ${req.headers['content-type']}`);
+  
+  // Set CORS headers khusus untuk admin routes
+  if (req.headers.origin) {
+    res.header("Access-Control-Allow-Origin", req.headers.origin);
+    res.header("Access-Control-Allow-Credentials", "true");
+  }
+  
   next();
 });
 
@@ -119,16 +190,21 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || "development",
     ngrok_url: process.env.NGROK_URL || "Not set",
-    midtrans_configured: !!(
-      process.env.MIDTRANS_SERVER_KEY && process.env.MIDTRANS_CLIENT_KEY
-    ),
-    allowed_origins: allowedOrigins,
+    cors_origins: allowedOrigins,
+    endpoints: {
+      admin_login: "/admin/login",
+      admin_auth: "/admin",
+      health: "/api/health"
+    }
   });
 });
 
+// ✅ PERBAIKAN ROUTES - Setup routes
+console.log('🔧 Setting up routes...');
+
 // Routes
 app.use("/user", userRoutes);
-app.use("/admin", adminRoutes);
+app.use("/admin", adminAuthRoutes); // ✅ PERBAIKAN: Route admin auth
 app.use("/contact", contactRoutes);
 app.use("/destination", destinationRoutes);
 app.use("/hotel", hotelRoutes);

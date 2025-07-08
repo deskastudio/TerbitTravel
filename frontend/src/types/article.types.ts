@@ -34,6 +34,7 @@ export interface IArticle {
   judul: string;
   slug?: string;
   ringkasan?: string;
+  deskripsi?: string;
   isi: string;
   gambar?: string;
   gambarUtama?: string;
@@ -56,6 +57,36 @@ export interface IArticle {
   isTrending?: boolean;
   featured?: boolean;
   isFeatured?: boolean;
+}
+
+// Input interface for creating/updating articles
+export interface IArticleInput {
+  judul: string;
+  penulis: string;
+  isi: string;
+  kategori: string;
+  slug?: string;
+  deskripsi?: string;
+  ringkasan?: string;
+  gambarUtama?: File;
+  gambarTambahan?: File[];
+  tags?: string[];
+  trending?: boolean;
+  featured?: boolean;
+  // Additional fields for edit
+  existingMainImage?: string;
+  existingAdditionalImages?: string[];
+}
+
+// Response interfaces
+export interface ArticleResponse {
+  message: string;
+  data: IArticle;
+}
+
+export interface ArticlesResponse {
+  data: IArticle[];
+  meta: PaginationMeta;
 }
 
 export interface PaginationMeta {
@@ -122,6 +153,11 @@ export interface TableOfContentItem {
 
 export interface NewsletterSubscription {
   email: string;
+}
+
+// Category input interface
+export interface ICategoryInput {
+  title: string;
 }
 
 // Implement hooks with proper typing in your hooks file

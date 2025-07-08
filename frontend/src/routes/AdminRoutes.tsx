@@ -1,5 +1,9 @@
-import { Routes, Route } from 'react-router-dom';
+// src/routes/AdminRoutes.tsx
+import { Routes, Route, useLocation } from 'react-router-dom';
+import AdminProtectedRoute from '@/components/partials/adminPartials/adminProtect/Index';
+import AdminLogin from '@/pages/adminPages/auth/Index';
 
+// Import semua admin pages
 import AdminDashboard from '@/pages/adminPages/dashboard/Index';
 import AdminAllPackageTour from '@/pages/adminPages/tourPackage/Index';
 import AddPackageTour from '@/pages/adminPages/tourPackage/add-tour-package';
@@ -17,12 +21,13 @@ import AdminAllConsumption from '@/pages/adminPages/consumption/Index';
 import AdminAllHotel from '@/pages/adminPages/hotel/Index';
 import AdminAllArticle from '@/pages/adminPages/article/Index';
 import AdminAllUser from '@/pages/adminPages/data-user/Index';
+import DetailUser from '@/pages/adminPages/data-user/detail-user';
 import AdminAbout from '@/pages/adminPages/terbit-profile/about-terbit';
 import AdminGallery from '@/pages/adminPages/terbit-profile/gallery-terbit';
 import AdminLicences from '@/pages/adminPages/terbit-profile/licences-terbit';
 import AdminPartner from '@/pages/adminPages/terbit-profile/partner-terbit';
 import AdminTeam from '@/pages/adminPages/terbit-profile/team-terbit';
-import AdminBanner from '@/pages/adminPages/terbit-profile/banner-terbit';
+import AdminBanner from '@/pages/adminPages/banner/Index';
 import DetailHotel from '@/pages/adminPages/hotel/detail-hotel';
 import EditHotel from '@/pages/adminPages/hotel/edit-hotel';
 import DetailConsumption from '@/pages/adminPages/consumption/detail-consumption';
@@ -32,62 +37,99 @@ import EditArmada from '@/pages/adminPages/armada/edit-armada';
 import EditDestination from '@/pages/adminPages/destination/edit-destination';
 import DetailPackageTour from '@/pages/adminPages/tourPackage/detail-tour-package';
 import EditPackageTour from '@/pages/adminPages/tourPackage/edit-tour-package';
+import BannerAdd from '@/pages/adminPages/banner/Add';
+import EditBanner from '@/pages/adminPages/banner/Edit';
+
+// Import Article Detail and Edit pages
+import DetailArticle from '@/pages/adminPages/article/detail-article';
+import EditArticle from '@/pages/adminPages/article/edit-article';
 
 function AdminRoutes() {
+  const location = useLocation();
+  
+  console.log('🔄 AdminRoutes rendered for path:', location.pathname);
+  
+  // Hanya render admin routes jika path dimulai dengan /admin
+  if (!location.pathname.startsWith('/admin')) {
+    console.log('❌ Not admin path, skipping AdminRoutes');
+    return null;
+  }
+
   return (
     <Routes>
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-
-      <Route path="/admin/paket-wisata" element={<AdminAllPackageTour />} />
-      <Route path="/admin/paket-wisata/add" element={<AddPackageTour />} />
-      <Route path="/admin/paket-wisata/:id" element={<DetailPackageTour />} />
-      <Route path="/admin/paket-wisata/:id/edit" element={<EditPackageTour />} />
-
-      <Route path="/admin/hotel" element={<AdminAllHotel/>} />
-      <Route path="/admin/hotel/add" element={<AddHotel />} />
-      <Route path="/admin/hotel/:id" element={<DetailHotel />} />
-      <Route path="/admin/hotel/:id/edit" element={<EditHotel />} />
-
-      <Route path="/admin/consumption" element={<AdminAllConsumption/>} />
-      <Route path="/admin/consumption/add" element={<AddConsumption />} />
-      <Route path="/admin/consumption/:id" element={<DetailConsumption />} />
-      <Route path="/admin/consumption/:id/edit" element={<EditConsumption />} />
-
-      <Route path="/admin/armada" element={<AdminAllArmada/>} />
-      <Route path="/admin/armada/add" element={<AddArmada />} />
-      <Route path="/admin/armada/:id" element={<DetailArmada />} />
-      <Route path="/admin/armada/:id/edit" element={<EditArmada />} />
-
-      <Route path="/admin/destination" element={<AdminAllDestination/>} />
-      <Route path="/admin/destination/add" element={<AddDestination />} />
-      <Route path="/admin/destination/:id" element={<DetailDestination />} />
-      <Route path="/admin/destination/:id/edit" element={<EditDestination />} /> 
-
-      <Route path="/admin/article" element={<AdminAllArticle/>} />
-      <Route path="/admin/article/add" element={<AddArticle />} />
-      {/* <Route path="/admin/artikel/:id" element={<DetailArticle />} />
-      <Route path="/admin/artikel/:id/edit" element={<EditArticle />} /> */}
-
-      <Route path="/admin/user" element={<AdminAllUser />} />
-      {/* <Route path="/admin/user/:id" element={<DetailUser />} />
-      <Route path="/admin/user/:id/edit" element={<EditUser />} />  */}
-
-      {/* <Route path="/admin/testimoni" element={<AdminAllTestimoni />} />
-      <Route path="/admin/testimoni/add" element={<AddTestimoni />} />
-      <Route path="/admin/testimoni/:id" element={<DetailTestimoni />} />
-      <Route path="/admin/testimoni/:id/edit" element={<EditTestimoni />} /> */}
+      {/* ✅ Admin Login Route - Public (tanpa layout) */}
+      <Route path="/admin/login" element={<AdminLogin />} />
       
-      <Route path="/admin-profile" element={<ProfilePage />} />
-      <Route path="/admin-password" element={<PasswordPage />} />
+      {/* ✅ Protected Admin Routes - Menggunakan AdminLayout yang sudah ada */}
+      <Route 
+        path="/admin/*" 
+        element={
+          <AdminProtectedRoute>
+              <Routes>
+                {/* ✅ Dashboard */}
+                <Route path="dashboard" element={<AdminDashboard />} />
 
-      <Route path="/admin/tentang-terbit" element={<AdminAbout/>} />Add commentMore actions
-      <Route path="/admin/galeri-terbit" element={<AdminGallery/>} />
-      <Route path="/admin/lisensi-terbit" element={<AdminLicences/>} />
-      <Route path="/admin/partner-terbit" element={<AdminPartner/>} />
-      <Route path="/admin/tim-terbit" element={<AdminTeam />} />
-      <Route path="/admin/banner-terbit" element={<AdminBanner/>} />
+                {/* ✅ Tour Package Management */}
+                <Route path="paket-wisata" element={<AdminAllPackageTour />} />
+                <Route path="paket-wisata/add" element={<AddPackageTour />} />
+                <Route path="paket-wisata/:id" element={<DetailPackageTour />} />
+                <Route path="paket-wisata/:id/edit" element={<EditPackageTour />} />
 
-      </Routes>
+                {/* ✅ Hotel Management */}
+                <Route path="hotel" element={<AdminAllHotel />} />
+                <Route path="hotel/add" element={<AddHotel />} />
+                <Route path="hotel/:id" element={<DetailHotel />} />
+                <Route path="hotel/:id/edit" element={<EditHotel />} />
+
+                {/* ✅ Consumption Management */}
+                <Route path="consumption" element={<AdminAllConsumption />} />
+                <Route path="consumption/add" element={<AddConsumption />} />
+                <Route path="consumption/:id" element={<DetailConsumption />} />
+                <Route path="consumption/:id/edit" element={<EditConsumption />} />
+
+                {/* ✅ Fleet Management */}
+                <Route path="armada" element={<AdminAllArmada />} />
+                <Route path="armada/add" element={<AddArmada />} />
+                <Route path="armada/:id" element={<DetailArmada />} />
+                <Route path="armada/:id/edit" element={<EditArmada />} />
+
+                {/* ✅ Destination Management */}
+                <Route path="destination" element={<AdminAllDestination />} />
+                <Route path="destination/add" element={<AddDestination />} />
+                <Route path="destination/:id" element={<DetailDestination />} />
+                <Route path="destination/:id/edit" element={<EditDestination />} />
+
+                {/* ✅ Article Management - UPDATED WITH DETAIL AND EDIT */}
+                <Route path="article" element={<AdminAllArticle />} />
+                <Route path="article/add" element={<AddArticle />} />
+                <Route path="article/:id" element={<DetailArticle />} />
+                <Route path="article/:id/edit" element={<EditArticle />} />
+
+                {/* ✅ Banner Management */}
+                <Route path="banner" element={<AdminBanner />} />
+                <Route path="banner/add" element={<BannerAdd />} />
+                <Route path="banner/:id/edit" element={<EditBanner />} />
+
+                {/* ✅ User Management */}
+                <Route path="user" element={<AdminAllUser />} />
+                <Route path="user" element={<DetailUser />} />
+
+
+                {/* ✅ Company Profile Management */}
+                <Route path="tentang-terbit" element={<AdminAbout />} />
+                <Route path="galeri-terbit" element={<AdminGallery />} />
+                <Route path="lisensi-terbit" element={<AdminLicences />} />
+                <Route path="partner-terbit" element={<AdminPartner />} />
+                <Route path="tim-terbit" element={<AdminTeam />} />
+
+                {/* ✅ Profile Management */}
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="password" element={<PasswordPage />} />
+              </Routes>
+          </AdminProtectedRoute>
+        } 
+      />
+    </Routes>
   );
 }
 
