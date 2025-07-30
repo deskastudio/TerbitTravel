@@ -107,7 +107,7 @@ const AppSidebar: React.FC<React.ComponentProps<typeof Sidebar>> = (props) => {
     projects: [
       { name: "Dashboard", url: "/admin/dashboard", icon: PieChart },
       { name: "Paket Wisata", url: "/admin/paket-wisata", icon: Map },
-      { name: "Pemesanan", url: "/admin/order", icon: ShoppingCart },
+      { name: "Pemesanan", url: "/admin/booking", icon: ShoppingCart },
       { name: "Data User", url: "/admin/user", icon: Users },
     ],
     NavContent: [

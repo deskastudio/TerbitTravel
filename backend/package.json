@@ -10,13 +10,16 @@
     "ngrok": "ngrok http 5000 --log=stdout",
     "create-admin": "node scripts/createSuperAdmin.js",
     "list-admins": "node scripts/createSuperAdmin.js list",
-    "reset-admin": "node scripts/resetAdmin.js"
+    "reset-admin": "node scripts/resetAdmin.js",
+    "seed:travel": "node seeders/travelSeeder.js"
+
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",

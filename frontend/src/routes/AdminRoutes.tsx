@@ -40,6 +40,9 @@ import EditPackageTour from '@/pages/adminPages/tourPackage/edit-tour-package';
 import BannerAdd from '@/pages/adminPages/banner/Add';
 import EditBanner from '@/pages/adminPages/banner/Edit';
 
+import AdminAllBooking from '@/pages/adminPages/booking/Index';
+import DetailBooking from '@/pages/adminPages/booking/detail-booking';
+
 // Import Article Detail and Edit pages
 import DetailArticle from '@/pages/adminPages/article/detail-article';
 import EditArticle from '@/pages/adminPages/article/edit-article';
@@ -98,6 +101,9 @@ function AdminRoutes() {
                 <Route path="destination/add" element={<AddDestination />} />
                 <Route path="destination/:id" element={<DetailDestination />} />
                 <Route path="destination/:id/edit" element={<EditDestination />} />
+
+                <Route path="booking" element={<AdminAllBooking />} />
+                <Route path="booking/:id" element={<DetailBooking />} />
 
                 {/* ✅ Article Management - UPDATED WITH DETAIL AND EDIT */}
                 <Route path="article" element={<AdminAllArticle />} />
