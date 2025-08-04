@@ -39,12 +39,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
 import { TourPackageService } from "@/services/tour-package.service";
 import { BookingService } from "@/services/booking.service";
 import { useBooking } from "@/hooks/use-booking";
 import { useAuth } from "@/hooks/use-auth";
 import type { ITourPackage } from "@/types/tour-package.types";
+import { useToast } from "@/hooks/use-toast";
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -400,7 +400,7 @@ export default function BookingDetail() {
               ) {
                 updatedBooking.status = "confirmed";
                 updatedBooking.paymentStatus = "settlement";
-                updatedBooking.paymentDate = new Date().toISOString();
+                (updatedBooking as any).paymentDate = new Date().toISOString();
 
                 toast({
                   title: "Pembayaran Berhasil!",
@@ -517,11 +517,12 @@ export default function BookingDetail() {
 
       if (updatedBooking.success && updatedBooking.data) {
         // Update booking data dengan status terbaru
+        const data = updatedBooking.data;
         setBookingData((prev: any) => ({
           ...prev,
-          status: updatedBooking.data.status,
-          paymentStatus: updatedBooking.data.paymentStatus,
-          paymentDate: updatedBooking.data.paymentDate,
+          status: data.status,
+          paymentStatus: data.paymentStatus,
+          paymentDate: data.paymentDate,
         }));
 
         toast({
@@ -627,11 +628,11 @@ export default function BookingDetail() {
 
       // Cek berbagai format response
       const snapToken =
-        paymentResponse.snap_token ||
-        paymentResponse.data?.snap_token ||
-        paymentResponse.token;
+        (paymentResponse as any).snap_token ||
+        (paymentResponse as any).data?.snap_token ||
+        (paymentResponse as any).token;
 
-      if (paymentResponse.success && snapToken) {
+      if ((paymentResponse as any).success && snapToken) {
         console.log("✅ Got Snap token:", snapToken);
 
         // Update booking status to pending_verification

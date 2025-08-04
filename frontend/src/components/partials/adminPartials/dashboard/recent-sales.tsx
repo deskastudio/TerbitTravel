@@ -1,53 +1,94 @@
 import React from "react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getImageUrl } from "@/utils/image-helper";
 
-// Data penjualan yang akan di-map
-const recentSalesData = [
-  { name: "Olivia Martin", email: "olivia.martin@email.com", amount: "+$1,999.00", avatar: "/avatars/01.png", fallback: "OM" },
-  { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "+$39.00", avatar: "/avatars/02.png", fallback: "JL" },
-  { name: "Isabella Nguyen", email: "isabella.nguyen@email.com", amount: "+$299.00", avatar: "/avatars/03.png", fallback: "IN" },
-  { name: "William Kim", email: "will@email.com", amount: "+$99.00", avatar: "/avatars/04.png", fallback: "WK" },
-  { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "+$39.00", avatar: "/avatars/05.png", fallback: "SD" },
-];
+interface Booking {
+  _id: string;
+  user?: {
+    nama: string;
+    email: string;
+    foto?: string;
+  };
+  namaUser?: string;
+  emailUser?: string;
+  totalHarga: number;
+  paketWisata?: {
+    nama: string;
+  };
+  createdAt: string;
+}
 
-// Functional Component untuk satu item penjualan
-const SaleItem: React.FC<{
-  name: string;
-  email: string;
-  amount: string;
-  avatar: string;
-  fallback: string;
-}> = ({ name, email, amount, avatar, fallback }) => (
-  <div className="flex items-center">
-    <Avatar className="h-9 w-9">
-      <AvatarImage src={avatar} alt={name} />
-      <AvatarFallback>{fallback}</AvatarFallback>
-    </Avatar>
-    <div className="ml-4 space-y-1">
-      <p className="text-sm font-medium leading-none">{name}</p>
-      <p className="text-sm text-muted-foreground">{email}</p>
+interface RecentSalesProps {
+  bookings?: Booking[];
+}
+
+// Functional Component untuk satu item booking
+const BookingItem: React.FC<{
+  booking: Booking;
+}> = ({ booking }) => {
+  const userName = booking.user?.nama || booking.namaUser || "Unknown User";
+  const userEmail = booking.user?.email || booking.emailUser || "";
+  const userAvatar = booking.user?.foto;
+  const packageName = booking.paketWisata?.nama || "Tour Package";
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // Get user initials
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <div className="flex items-center">
+      <Avatar className="h-9 w-9">
+        {userAvatar ? (
+          <AvatarImage src={getImageUrl(userAvatar)} alt={userName} />
+        ) : null}
+        <AvatarFallback className="bg-blue-100 text-blue-600">
+          {getInitials(userName)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="ml-4 space-y-1">
+        <p className="text-sm font-medium leading-none">{userName}</p>
+        <p className="text-sm text-muted-foreground">
+          {userEmail || packageName}
+        </p>
+      </div>
+      <div className="ml-auto font-medium text-green-600">
+        +{formatCurrency(booking.totalHarga)}
+      </div>
     </div>
-    <div className="ml-auto font-medium">{amount}</div>
-  </div>
-);
+  );
+};
 
 // Functional Component utama untuk RecentSales
-const RecentSales: React.FC = () => {
+const RecentSales: React.FC<RecentSalesProps> = ({ bookings = [] }) => {
+  if (bookings.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-sm text-muted-foreground">
+          Belum ada booking terbaru
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      {recentSalesData.map((sale, index) => (
-        <SaleItem
-          key={index}
-          name={sale.name}
-          email={sale.email}
-          amount={sale.amount}
-          avatar={sale.avatar}
-          fallback={sale.fallback}
-        />
+      {bookings.map((booking) => (
+        <BookingItem key={booking._id} booking={booking} />
       ))}
     </div>
   );

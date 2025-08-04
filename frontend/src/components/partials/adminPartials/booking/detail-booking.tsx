@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  MapPin, 
-  Calendar, 
-  Clock, 
-  User, 
-  Mail, 
-  Phone, 
-  Building, 
-  CheckCircle, 
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  User,
+  Mail,
+  Phone,
+  Building,
+  CheckCircle,
   XCircle,
   ArrowLeft,
   Edit,
@@ -25,15 +25,27 @@ import {
   Ticket,
   Users,
   FileText,
-  MessageSquare
+  MessageSquare,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { BookingAdminService } from "@/services/booking-admin.service";
+import { IBooking, BookingStatus, PaymentStatus } from "@/types/booking.types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -73,11 +85,14 @@ const DetailBooking = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [booking, setBooking] = useState<ExtendedBooking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [selectedAction, setSelectedAction] = useState<{ action: string; data?: any } | null>(null);
+  const [selectedAction, setSelectedAction] = useState<{
+    action: string;
+    data?: any;
+  } | null>(null);
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -94,13 +109,13 @@ const DetailBooking = () => {
         toast({
           variant: "destructive",
           title: "Error",
-          description: error.message || "Gagal mengambil detail pemesanan"
+          description: error.message || "Gagal mengambil detail pemesanan",
         });
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     if (id) fetchBooking();
   }, [id, toast]);
 
@@ -148,21 +163,21 @@ const DetailBooking = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString("id-ID", {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -185,7 +200,10 @@ const DetailBooking = () => {
           result = await BookingAdminService.confirmPayment(booking._id);
           break;
         case "cancel":
-          result = await BookingAdminService.cancelBooking(booking._id, "Dibatalkan oleh admin");
+          result = await BookingAdminService.cancelBooking(
+            booking._id,
+            "Dibatalkan oleh admin"
+          );
           break;
         case "generate-voucher":
           result = await BookingAdminService.generateVoucher(booking._id);
@@ -200,24 +218,25 @@ const DetailBooking = () => {
           break;
       }
 
-      if (result && typeof result === 'object' && 'success' in result) {
-        if (result.success && 'data' in result && result.data) {
+      if (result && typeof result === "object" && "success" in result) {
+        if (result.success && "data" in result && result.data) {
           setBooking(result.data as IBooking);
         }
       }
 
       // Refresh booking data
-      const refreshResponse = await BookingAdminService.getBookingById(booking._id);
+      const refreshResponse = await BookingAdminService.getBookingById(
+        booking._id
+      );
       if (refreshResponse.success && refreshResponse.data) {
         setBooking(refreshResponse.data);
       }
-
     } catch (error: any) {
       console.error("Action failed:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Gagal melakukan aksi"
+        description: error.message || "Gagal melakukan aksi",
       });
     } finally {
       setIsUpdating(false);
@@ -260,8 +279,12 @@ const DetailBooking = () => {
         <Card className="w-96 text-center">
           <CardContent className="pt-6">
             <div className="text-6xl mb-4">📋</div>
-            <h3 className="text-lg font-semibold mb-2">Pemesanan Tidak Ditemukan</h3>
-            <p className="text-gray-600 mb-4">Pemesanan yang Anda cari tidak tersedia atau telah dihapus.</p>
+            <h3 className="text-lg font-semibold mb-2">
+              Pemesanan Tidak Ditemukan
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Pemesanan yang Anda cari tidak tersedia atau telah dihapus.
+            </p>
             <Button onClick={() => navigate("/admin/booking")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Kembali ke Daftar
@@ -278,8 +301,8 @@ const DetailBooking = () => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Button 
-              variant="link" 
+            <Button
+              variant="link"
               onClick={() => navigate("/admin/booking")}
               className="p-0 text-blue-600 hover:text-blue-800"
             >
@@ -288,7 +311,9 @@ const DetailBooking = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="text-gray-600">Detail Pemesanan</BreadcrumbPage>
+            <BreadcrumbPage className="text-gray-600">
+              Detail Pemesanan
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -296,7 +321,9 @@ const DetailBooking = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">{booking.bookingId}</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {booking.bookingId}
+          </h1>
           <div className="flex flex-wrap gap-2 mt-2">
             <Badge variant="secondary" className="flex items-center gap-1">
               <User className="w-3 h-3" />
@@ -306,66 +333,88 @@ const DetailBooking = () => {
               <Users className="w-3 h-3 text-blue-500" />
               {booking.jumlahPeserta} orang
             </Badge>
-            <Badge className={`flex items-center gap-1 ${getStatusVariant(booking.status)}`}>
+            <Badge
+              className={`flex items-center gap-1 ${getStatusVariant(
+                booking.status
+              )}`}
+            >
               <Package className="w-3 h-3" />
               {booking.status}
             </Badge>
-            <Badge className={`flex items-center gap-1 ${getPaymentStatusVariant(booking.paymentStatus)}`}>
+            <Badge
+              className={`flex items-center gap-1 ${getPaymentStatusVariant(
+                booking.paymentStatus
+              )}`}
+            >
               <CreditCard className="w-3 h-3" />
               {booking.paymentStatus}
             </Badge>
-            <Badge variant="default" className="flex items-center gap-1 bg-green-600">
+            <Badge
+              variant="default"
+              className="flex items-center gap-1 bg-green-600"
+            >
               <DollarSign className="w-3 h-3" />
               {formatPrice(booking.totalHarga || booking.harga)}
             </Badge>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" disabled={isUpdating}>
-                {isUpdating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Edit className="h-4 w-4 mr-2" />}
+                {isUpdating ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Edit className="h-4 w-4 mr-2" />
+                )}
                 Aksi
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Aksi Pemesanan</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              
+
               {booking.status === "pending_verification" && (
                 <DropdownMenuItem onClick={() => handleActionClick("confirm")}>
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Konfirmasi Pembayaran
                 </DropdownMenuItem>
               )}
-              
+
               {booking.status === "confirmed" && !booking.voucherGenerated && (
-                <DropdownMenuItem onClick={() => handleActionClick("generate-voucher")}>
+                <DropdownMenuItem
+                  onClick={() => handleActionClick("generate-voucher")}
+                >
                   <Ticket className="mr-2 h-4 w-4" />
                   Buat E-Voucher
                 </DropdownMenuItem>
               )}
-              
+
               {booking.paymentStatus === "pending" && (
-                <DropdownMenuItem onClick={() => handleActionClick("check-payment")}>
+                <DropdownMenuItem
+                  onClick={() => handleActionClick("check-payment")}
+                >
                   <RefreshCw className="mr-2 h-4 w-4" />
                   Cek Status Pembayaran
                 </DropdownMenuItem>
               )}
-              
+
               {booking.status === "pending" && (
-                <DropdownMenuItem onClick={() => handleActionClick("send-reminder")}>
+                <DropdownMenuItem
+                  onClick={() => handleActionClick("send-reminder")}
+                >
                   <Send className="mr-2 h-4 w-4" />
                   Kirim Pengingat
                 </DropdownMenuItem>
               )}
-              
+
               <DropdownMenuSeparator />
-              
-              {(booking.status === "pending" || booking.status === "pending_verification") && (
-                <DropdownMenuItem 
+
+              {(booking.status === "pending" ||
+                booking.status === "pending_verification") && (
+                <DropdownMenuItem
                   onClick={() => handleActionClick("cancel")}
                   className="text-red-600"
                 >
@@ -375,7 +424,7 @@ const DetailBooking = () => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <Button
             variant="outline"
             onClick={() => navigate(-1)}
@@ -392,19 +441,22 @@ const DetailBooking = () => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Pemesanan ini telah dibatalkan. {booking.cancelReason && `Alasan: ${booking.cancelReason}`}
+            Pemesanan ini telah dibatalkan.{" "}
+            {booking.cancelReason && `Alasan: ${booking.cancelReason}`}
           </AlertDescription>
         </Alert>
       )}
 
-      {booking.paymentStatus === "pending" && booking.status !== "cancelled" && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Pembayaran masih menunggu konfirmasi. Harap pantau status pembayaran secara berkala.
-          </AlertDescription>
-        </Alert>
-      )}
+      {booking.paymentStatus === "pending" &&
+        booking.status !== "cancelled" && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Pembayaran masih menunggu konfirmasi. Harap pantau status
+              pembayaran secara berkala.
+            </AlertDescription>
+          </Alert>
+        )}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -421,18 +473,26 @@ const DetailBooking = () => {
             <CardContent className="space-y-6">
               <div className="flex items-start gap-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{booking.packageInfo?.nama}</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {booking.packageInfo?.nama}
+                  </h3>
                   <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="outline" className="flex items-center gap-1">
+                    <Badge
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
                       <MapPin className="w-3 h-3" />
                       {booking.packageInfo?.destination}
                     </Badge>
-                    <Badge variant="outline" className="flex items-center gap-1">
+                    <Badge
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
                       <Clock className="w-3 h-3" />
                       {booking.packageInfo?.durasi}
                     </Badge>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
@@ -440,8 +500,12 @@ const DetailBooking = () => {
                           <DollarSign className="w-5 h-5 text-blue-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Harga per Orang</p>
-                          <p className="text-blue-700 font-semibold">{formatPrice(booking.harga)}</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Harga per Orang
+                          </p>
+                          <p className="text-blue-700 font-semibold">
+                            {formatPrice(booking.harga)}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -452,8 +516,12 @@ const DetailBooking = () => {
                           <Users className="w-5 h-5 text-green-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-700">Jumlah Peserta</p>
-                          <p className="text-green-700 font-semibold">{booking.jumlahPeserta} orang</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            Jumlah Peserta
+                          </p>
+                          <p className="text-green-700 font-semibold">
+                            {booking.jumlahPeserta} orang
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -478,19 +546,23 @@ const DetailBooking = () => {
                     <Calendar className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Tanggal Keberangkatan</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Tanggal Keberangkatan
+                    </p>
                     <p className="text-purple-700 font-semibold">
                       {formatDate(booking.selectedSchedule?.tanggalAwal)}
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-lg">
                   <div className="p-3 bg-orange-100 rounded-lg">
                     <Calendar className="w-6 h-6 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Tanggal Kepulangan</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Tanggal Kepulangan
+                    </p>
                     <p className="text-orange-700 font-semibold">
                       {formatDate(booking.selectedSchedule?.tanggalAkhir)}
                     </p>
@@ -516,18 +588,24 @@ const DetailBooking = () => {
                       <User className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Nama Lengkap</p>
-                      <p className="text-blue-700 font-semibold">{booking.customerInfo?.nama}</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Nama Lengkap
+                      </p>
+                      <p className="text-blue-700 font-semibold">
+                        {booking.customerInfo?.nama}
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                     <div className="p-2 bg-green-100 rounded-lg">
                       <Mail className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Email</p>
-                      <p className="text-green-700 font-semibold">{booking.customerInfo?.email}</p>
+                      <p className="text-green-700 font-semibold">
+                        {booking.customerInfo?.email}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -538,39 +616,51 @@ const DetailBooking = () => {
                       <Phone className="w-5 h-5 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Nomor Telepon</p>
-                      <p className="text-purple-700 font-semibold">{booking.customerInfo?.telepon}</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Nomor Telepon
+                      </p>
+                      <p className="text-purple-700 font-semibold">
+                        {booking.customerInfo?.telepon}
+                      </p>
                     </div>
                   </div>
-                  
+
                   {booking.customerInfo?.instansi && (
                     <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
                       <div className="p-2 bg-orange-100 rounded-lg">
                         <Building className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-700">Instansi</p>
-                        <p className="text-orange-700 font-semibold">{booking.customerInfo.instansi}</p>
+                        <p className="text-sm font-medium text-gray-700">
+                          Instansi
+                        </p>
+                        <p className="text-orange-700 font-semibold">
+                          {booking.customerInfo.instansi}
+                        </p>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-              
+
               {booking.customerInfo?.alamat && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Alamat</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    Alamat
+                  </p>
                   <p className="text-gray-900">{booking.customerInfo.alamat}</p>
                 </div>
               )}
-              
+
               {booking.customerInfo?.catatan && (
                 <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     <MessageSquare className="w-4 h-4" />
                     Catatan Khusus
                   </p>
-                  <p className="text-gray-900">{booking.customerInfo.catatan}</p>
+                  <p className="text-gray-900">
+                    {booking.customerInfo.catatan}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -589,33 +679,45 @@ const DetailBooking = () => {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Status Pembayaran</label>
-                      <Badge className={`${getPaymentStatusVariant(booking.paymentStatus)}`}>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Status Pembayaran
+                      </label>
+                      <Badge
+                        className={`${getPaymentStatusVariant(
+                          booking.paymentStatus
+                        )}`}
+                      >
                         {booking.paymentStatus}
                       </Badge>
                     </div>
-                    
+
                     {booking.paymentMethod && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Metode Pembayaran</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Metode Pembayaran
+                        </label>
                         <p className="text-gray-900 font-medium capitalize">
-                          {booking.paymentMethod.replace('_', ' ')}
+                          {booking.paymentMethod.replace("_", " ")}
                         </p>
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Total Pembayaran</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Total Pembayaran
+                      </label>
                       <p className="text-2xl font-bold text-green-600">
                         {formatPrice(booking.totalHarga || booking.harga)}
                       </p>
                     </div>
-                    
+
                     {booking.paymentDate && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Pembayaran</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tanggal Pembayaran
+                        </label>
                         <p className="text-gray-900 font-medium">
                           {formatDateTime(booking.paymentDate)}
                         </p>
@@ -623,9 +725,9 @@ const DetailBooking = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="text-sm text-gray-600">Harga per orang</p>
@@ -637,7 +739,9 @@ const DetailBooking = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-600">Total</p>
-                    <p className="font-bold text-green-600">{formatPrice(booking.totalHarga || booking.harga)}</p>
+                    <p className="font-bold text-green-600">
+                      {formatPrice(booking.totalHarga || booking.harga)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -659,9 +763,15 @@ const DetailBooking = () => {
                     <Ticket className="w-8 h-8 text-indigo-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-700">Kode Voucher</p>
-                    <p className="text-xl font-bold text-indigo-700">{booking.voucherCode}</p>
-                    <p className="text-sm text-gray-600 mt-1">E-voucher telah dibuat dan dapat digunakan</p>
+                    <p className="text-sm font-medium text-gray-700">
+                      Kode Voucher
+                    </p>
+                    <p className="text-xl font-bold text-indigo-700">
+                      {booking.voucherCode}
+                    </p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      E-voucher telah dibuat dan dapat digunakan
+                    </p>
                   </div>
                   <Button variant="outline" className="flex items-center gap-2">
                     <Download className="w-4 h-4" />
@@ -690,9 +800,9 @@ const DetailBooking = () => {
                 </div>
                 <p className="text-sm text-gray-600">ID Pemesanan</p>
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Status</span>
@@ -702,7 +812,9 @@ const DetailBooking = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Pembayaran</span>
-                  <Badge className={getPaymentStatusVariant(booking.paymentStatus)}>
+                  <Badge
+                    className={getPaymentStatusVariant(booking.paymentStatus)}
+                  >
                     {booking.paymentStatus}
                   </Badge>
                 </div>
@@ -710,16 +822,18 @@ const DetailBooking = () => {
                   <span className="text-sm text-gray-600">E-Voucher</span>
                   <span className="text-sm font-medium">
                     {booking.voucherGenerated ? (
-                      <Badge className="bg-green-100 text-green-800">Sudah dibuat</Badge>
+                      <Badge className="bg-green-100 text-green-800">
+                        Sudah dibuat
+                      </Badge>
                     ) : (
                       <Badge variant="outline">Belum dibuat</Badge>
                     )}
                   </span>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600 mb-1">
                   {formatPrice(booking.totalHarga || booking.harga)}
@@ -743,39 +857,49 @@ const DetailBooking = () => {
                   <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
                   <div>
                     <p className="text-sm font-medium">Pemesanan Dibuat</p>
-                    <p className="text-xs text-gray-600">{formatDateTime(booking.createdAt)}</p>
+                    <p className="text-xs text-gray-600">
+                      {formatDateTime(booking.createdAt)}
+                    </p>
                   </div>
                 </div>
-                
+
                 {booking.paymentDate && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
                     <div>
                       <p className="text-sm font-medium">Pembayaran Diterima</p>
-                      <p className="text-xs text-gray-600">{formatDateTime(booking.paymentDate)}</p>
+                      <p className="text-xs text-gray-600">
+                        {formatDateTime(booking.paymentDate)}
+                      </p>
                     </div>
                   </div>
                 )}
-                
+
                 {booking.voucherGenerated && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-600 rounded-full mt-2"></div>
                     <div>
                       <p className="text-sm font-medium">E-Voucher Dibuat</p>
                       <p className="text-xs text-gray-600">
-                        {booking.voucherGeneratedAt ? formatDateTime(booking.voucherGeneratedAt) : 'Tanggal tidak tersedia'}
+                        {booking.voucherGeneratedAt
+                          ? formatDateTime(booking.voucherGeneratedAt)
+                          : "Tanggal tidak tersedia"}
                       </p>
                     </div>
                   </div>
                 )}
-                
+
                 {booking.status === "cancelled" && (
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-red-600 rounded-full mt-2"></div>
                     <div>
-                      <p className="text-sm font-medium">Pemesanan Dibatalkan</p>
+                      <p className="text-sm font-medium">
+                        Pemesanan Dibatalkan
+                      </p>
                       <p className="text-xs text-gray-600">
-                        {booking.cancelledAt ? formatDateTime(booking.cancelledAt) : formatDateTime(booking.updatedAt)}
+                        {booking.cancelledAt
+                          ? formatDateTime(booking.cancelledAt)
+                          : formatDateTime(booking.updatedAt)}
                       </p>
                     </div>
                   </div>
@@ -795,8 +919,10 @@ const DetailBooking = () => {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <a 
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <a
                     href={`mailto:${booking.customerInfo?.email}`}
                     className="text-blue-600 hover:text-blue-800 font-medium"
                   >
@@ -804,21 +930,28 @@ const DetailBooking = () => {
                   </a>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
-                  <a 
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telepon
+                  </label>
+                  <a
                     href={`tel:${booking.customerInfo?.telepon}`}
                     className="text-blue-600 hover:text-blue-800 font-medium"
                   >
                     {booking.customerInfo?.telepon}
                   </a>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="space-y-2">
                   <Button
                     variant="outline"
-                    onClick={() => window.open(`mailto:${booking.customerInfo?.email}`, '_blank')}
+                    onClick={() =>
+                      window.open(
+                        `mailto:${booking.customerInfo?.email}`,
+                        "_blank"
+                      )
+                    }
                     className="w-full flex items-center justify-center gap-2"
                   >
                     <Mail className="w-4 h-4" />
@@ -826,7 +959,15 @@ const DetailBooking = () => {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => window.open(`https://wa.me/${booking.customerInfo?.telepon?.replace(/[^0-9]/g, '')}`, '_blank')}
+                    onClick={() =>
+                      window.open(
+                        `https://wa.me/${booking.customerInfo?.telepon?.replace(
+                          /[^0-9]/g,
+                          ""
+                        )}`,
+                        "_blank"
+                      )
+                    }
                     className="w-full flex items-center justify-center gap-2"
                   >
                     <Phone className="w-4 h-4" />
@@ -848,12 +989,14 @@ const DetailBooking = () => {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{booking.jumlahPeserta}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {booking.jumlahPeserta}
+                  </div>
                   <div className="text-sm text-gray-600">Peserta</div>
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
-                    {booking.packageInfo?.durasi?.split(' ')[0] || 0}
+                    {booking.packageInfo?.durasi?.split(" ")[0] || 0}
                   </div>
                   <div className="text-sm text-gray-600">Hari</div>
                 </div>
@@ -865,7 +1008,13 @@ const DetailBooking = () => {
                 </div>
                 <div className="text-center p-3 bg-orange-50 rounded-lg">
                   <div className="text-2xl font-bold text-orange-600">
-                    {Math.ceil((new Date(booking.selectedSchedule?.tanggalAwal || '').getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))}
+                    {Math.ceil(
+                      (new Date(
+                        booking.selectedSchedule?.tanggalAwal || ""
+                      ).getTime() -
+                        new Date().getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )}
                   </div>
                   <div className="text-sm text-gray-600">Hari Lagi</div>
                 </div>
@@ -884,22 +1033,35 @@ const DetailBooking = () => {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nama Paket</label>
-                  <p className="text-gray-900 font-medium">{booking.packageInfo?.nama}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nama Paket
+                  </label>
+                  <p className="text-gray-900 font-medium">
+                    {booking.packageInfo?.nama}
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Destinasi</label>
-                  <p className="text-gray-700">{booking.packageInfo?.destination}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Destinasi
+                  </label>
+                  <p className="text-gray-700">
+                    {booking.packageInfo?.destination}
+                  </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Durasi</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Durasi
+                  </label>
                   <p className="text-gray-700">{booking.packageInfo?.durasi}</p>
                 </div>
                 {booking.packageInfo?.armada && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Transportasi</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Transportasi
+                    </label>
                     <p className="text-gray-700">
-                      {booking.packageInfo.armada.nama} - Kapasitas {booking.packageInfo.armada.kapasitas} orang
+                      {booking.packageInfo.armada.nama} - Kapasitas{" "}
+                      {booking.packageInfo.armada.kapasitas} orang
                     </p>
                   </div>
                 )}
@@ -924,7 +1086,8 @@ const DetailBooking = () => {
                       // Implementation for downloading voucher
                       toast({
                         title: "Download E-Voucher",
-                        description: "Fitur download e-voucher akan segera tersedia"
+                        description:
+                          "Fitur download e-voucher akan segera tersedia",
                       });
                     }}
                     className="w-full flex items-center justify-center gap-2"
@@ -933,14 +1096,14 @@ const DetailBooking = () => {
                     Download E-Voucher
                   </Button>
                 )}
-                
+
                 <Button
                   variant="outline"
                   onClick={() => {
                     navigator.clipboard.writeText(booking.bookingId);
                     toast({
                       title: "Tersalin!",
-                      description: "ID Booking telah disalin ke clipboard"
+                      description: "ID Booking telah disalin ke clipboard",
                     });
                   }}
                   className="w-full flex items-center justify-center gap-2"
@@ -948,7 +1111,7 @@ const DetailBooking = () => {
                   <FileText className="w-4 h-4" />
                   Copy Booking ID
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -956,7 +1119,7 @@ const DetailBooking = () => {
                     navigator.clipboard.writeText(url);
                     toast({
                       title: "Tersalin!",
-                      description: "Link detail booking telah disalin"
+                      description: "Link detail booking telah disalin",
                     });
                   }}
                   className="w-full flex items-center justify-center gap-2"
@@ -971,25 +1134,34 @@ const DetailBooking = () => {
       </div>
 
       {/* Action Confirmation Dialog */}
-      <AlertDialog open={isActionDialogOpen} onOpenChange={setIsActionDialogOpen}>
+      <AlertDialog
+        open={isActionDialogOpen}
+        onOpenChange={setIsActionDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Aksi</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin {selectedAction ? getActionText(selectedAction.action) : ""}? 
-              {selectedAction?.action === "cancel" && " Tindakan ini tidak dapat dibatalkan."}
+              Apakah Anda yakin ingin{" "}
+              {selectedAction ? getActionText(selectedAction.action) : ""}?
+              {selectedAction?.action === "cancel" &&
+                " Tindakan ini tidak dapat dibatalkan."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmAction}
-              className={selectedAction?.action === "cancel" 
-                ? "bg-red-600 hover:bg-red-700" 
-                : "bg-blue-600 hover:bg-blue-700"
+              className={
+                selectedAction?.action === "cancel"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-blue-600 hover:bg-blue-700"
               }
             >
-              Ya, {selectedAction ? getActionText(selectedAction.action) : "Lanjutkan"}
+              Ya,{" "}
+              {selectedAction
+                ? getActionText(selectedAction.action)
+                : "Lanjutkan"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

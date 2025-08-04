@@ -34,7 +34,7 @@ const instance = axios.create({
       // Browser blocked Origin header removed - this is set automatically by the browser
     }),
   },
-  withCredentials: true, // For cookies credentials
+  withCredentials: false, // ✅ FIXED: Set to false to avoid CORS issues with wildcard
   timeout: 30000, // Increased timeout for tunnel connections
 });
 

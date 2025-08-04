@@ -349,6 +349,62 @@ app.get("/api/orders/:bookingId", async (req, res) => {
   return app._router.handle(req, res);
 });
 
+// DEBUG: Endpoint untuk semua booking tanpa auth (development only)
+app.get("/api/debug/bookings", async (req, res) => {
+  try {
+    console.log("🔍 DEBUG: Fetching all bookings without auth");
+
+    const bookings = await BookingModel.find()
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    console.log(`📊 Found ${bookings.length} bookings`);
+
+    res.json({
+      success: true,
+      data: bookings,
+      total: bookings.length,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching debug bookings:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching bookings",
+      error: error.message,
+    });
+  }
+});
+
+// ✅ ADMIN SESSION CLEAR ENDPOINT
+app.post("/admin/clear-session", (req, res) => {
+  try {
+    console.log("🧹 Clearing admin session data");
+
+    // Clear any session data
+    if (req.session) {
+      req.session.destroy();
+    }
+
+    // Send response with instructions to clear localStorage
+    res.json({
+      success: true,
+      message: "Session cleared successfully",
+      instructions: {
+        clearLocalStorage: true,
+        keys: ["adminToken", "adminUser", "adminAuthExpiry"],
+        redirect: "/admin/login",
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error clearing session:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error clearing session",
+      error: error.message,
+    });
+  }
+});
+
 // ✅ MANUAL PAYMENT CHECK ENDPOINT - PERBAIKAN UTAMA
 app.post("/api/booking/check-payment/:bookingId", async (req, res) => {
   try {
