@@ -1,4 +1,4 @@
-// pages/destination/Index.tsx - IMPROVED VERSION with DEBUG
+// pages/destination/Index.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -13,11 +13,8 @@ import {
   SlidersHorizontal,
   MapPin,
   Tag,
-  Bug, // Added for debug icon
 } from "lucide-react";
 import { useDestination } from "@/hooks/use-destination";
-// import APIConnectionTest from "@/components/debug/APIConnectionTest";
-import CORSHeader from "@/components/debug/CORSHeader";
 import { APIError, toAPIError } from "@/types/api.types";
 
 import {
@@ -66,7 +63,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getImageUrl } from "@/utils/image-helper";
-import APIConnectionTest from "@/components/debug/APIConnectionTest";
 
 const DestinationPage = () => {
   const navigate = useNavigate();
@@ -80,7 +76,6 @@ const DestinationPage = () => {
     "",
   ]);
   const [isFilterActive, setIsFilterActive] = useState(false);
-  const [showDebug, setShowDebug] = useState(false); // Added debug state
   const itemsPerPage = 8;
 
   const {
@@ -184,42 +179,6 @@ const DestinationPage = () => {
   if (destinationsError) {
     return (
       <div className="space-y-6">
-        {/* Debug Panel Toggle for Error State */}
-        <div className="flex justify-between items-center">
-          <div className="flex-1" />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDebug(!showDebug)}
-            className="flex items-center gap-2"
-          >
-            <Bug className="h-4 w-4" />
-            {showDebug ? "Hide Debug" : "Show Debug"}
-          </Button>
-        </div>
-
-        {/* Debug Panel */}
-        {showDebug && (
-          <div className="border-2 border-dashed border-orange-300 p-4 bg-orange-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 text-orange-800">
-              🔧 Debug Panel - Error State
-            </h3>
-            <div className="mb-4 text-sm space-y-2">
-              <div>
-                <strong>Error:</strong> {toAPIError(destinationsError).message}
-              </div>
-              <div>
-                <strong>API URL:</strong> {import.meta.env.VITE_API_URL}
-              </div>
-              <div>
-                <strong>Full URL:</strong> {import.meta.env.VITE_API_URL}
-                /destination/getAll
-              </div>
-            </div>
-            {/* <APIConnectionTest /> */}
-          </div>
-        )}
-
         {/* Error State */}
         <div className="flex justify-center items-center h-64">
           <div className="text-center max-w-md">
@@ -256,95 +215,18 @@ const DestinationPage = () => {
   if (isLoadingDestinations) {
     return (
       <div className="space-y-6">
-        {/* Debug Panel Toggle */}
-        <div className="flex justify-between items-center">
-          <div className="flex justify-center items-center h-32">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-gray-600">Memuat data destinasi...</p>
-            </div>
+        <div className="flex justify-center items-center h-32">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Memuat data destinasi...</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDebug(!showDebug)}
-            className="flex items-center gap-2"
-          >
-            <Bug className="h-4 w-4" />
-            {showDebug ? "Hide Debug" : "Show Debug"}
-          </Button>
         </div>
-
-        {/* Debug Panel */}
-        {showDebug && (
-          <div className="border-2 border-dashed border-orange-300 p-4 bg-orange-50 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4 text-orange-800">
-              🔧 Debug Panel
-            </h3>
-            <APIConnectionTest />
-          </div>
-        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Debug Panel Toggle - Always visible */}
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowDebug(!showDebug)}
-          className="flex items-center gap-2"
-        >
-          <Bug className="h-4 w-4" />
-          {showDebug ? "Hide Debug" : "Show Debug"}
-        </Button>
-      </div>
-
-      {/* Debug Panel */}
-      {showDebug && (
-        <div className="border-2 border-dashed border-orange-300 p-4 bg-orange-50 rounded-lg">
-          <h3 className="text-lg font-semibold mb-4 text-orange-800">
-            🔧 Debug Panel
-          </h3>
-          <div className="mb-4 text-sm">
-            <div>
-              <strong>Total Destinations:</strong> {destinations?.length || 0}
-            </div>
-            <div>
-              <strong>Filtered Destinations:</strong>{" "}
-              {filteredDestinations.length}
-            </div>
-            <div>
-              <strong>Current Items:</strong> {currentItems.length}
-            </div>
-            <div>
-              <strong>Loading State:</strong>{" "}
-              {isLoadingDestinations ? "Loading" : "Loaded"}
-            </div>
-            <div>
-              <strong>API URL:</strong> {import.meta.env.VITE_API_URL}
-            </div>
-            <div>
-              <strong>Raw Destinations Data:</strong>
-            </div>
-            <pre className="text-xs bg-gray-100 p-2 rounded max-h-32 overflow-auto">
-              {JSON.stringify(destinations?.slice(0, 2), null, 2)}
-            </pre>
-          </div>
-
-          {/* CORS Header Debug */}
-          <div className="mb-4">
-            <h4 className="font-semibold mb-2">CORS Debug:</h4>
-            <CORSHeader />
-          </div>
-
-          <APIConnectionTest />
-        </div>
-      )}
-
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

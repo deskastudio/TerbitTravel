@@ -1,23 +1,24 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useUserDetail } from "@/hooks/use-user";
+import { getImageUrl } from "@/utils/image-helper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Breadcrumb, 
-  BreadcrumbItem, 
-  BreadcrumbList, 
-  BreadcrumbPage, 
-  BreadcrumbSeparator 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { 
-  ArrowLeft, 
-  Loader2, 
-  Mail, 
-  Phone, 
-  Building, 
-  MapPin, 
-  Calendar, 
+import {
+  ArrowLeft,
+  Loader2,
+  Mail,
+  Phone,
+  Building,
+  MapPin,
+  Calendar,
   Clock,
   User,
   Shield,
@@ -27,7 +28,7 @@ import {
   Copy,
   CheckCircle,
   AlertCircle,
-  XCircle
+  XCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -92,21 +93,30 @@ const UserDetail = () => {
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "Tidak diketahui";
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const calculateDaysJoined = (createdAt: string | undefined) => {
     if (!createdAt) return 0;
-    return Math.floor((new Date().getTime() - new Date(createdAt).getTime()) / (1000 * 3600 * 24));
+    return Math.floor(
+      (new Date().getTime() - new Date(createdAt).getTime()) /
+        (1000 * 3600 * 24)
+    );
   };
 
   const calculateProfileCompleteness = (user: any) => {
-    const fields = [user?.nama, user?.email, user?.noTelp, user?.alamat, user?.instansi];
+    const fields = [
+      user?.nama,
+      user?.email,
+      user?.noTelp,
+      user?.alamat,
+      user?.instansi,
+    ];
     const filledFields = fields.filter(Boolean).length;
     return Math.round((filledFields / fields.length) * 100);
   };
@@ -147,7 +157,9 @@ const UserDetail = () => {
           <CardContent className="pt-6">
             <div className="text-6xl mb-4">👤</div>
             <h3 className="text-lg font-semibold mb-2">User Tidak Ditemukan</h3>
-            <p className="text-gray-600 mb-4">User yang Anda cari tidak tersedia atau telah dihapus.</p>
+            <p className="text-gray-600 mb-4">
+              User yang Anda cari tidak tersedia atau telah dihapus.
+            </p>
             <Button onClick={() => navigate("/admin/user")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Kembali ke Daftar User
@@ -164,8 +176,8 @@ const UserDetail = () => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Button 
-              variant="link" 
+            <Button
+              variant="link"
               onClick={() => navigate("/admin/user")}
               className="p-0 text-blue-600 hover:text-blue-800"
             >
@@ -174,7 +186,9 @@ const UserDetail = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="text-gray-600">Detail User</BreadcrumbPage>
+            <BreadcrumbPage className="text-gray-600">
+              Detail User
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -192,13 +206,17 @@ const UserDetail = () => {
               <Phone className="w-3 h-3 text-blue-500" />
               {user.noTelp}
             </Badge>
-            <Badge className={`flex items-center gap-1 ${getStatusVariant(user.status || 'unverified')}`}>
-              {getStatusIcon(user.status || 'unverified')}
-              {getStatusLabel(user.status || 'unverified')}
+            <Badge
+              className={`flex items-center gap-1 ${getStatusVariant(
+                user.status || "unverified"
+              )}`}
+            >
+              {getStatusIcon(user.status || "unverified")}
+              {getStatusLabel(user.status || "unverified")}
             </Badge>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           <Button
@@ -234,17 +252,23 @@ const UserDetail = () => {
                       <div className="w-24 h-24 mx-auto mb-4 relative">
                         {user.foto ? (
                           <img
-                            src={`http://localhost:5000${user.foto}`}
+                            src={getImageUrl(user.foto)}
                             alt={user.nama}
                             className="w-full h-full object-cover rounded-full border-4 border-white shadow-lg"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.nextElementSibling?.classList.remove('hidden');
+                              target.style.display = "none";
+                              target.nextElementSibling?.classList.remove(
+                                "hidden"
+                              );
                             }}
                           />
                         ) : null}
-                        <div className={`w-full h-full bg-white/20 backdrop-blur-sm rounded-full border-4 border-white flex items-center justify-center ${user.foto ? 'hidden' : ''}`}>
+                        <div
+                          className={`w-full h-full bg-white/20 backdrop-blur-sm rounded-full border-4 border-white flex items-center justify-center ${
+                            user.foto ? "hidden" : ""
+                          }`}
+                        >
                           <User className="h-12 w-12 text-white" />
                         </div>
                       </div>
@@ -254,8 +278,10 @@ const UserDetail = () => {
                   </div>
                 </div>
                 <div className="absolute top-4 right-4">
-                  <Badge className={getStatusVariant(user.status || 'unverified')}>
-                    {getStatusLabel(user.status || 'unverified')}
+                  <Badge
+                    className={getStatusVariant(user.status || "unverified")}
+                  >
+                    {getStatusLabel(user.status || "unverified")}
                   </Badge>
                 </div>
               </div>
@@ -278,7 +304,9 @@ const UserDetail = () => {
                       <User className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-700">Nama Lengkap</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Nama Lengkap
+                      </p>
                       <p className="text-blue-700 font-semibold">{user.nama}</p>
                     </div>
                     <Button
@@ -289,14 +317,16 @@ const UserDetail = () => {
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
                     <div className="p-2 bg-green-100 rounded-lg">
                       <Mail className="w-5 h-5 text-green-600" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-700">Email</p>
-                      <p className="text-green-700 font-semibold">{user.email}</p>
+                      <p className="text-green-700 font-semibold">
+                        {user.email}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"
@@ -314,31 +344,43 @@ const UserDetail = () => {
                       <Phone className="w-5 h-5 text-purple-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-700">Nomor Telepon</p>
-                      <p className="text-purple-700 font-semibold">{user.noTelp}</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Nomor Telepon
+                      </p>
+                      <p className="text-purple-700 font-semibold">
+                        {user.noTelp}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => copyToClipboard(user.noTelp, "Nomor telepon")}
+                      onClick={() =>
+                        copyToClipboard(user.noTelp, "Nomor telepon")
+                      }
                     >
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
                     <div className="p-2 bg-orange-100 rounded-lg">
                       <Building className="w-5 h-5 text-orange-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-700">Instansi</p>
-                      <p className="text-orange-700 font-semibold">{user.instansi || "Tidak ada"}</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Instansi
+                      </p>
+                      <p className="text-orange-700 font-semibold">
+                        {user.instansi || "Tidak ada"}
+                      </p>
                     </div>
                     {user.instansi && (
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(user.instansi!, "Instansi")}
+                        onClick={() =>
+                          copyToClipboard(user.instansi!, "Instansi")
+                        }
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
@@ -354,7 +396,9 @@ const UserDetail = () => {
                   Alamat
                 </h3>
                 <div className="p-4 bg-gray-50 rounded-lg flex items-center justify-between">
-                  <p className="text-gray-700">{user.alamat || "Alamat belum diisi"}</p>
+                  <p className="text-gray-700">
+                    {user.alamat || "Alamat belum diisi"}
+                  </p>
                   {user.alamat && (
                     <Button
                       variant="ghost"
@@ -385,7 +429,9 @@ const UserDetail = () => {
                       <Calendar className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Bergabung Pada</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Bergabung Pada
+                      </p>
                       <p className="text-green-700 font-medium">
                         {formatDate(user.createdAt)}
                       </p>
@@ -399,7 +445,9 @@ const UserDetail = () => {
                       <Clock className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Terakhir Update</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Terakhir Update
+                      </p>
                       <p className="text-blue-700 font-medium">
                         {formatDate(user.updatedAt)}
                       </p>
@@ -424,7 +472,7 @@ const UserDetail = () => {
             <CardContent className="space-y-4">
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-3 relative">
-                  {user.status === 'verified' ? (
+                  {user.status === "verified" ? (
                     <div className="w-full h-full bg-green-100 rounded-full flex items-center justify-center">
                       <Shield className="w-8 h-8 text-green-600" />
                     </div>
@@ -434,22 +482,40 @@ const UserDetail = () => {
                     </div>
                   )}
                 </div>
-                <Badge className={`text-sm ${getStatusVariant(user.status || 'unverified')}`}>
-                  {getStatusLabel(user.status || 'unverified')}
+                <Badge
+                  className={`text-sm ${getStatusVariant(
+                    user.status || "unverified"
+                  )}`}
+                >
+                  {getStatusLabel(user.status || "unverified")}
                 </Badge>
               </div>
-              
+
               <div className="space-y-3 mt-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Verifikasi Email</span>
-                  <Badge variant={user.status === 'verified' ? 'default' : 'secondary'}>
-                    {user.status === 'verified' ? 'Terverifikasi' : 'Belum'}
+                  <span className="text-sm text-gray-600">
+                    Verifikasi Email
+                  </span>
+                  <Badge
+                    variant={
+                      user.status === "verified" ? "default" : "secondary"
+                    }
+                  >
+                    {user.status === "verified" ? "Terverifikasi" : "Belum"}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Profil Lengkap</span>
-                  <Badge variant={user.status !== 'incomplete_profile' ? 'default' : 'destructive'}>
-                    {user.status !== 'incomplete_profile' ? 'Lengkap' : 'Tidak Lengkap'}
+                  <Badge
+                    variant={
+                      user.status !== "incomplete_profile"
+                        ? "default"
+                        : "destructive"
+                    }
+                  >
+                    {user.status !== "incomplete_profile"
+                      ? "Lengkap"
+                      : "Tidak Lengkap"}
                   </Badge>
                 </div>
               </div>
@@ -480,7 +546,15 @@ const UserDetail = () => {
                 </div>
                 <div className="text-center p-3 bg-purple-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
-                    {[user.nama, user.email, user.noTelp, user.alamat, user.instansi].filter(Boolean).length}
+                    {
+                      [
+                        user.nama,
+                        user.email,
+                        user.noTelp,
+                        user.alamat,
+                        user.instansi,
+                      ].filter(Boolean).length
+                    }
                   </div>
                   <div className="text-sm text-gray-600">Data Terisi</div>
                 </div>
@@ -505,7 +579,9 @@ const UserDetail = () => {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ID User</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ID User
+                  </label>
                   <div className="flex items-center justify-between">
                     <p className="text-gray-900 font-mono text-sm bg-gray-100 p-2 rounded flex-1 mr-2">
                       {user._id}
@@ -520,10 +596,17 @@ const UserDetail = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status Akun</label>
-                  <Badge variant="outline" className={getStatusVariant(user.status || 'unverified')}>
-                    {getStatusIcon(user.status || 'unverified')}
-                    <span className="ml-1">{getStatusLabel(user.status || 'unverified')}</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Status Akun
+                  </label>
+                  <Badge
+                    variant="outline"
+                    className={getStatusVariant(user.status || "unverified")}
+                  >
+                    {getStatusIcon(user.status || "unverified")}
+                    <span className="ml-1">
+                      {getStatusLabel(user.status || "unverified")}
+                    </span>
                   </Badge>
                 </div>
               </div>
@@ -566,7 +649,9 @@ const UserDetail = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => copyToClipboard(window.location.href, "Link halaman")}
+                  onClick={() =>
+                    copyToClipboard(window.location.href, "Link halaman")
+                  }
                   className="w-full flex items-center justify-center gap-2"
                 >
                   <Eye className="w-4 h-4" />

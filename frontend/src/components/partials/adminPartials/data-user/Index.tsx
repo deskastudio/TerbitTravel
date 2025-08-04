@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "@/utils/image-helper";
 import {
   Table,
   TableBody,
@@ -26,7 +27,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -38,12 +46,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  Loader2, 
-  Search, 
-  MoreHorizontal, 
-  Trash, 
-  Eye, 
+import {
+  Loader2,
+  Search,
+  MoreHorizontal,
+  Trash,
+  Eye,
   Plus,
   FilterX,
   SlidersHorizontal,
@@ -52,8 +60,8 @@ import {
   UserX,
   Mail,
   Phone,
-  Building
-} from 'lucide-react';
+  Building,
+} from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 
 const ITEMS_PER_PAGE = 8;
@@ -67,54 +75,53 @@ const UserIndex = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isFilterActive, setIsFilterActive] = useState(false);
 
-  const {
-    users,
-    loading,
-    error,
-    deleteUser,
-    isDeleting
-  } = useUser({
+  const { users, loading, error, deleteUser, isDeleting } = useUser({
     page: currentPage,
     limit: ITEMS_PER_PAGE,
     search: searchTerm,
-    status: statusFilter === "all" ? undefined : statusFilter
+    status: statusFilter === "all" ? undefined : statusFilter,
   });
 
   // Memoized values for stats
-  const { totalUsers, verifiedUsers, unverifiedUsers, incompleteUsers } = useMemo(() => {
-    if (!users?.length) {
-      return {
-        totalUsers: 0,
-        verifiedUsers: 0,
-        unverifiedUsers: 0,
-        incompleteUsers: 0
-      };
-    }
+  const { totalUsers, verifiedUsers, unverifiedUsers, incompleteUsers } =
+    useMemo(() => {
+      if (!users?.length) {
+        return {
+          totalUsers: 0,
+          verifiedUsers: 0,
+          unverifiedUsers: 0,
+          incompleteUsers: 0,
+        };
+      }
 
-    return {
-      totalUsers: users.length,
-      verifiedUsers: users.filter(u => u.status === 'verified').length,
-      unverifiedUsers: users.filter(u => u.status === 'unverified').length,
-      incompleteUsers: users.filter(u => u.status === 'incomplete_profile').length
-    };
-  }, [users]);
+      return {
+        totalUsers: users.length,
+        verifiedUsers: users.filter((u) => u.status === "verified").length,
+        unverifiedUsers: users.filter((u) => u.status === "unverified").length,
+        incompleteUsers: users.filter((u) => u.status === "incomplete_profile")
+          .length,
+      };
+    }, [users]);
 
   // Filtered users
   const filteredUsers = useMemo(() => {
-    return users?.filter((user) => {
-      const matchesSearch = 
-        user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.instansi?.toLowerCase().includes(searchTerm.toLowerCase());
+    return (
+      users?.filter((user) => {
+        const matchesSearch =
+          user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.instansi?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesStatus = statusFilter === "all" || user.status === statusFilter;
+        const matchesStatus =
+          statusFilter === "all" || user.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
-    }) || [];
+        return matchesSearch && matchesStatus;
+      }) || []
+    );
   }, [users, searchTerm, statusFilter]);
 
   // Check if filters are active
-  useState(() => {
+  useEffect(() => {
     setIsFilterActive(statusFilter !== "all");
   }, [statusFilter]);
 
@@ -196,11 +203,15 @@ const UserIndex = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Kelola semua data pengguna dan akun user</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            User Management
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Kelola semua data pengguna dan akun user
+          </p>
         </div>
-        <Button 
-          onClick={() => navigate('/admin/user/add')}
+        <Button
+          onClick={() => navigate("/admin/user/add")}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="h-4 w-4" />
@@ -217,7 +228,9 @@ const UserIndex = () => {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{totalUsers}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {totalUsers}
+                </div>
                 <div className="text-sm text-gray-600">Total User</div>
               </div>
             </div>
@@ -230,7 +243,9 @@ const UserIndex = () => {
                 <UserCheck className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{verifiedUsers}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {verifiedUsers}
+                </div>
                 <div className="text-sm text-gray-600">Terverifikasi</div>
               </div>
             </div>
@@ -243,7 +258,9 @@ const UserIndex = () => {
                 <UserX className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{unverifiedUsers}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {unverifiedUsers}
+                </div>
                 <div className="text-sm text-gray-600">Belum Verifikasi</div>
               </div>
             </div>
@@ -256,7 +273,9 @@ const UserIndex = () => {
                 <Search className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{filteredUsers.length}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {filteredUsers.length}
+                </div>
                 <div className="text-sm text-gray-600">Hasil Filter</div>
               </div>
             </div>
@@ -283,7 +302,9 @@ const UserIndex = () => {
                 <Button variant="outline" className="flex items-center gap-2">
                   <SlidersHorizontal className="h-4 w-4" />
                   Filter
-                  {isFilterActive && <span className="h-2 w-2 rounded-full bg-blue-600"></span>}
+                  {isFilterActive && (
+                    <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                  )}
                 </Button>
               </SheetTrigger>
               <SheetContent>
@@ -292,8 +313,13 @@ const UserIndex = () => {
                 </SheetHeader>
                 <div className="py-4 space-y-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Status Verifikasi</label>
-                    <Select value={statusFilter} onValueChange={handleStatusFilter}>
+                    <label className="text-sm font-medium">
+                      Status Verifikasi
+                    </label>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={handleStatusFilter}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih status" />
                       </SelectTrigger>
@@ -322,8 +348,8 @@ const UserIndex = () => {
                   </div>
                 </div>
                 <SheetFooter>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={resetFilters}
                     className="w-full flex items-center gap-2"
                   >
@@ -364,8 +390,12 @@ const UserIndex = () => {
                       <TableCell colSpan={6} className="text-center py-8">
                         <div className="flex flex-col items-center gap-2">
                           <div className="text-4xl">👥</div>
-                          <p className="text-gray-500">Tidak ada user yang ditemukan</p>
-                          <p className="text-sm text-gray-400">Coba ubah filter pencarian Anda</p>
+                          <p className="text-gray-500">
+                            Tidak ada user yang ditemukan
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Coba ubah filter pencarian Anda
+                          </p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -377,11 +407,11 @@ const UserIndex = () => {
                             {user.foto ? (
                               <div className="w-10 h-10 relative overflow-hidden rounded-full bg-gray-100">
                                 <img
-                                  src={`http://localhost:5000${user.foto}`}
+                                  src={getImageUrl(user.foto)}
                                   alt={user.nama}
                                   className="w-full h-full object-cover"
                                   onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
+                                    e.currentTarget.style.display = "none";
                                   }}
                                 />
                               </div>
@@ -391,8 +421,12 @@ const UserIndex = () => {
                               </div>
                             )}
                             <div>
-                              <div className="font-medium text-gray-900">{user.nama}</div>
-                              <div className="text-sm text-gray-500">ID: {user._id.slice(-8)}</div>
+                              <div className="font-medium text-gray-900">
+                                {user.nama}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                ID: {user._id.slice(-8)}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
@@ -411,24 +445,32 @@ const UserIndex = () => {
                         <TableCell>
                           <div className="flex items-center gap-1 text-gray-600">
                             <Building className="h-3 w-3" />
-                            <span className="text-sm">{user.instansi || "-"}</span>
+                            <span className="text-sm">
+                              {user.instansi || "-"}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={`text-xs ${getStatusVariant(user.status || 'unverified')}`}>
-                            {getStatusLabel(user.status || 'unverified')}
+                          <Badge
+                            className={`text-xs ${getStatusVariant(
+                              user.status || "unverified"
+                            )}`}
+                          >
+                            {getStatusLabel(user.status || "unverified")}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm text-gray-600">
-                            {user.createdAt 
-                              ? new Date(user.createdAt).toLocaleDateString('id-ID', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                  year: 'numeric'
-                                })
-                              : "-"
-                            }
+                            {user.createdAt
+                              ? new Date(user.createdAt).toLocaleDateString(
+                                  "id-ID",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  }
+                                )
+                              : "-"}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -442,11 +484,15 @@ const UserIndex = () => {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Aksi</DropdownMenuLabel>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => navigate(`/admin/user/${user._id}`)}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  navigate(`/admin/user/${user._id}`)
+                                }
+                              >
                                 <Eye className="mr-2 h-4 w-4" />
                                 Lihat detail
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 onClick={() => handleDeleteClick(user._id)}
                                 className="text-red-600"
                               >
@@ -483,17 +529,21 @@ const UserIndex = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus user ini? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait.
+              Apakah Anda yakin ingin menghapus user ini? Tindakan ini tidak
+              dapat dibatalkan dan akan menghapus semua data terkait.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleConfirmDelete}
               className="bg-red-600 hover:bg-red-700"
               disabled={isDeleting}

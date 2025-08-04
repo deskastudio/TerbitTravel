@@ -1,19 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -38,14 +33,28 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Upload, User, ImageIcon, X, Eye, Plus } from 'lucide-react';
-import { IArticleInput } from '@/types/article.types';
-import { useArticle, useCategory } from '@/hooks/use-article';
-import AddCategory from './AddCategory';
-import { useToast } from '@/hooks/use-toast';
+import {
+  ArrowLeft,
+  Upload,
+  User,
+  ImageIcon,
+  X,
+  Eye,
+  Plus,
+  Loader2,
+} from "lucide-react";
+import { IArticleInput } from "@/types/article.types";
+import { useArticle, useCategory } from "@/hooks/use-article";
+import AddCategory from "./AddCategory";
+import { useToast } from "@/hooks/use-toast";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
 
 // Schema validasi untuk artikel
 const articleSchema = z.object({
@@ -53,13 +62,13 @@ const articleSchema = z.object({
   penulis: z.string().min(1, "Nama penulis wajib diisi"),
   isi: z.string().min(100, "Konten artikel minimal 100 karakter"),
   kategori: z.string().min(1, "Kategori wajib dipilih"),
-  gambarUtama: z.instanceof(File).refine(
-    (file) => file.size <= MAX_FILE_SIZE,
-    "Ukuran gambar maksimal 5MB"
-  ).refine(
-    (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
-    "Hanya format JPG, PNG, WEBP yang didukung"
-  ),
+  gambarUtama: z
+    .instanceof(File)
+    .refine((file) => file.size <= MAX_FILE_SIZE, "Ukuran gambar maksimal 5MB")
+    .refine(
+      (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
+      "Hanya format JPG, PNG, WEBP yang didukung"
+    ),
 });
 
 type FormData = z.infer<typeof articleSchema>;
@@ -69,28 +78,30 @@ export default function ArticleAddPage() {
   const { createArticle, isCreating } = useArticle();
   const { categories, isLoadingCategories, refreshCategories } = useCategory();
   const { toast } = useToast();
-  
+
   // State untuk gambar
-  const [mainImagePreview, setMainImagePreview] = useState<string>('');
+  const [mainImagePreview, setMainImagePreview] = useState<string>("");
   const [additionalImages, setAdditionalImages] = useState<File[]>([]);
-  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<
+    string[]
+  >([]);
   const [dragActive, setDragActive] = useState(false);
 
   // Form
   const form = useForm<FormData>({
     resolver: zodResolver(articleSchema),
     defaultValues: {
-      judul: '',
-      penulis: '',
-      isi: '',
-      kategori: '',
+      judul: "",
+      penulis: "",
+      isi: "",
+      kategori: "",
     },
   });
 
   // Handle main image upload
   const handleMainImageUpload = (files: FileList | File[]) => {
     const file = Array.from(files)[0];
-    
+
     if (!file) return;
 
     if (file.size > MAX_FILE_SIZE) {
@@ -102,7 +113,7 @@ export default function ArticleAddPage() {
 
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
       form.setError("gambarUtama", {
-        message: "Format file tidak didukung"
+        message: "Format file tidak didukung",
       });
       return;
     }
@@ -130,7 +141,7 @@ export default function ArticleAddPage() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files) {
       handleMainImageUpload(e.dataTransfer.files);
     }
@@ -147,11 +158,13 @@ export default function ArticleAddPage() {
   };
 
   // Handle additional images
-  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAdditionalImagesChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
-      
-      const validFiles = filesArray.filter(file => {
+
+      const validFiles = filesArray.filter((file) => {
         if (file.size > MAX_FILE_SIZE) {
           toast({
             variant: "destructive",
@@ -160,7 +173,7 @@ export default function ArticleAddPage() {
           });
           return false;
         }
-        
+
         if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
           toast({
             variant: "destructive",
@@ -169,21 +182,21 @@ export default function ArticleAddPage() {
           });
           return false;
         }
-        
+
         return true;
       });
-      
+
       if (validFiles.length === 0) return;
-      
-      setAdditionalImages(prev => [...prev, ...validFiles]);
-      
-      validFiles.forEach(file => {
+
+      setAdditionalImages((prev) => [...prev, ...validFiles]);
+
+      validFiles.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
-            setAdditionalImagePreviews(prev => [
-              ...prev, 
-              event.target!.result as string
+            setAdditionalImagePreviews((prev) => [
+              ...prev,
+              event.target!.result as string,
             ]);
           }
         };
@@ -194,12 +207,14 @@ export default function ArticleAddPage() {
 
   const removeMainImage = () => {
     form.setValue("gambarUtama", undefined as any);
-    setMainImagePreview('');
+    setMainImagePreview("");
   };
 
   const removeAdditionalImage = (index: number) => {
     setAdditionalImages(additionalImages.filter((_, i) => i !== index));
-    setAdditionalImagePreviews(additionalImagePreviews.filter((_, i) => i !== index));
+    setAdditionalImagePreviews(
+      additionalImagePreviews.filter((_, i) => i !== index)
+    );
   };
 
   // Handle category added
@@ -223,28 +238,31 @@ export default function ArticleAddPage() {
         });
         return;
       }
-      
+
       const articleData: IArticleInput = {
         ...data,
         gambarUtama: data.gambarUtama,
-        gambarTambahan: additionalImages.length > 0 ? additionalImages : undefined,
+        gambarTambahan:
+          additionalImages.length > 0 ? additionalImages : undefined,
       };
 
       const success = await createArticle(articleData);
-      
+
       if (success) {
         toast({
           title: "Sukses!",
           description: "Artikel berhasil ditambahkan.",
         });
-        navigate('/admin/article');
+        navigate("/admin/article");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
       toast({
         variant: "destructive",
         title: "Error!",
-        description: `Gagal menambahkan artikel: ${error.message || "Terjadi kesalahan"}`,
+        description: `Gagal menambahkan artikel: ${
+          error.message || "Terjadi kesalahan"
+        }`,
       });
     }
   };
@@ -255,8 +273,8 @@ export default function ArticleAddPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <Button 
-              variant="link" 
+            <Button
+              variant="link"
               onClick={() => navigate("/admin/article")}
               className="p-0 text-blue-600 hover:text-blue-800"
             >
@@ -265,7 +283,9 @@ export default function ArticleAddPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage className="text-gray-600">Tambah Artikel</BreadcrumbPage>
+            <BreadcrumbPage className="text-gray-600">
+              Tambah Artikel
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -273,8 +293,12 @@ export default function ArticleAddPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tambah Artikel Baru</h1>
-          <p className="text-gray-600 mt-1">Buat artikel blog dan konten menarik untuk website</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Tambah Artikel Baru
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Buat artikel blog dan konten menarik untuk website
+          </p>
         </div>
         <Button
           variant="outline"
@@ -306,11 +330,13 @@ export default function ArticleAddPage() {
                     name="judul"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Judul Artikel</FormLabel>
+                        <FormLabel className="text-sm font-medium">
+                          Judul Artikel
+                        </FormLabel>
                         <FormControl>
-                          <Input 
-                            placeholder="contoh: Tips Traveling ke Bali yang Menarik" 
-                            {...field} 
+                          <Input
+                            placeholder="contoh: Tips Traveling ke Bali yang Menarik"
+                            {...field}
                             className="focus:ring-2 focus:ring-blue-500"
                           />
                         </FormControl>
@@ -325,12 +351,14 @@ export default function ArticleAddPage() {
                       name="penulis"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium">Nama Penulis</FormLabel>
+                          <FormLabel className="text-sm font-medium">
+                            Nama Penulis
+                          </FormLabel>
                           <FormControl>
                             <div className="relative">
-                              <Input 
-                                placeholder="contoh: John Doe" 
-                                {...field} 
+                              <Input
+                                placeholder="contoh: John Doe"
+                                {...field}
                                 className="focus:ring-2 focus:ring-blue-500"
                               />
                               <User className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -347,15 +375,17 @@ export default function ArticleAddPage() {
                       render={({ field }) => (
                         <FormItem>
                           <div className="flex justify-between items-center">
-                            <FormLabel className="text-sm font-medium">Kategori</FormLabel>
-                            <AddCategory 
-                              variant="inline" 
-                              onSuccess={handleCategoryAdded} 
+                            <FormLabel className="text-sm font-medium">
+                              Kategori
+                            </FormLabel>
+                            <AddCategory
+                              variant="inline"
+                              onSuccess={handleCategoryAdded}
                             />
                           </div>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value} 
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
                             disabled={isLoadingCategories}
                           >
                             <FormControl>
@@ -370,13 +400,17 @@ export default function ArticleAddPage() {
                                 </div>
                               ) : categories && categories.length > 0 ? (
                                 categories.map((category) => (
-                                  <SelectItem key={category._id} value={category._id}>
+                                  <SelectItem
+                                    key={category._id}
+                                    value={category._id}
+                                  >
                                     {category.title}
                                   </SelectItem>
                                 ))
                               ) : (
                                 <div className="text-center p-2 text-muted-foreground">
-                                  Tidak ada kategori. Klik "Tambah Kategori Baru".
+                                  Tidak ada kategori. Klik "Tambah Kategori
+                                  Baru".
                                 </div>
                               )}
                             </SelectContent>
@@ -403,17 +437,20 @@ export default function ArticleAddPage() {
                     name="isi"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm font-medium">Isi Artikel</FormLabel>
+                        <FormLabel className="text-sm font-medium">
+                          Isi Artikel
+                        </FormLabel>
                         <FormControl>
-                          <Textarea 
-                            placeholder="Tulis konten artikel yang menarik dan informatif..." 
-                            rows={12} 
-                            {...field} 
+                          <Textarea
+                            placeholder="Tulis konten artikel yang menarik dan informatif..."
+                            rows={12}
+                            {...field}
                             className="focus:ring-2 focus:ring-green-500"
                           />
                         </FormControl>
                         <FormDescription>
-                          Minimal 100 karakter. Saat ini: {field.value?.length || 0} karakter
+                          Minimal 100 karakter. Saat ini:{" "}
+                          {field.value?.length || 0} karakter
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -446,11 +483,11 @@ export default function ArticleAddPage() {
                               {/* Upload Area */}
                               <div
                                 className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                                  dragActive 
-                                    ? 'border-purple-500 bg-purple-50' 
-                                    : !field.value 
-                                      ? 'border-gray-300 hover:border-gray-400' 
-                                      : 'border-gray-200 bg-gray-50'
+                                  dragActive
+                                    ? "border-purple-500 bg-purple-50"
+                                    : !field.value
+                                    ? "border-gray-300 hover:border-gray-400"
+                                    : "border-gray-200 bg-gray-50"
                                 }`}
                                 onDragEnter={handleDrag}
                                 onDragLeave={handleDrag}
@@ -465,7 +502,13 @@ export default function ArticleAddPage() {
                                         <Button
                                           type="button"
                                           variant="outline"
-                                          onClick={() => document.getElementById('main-image-upload')?.click()}
+                                          onClick={() =>
+                                            document
+                                              .getElementById(
+                                                "main-image-upload"
+                                              )
+                                              ?.click()
+                                          }
                                           className="mb-2"
                                         >
                                           Pilih Gambar Utama
@@ -478,7 +521,7 @@ export default function ArticleAddPage() {
                                     <input
                                       id="main-image-upload"
                                       type="file"
-                                      accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                                      accept={ACCEPTED_IMAGE_TYPES.join(",")}
                                       onChange={handleFileInputChange}
                                       className="hidden"
                                     />
@@ -510,8 +553,8 @@ export default function ArticleAddPage() {
                                   >
                                     <X className="h-3 w-3" />
                                   </Button>
-                                  <Badge 
-                                    variant="secondary" 
+                                  <Badge
+                                    variant="secondary"
                                     className="absolute bottom-1 left-1 text-xs"
                                   >
                                     Utama
@@ -521,7 +564,8 @@ export default function ArticleAddPage() {
                             </div>
                           </FormControl>
                           <FormDescription>
-                            Gambar utama wajib (maks. 5MB, format: JPG, PNG, WEBP)
+                            Gambar utama wajib (maks. 5MB, format: JPG, PNG,
+                            WEBP)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -531,12 +575,16 @@ export default function ArticleAddPage() {
 
                   {/* Additional Images */}
                   <div>
-                    <FormLabel className="text-sm font-medium">Gambar Tambahan (Opsional)</FormLabel>
+                    <FormLabel className="text-sm font-medium">
+                      Gambar Tambahan (Opsional)
+                    </FormLabel>
                     <div className="flex flex-wrap gap-4 mt-4">
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => document.getElementById('additional-images')?.click()}
+                        onClick={() =>
+                          document.getElementById("additional-images")?.click()
+                        }
                         className="h-24 w-24 flex flex-col items-center justify-center border-dashed"
                       >
                         <Plus className="h-6 w-6 mb-1" />
@@ -548,7 +596,7 @@ export default function ArticleAddPage() {
                         onChange={handleAdditionalImagesChange}
                         className="hidden"
                         multiple
-                        accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                        accept={ACCEPTED_IMAGE_TYPES.join(",")}
                       />
                       {additionalImagePreviews.map((preview, index) => (
                         <div key={index} className="relative group">
@@ -568,8 +616,8 @@ export default function ArticleAddPage() {
                           >
                             <X className="h-3 w-3" />
                           </Button>
-                          <Badge 
-                            variant="outline" 
+                          <Badge
+                            variant="outline"
                             className="absolute bottom-1 left-1 text-xs"
                           >
                             {index + 1}
@@ -596,12 +644,14 @@ export default function ArticleAddPage() {
                     >
                       Batal
                     </Button>
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       disabled={isCreating || !form.watch("gambarUtama")}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
-                      {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {isCreating && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       Simpan Artikel
                     </Button>
                   </div>
@@ -620,19 +670,27 @@ export default function ArticleAddPage() {
             <CardContent className="space-y-3">
               <div className="flex items-start gap-2">
                 <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-sm text-gray-600">Gunakan judul yang menarik dan SEO-friendly</p>
+                <p className="text-sm text-gray-600">
+                  Gunakan judul yang menarik dan SEO-friendly
+                </p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-2 h-2 bg-green-600 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-sm text-gray-600">Tulis konten yang informatif dan engaging</p>
+                <p className="text-sm text-gray-600">
+                  Tulis konten yang informatif dan engaging
+                </p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-2 h-2 bg-purple-600 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-sm text-gray-600">Pilih gambar berkualitas tinggi yang relevan</p>
+                <p className="text-sm text-gray-600">
+                  Pilih gambar berkualitas tinggi yang relevan
+                </p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-2 h-2 bg-orange-600 rounded-full mt-2 flex-shrink-0"></div>
-                <p className="text-sm text-gray-600">Kategorikan artikel dengan tepat</p>
+                <p className="text-sm text-gray-600">
+                  Kategorikan artikel dengan tepat
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -647,40 +705,54 @@ export default function ArticleAddPage() {
             <CardContent>
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Judul</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Judul
+                  </label>
                   <p className="text-sm font-medium">
                     {form.watch("judul") || "Belum diisi"}
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Penulis</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Penulis
+                  </label>
                   <p className="text-sm">
                     {form.watch("penulis") || "Belum diisi"}
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Kategori
+                  </label>
                   <p className="text-sm">
-                    {form.watch("kategori") 
-                      ? categories?.find(c => c._id === form.watch("kategori"))?.title 
+                    {form.watch("kategori")
+                      ? categories?.find(
+                          (c) => c._id === form.watch("kategori")
+                        )?.title
                       : "Belum dipilih"}
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Konten</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Konten
+                  </label>
                   <p className="text-sm">
                     {form.watch("isi")?.length || 0} karakter
                   </p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">Gambar</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Gambar
+                  </label>
                   <div className="flex items-center gap-2">
-                    <Badge variant={form.watch("gambarUtama") ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        form.watch("gambarUtama") ? "default" : "secondary"
+                      }
+                    >
                       Utama: {form.watch("gambarUtama") ? "✓" : "✗"}
                     </Badge>
-                    <Badge variant="outline">
-                      +{additionalImages.length}
-                    </Badge>
+                    <Badge variant="outline">+{additionalImages.length}</Badge>
                   </div>
                 </div>
               </div>
