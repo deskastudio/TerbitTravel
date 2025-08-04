@@ -38,11 +38,11 @@ const PORT = process.env.PORT || 5000;
 // ===== CORS CONFIGURATION - PERBAIKAN LENGKAP =====
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://127.0.0.1:5173", 
+  "http://127.0.0.1:5173",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   // ✅ PERBAIKAN: URL ngrok yang benar dari error log
-  "https://7957-180-254-75-63.ngrok-free.app"
+  "https://7957-180-254-75-63.ngrok-free.app",
 ];
 
 // ✅ TAMBAHAN: Dinamis ngrok atau localtunnel dari environment
@@ -65,12 +65,15 @@ if (process.env.ALLOWED_ORIGINS) {
 const uniqueAllowedOrigins = [...new Set(allowedOrigins)];
 
 // Debug mode
-const corsDebug = process.env.CORS_DEBUG === 'true';
+const corsDebug = process.env.CORS_DEBUG === "true";
 if (corsDebug) {
-  console.log('🔍 CORS Debug Mode: ON');
-  console.log('🌐 CORS Debug - Allowed Origins:', uniqueAllowedOrigins);
+  console.log("🔍 CORS Debug Mode: ON");
+  console.log("🌐 CORS Debug - Allowed Origins:", uniqueAllowedOrigins);
 } else {
-  console.log('🌐 CORS Debug - Allowed Origins count:', uniqueAllowedOrigins.length);
+  console.log(
+    "🌐 CORS Debug - Allowed Origins count:",
+    uniqueAllowedOrigins.length
+  );
 }
 
 app.use(
@@ -79,13 +82,14 @@ app.use(
       if (corsDebug) {
         console.log(`🔍 CORS Check - Request Origin: "${origin}"`);
       }
-      
+
       // ✅ Allow no origin (Postman, mobile apps, server-to-server)
       if (!origin) {
-        if (corsDebug) console.log("✅ CORS allowed: No origin (server-to-server request)");
+        if (corsDebug)
+          console.log("✅ CORS allowed: No origin (server-to-server request)");
         return callback(null, true);
       }
-      
+
       // ✅ IMPROVEMENT: Enable all origins during debug mode
       if (corsDebug && process.env.NODE_ENV !== "production") {
         console.log(`🔧 CORS Debug Mode: Allowing all origins`);
@@ -107,11 +111,13 @@ app.use(
           origin.includes("ngrok") ||
           origin.includes(".loca.lt"))
       ) {
-        console.log(`✅ CORS allowed: Tunnel domain (ngrok/localtunnel) - ${origin}`);
+        console.log(
+          `✅ CORS allowed: Tunnel domain (ngrok/localtunnel) - ${origin}`
+        );
         return callback(null, true);
       }
 
-      // ✅ Allow localhost variations in development  
+      // ✅ Allow localhost variations in development
       if (
         process.env.NODE_ENV !== "production" &&
         (origin.startsWith("http://localhost:") ||
@@ -134,47 +140,58 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
       "Content-Type",
-      "Authorization", 
+      "Authorization",
       "X-Requested-With",
       "Accept",
       "Origin",
       "Access-Control-Request-Method",
       "Access-Control-Request-Headers",
-      "ngrok-skip-browser-warning" // ✅ TAMBAHAN untuk ngrok
+      "ngrok-skip-browser-warning", // ✅ TAMBAHAN untuk ngrok
     ],
     exposedHeaders: [
       "set-cookie",
       "access-control-allow-origin",
       "access-control-allow-credentials",
       "access-control-allow-methods",
-      "access-control-allow-headers"
+      "access-control-allow-headers",
     ],
     preflightContinue: false,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
   })
 );
 
 // ✅ PERBAIKAN: Middleware tambahan untuk tunnel headers (ngrok/localtunnel)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const corsDebug = process.env.CORS_DEBUG === 'true';
-  
+  const corsDebug = process.env.CORS_DEBUG === "true";
+
   // ✅ Set CORS headers secara manual untuk tunnel services atau saat debug mode
-  if (corsDebug || (origin && (origin.includes('ngrok') || origin.includes('loca.lt')))) {
-    res.header("Access-Control-Allow-Origin", origin || '*');
+  if (
+    corsDebug ||
+    (origin && (origin.includes("ngrok") || origin.includes("loca.lt")))
+  ) {
+    res.header("Access-Control-Allow-Origin", origin || "*");
     res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS,PATCH");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, ngrok-skip-browser-warning");
-    
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,PUT,POST,DELETE,OPTIONS,PATCH"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization, ngrok-skip-browser-warning"
+    );
+
     if (corsDebug) {
-      console.log(`🔧 Manual CORS headers set for: ${origin || '*'} (Debug Mode)`);
+      console.log(
+        `🔧 Manual CORS headers set for: ${origin || "*"} (Debug Mode)`
+      );
     } else {
       console.log(`🔧 Manual CORS headers set for tunnel service: ${origin}`);
     }
   }
-  
+
   // ✅ Handle preflight OPTIONS requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     console.log(`✅ Handling OPTIONS preflight for ${req.path}`);
     res.sendStatus(200);
   } else {
@@ -191,11 +208,18 @@ app.use((req, res, next) => {
   if (req.path.includes("admin") || req.path.includes("login")) {
     console.log(`\n📨 ${req.method} ${req.path}`);
     console.log(`🌐 Origin: ${req.headers.origin}`);
-    console.log(`📋 Headers:`, JSON.stringify({
-      'content-type': req.headers['content-type'],
-      'authorization': req.headers['authorization'] ? 'Bearer ***' : 'None',
-      'origin': req.headers['origin']
-    }, null, 2));
+    console.log(
+      `📋 Headers:`,
+      JSON.stringify(
+        {
+          "content-type": req.headers["content-type"],
+          authorization: req.headers["authorization"] ? "Bearer ***" : "None",
+          origin: req.headers["origin"],
+        },
+        null,
+        2
+      )
+    );
     if (req.body && Object.keys(req.body).length > 0) {
       console.log(`📤 Body:`, JSON.stringify(req.body, null, 2));
     }
@@ -204,17 +228,17 @@ app.use((req, res, next) => {
 });
 
 // ✅ TAMBAHAN: Middleware khusus untuk admin routes
-app.use('/admin', (req, res, next) => {
+app.use("/admin", (req, res, next) => {
   console.log(`\n🔑 Admin route accessed: ${req.method} ${req.path}`);
   console.log(`🌐 Origin: ${req.headers.origin}`);
-  console.log(`📋 Content-Type: ${req.headers['content-type']}`);
-  
+  console.log(`📋 Content-Type: ${req.headers["content-type"]}`);
+
   // Set CORS headers khusus untuk admin routes
   if (req.headers.origin) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Credentials", "true");
   }
-  
+
   next();
 });
 
@@ -230,13 +254,13 @@ app.get("/api/health", (req, res) => {
     endpoints: {
       admin_login: "/admin/login",
       admin_auth: "/admin",
-      health: "/api/health"
-    }
+      health: "/api/health",
+    },
   });
 });
 
 // ✅ PERBAIKAN ROUTES - Setup routes
-console.log('🔧 Setting up routes...');
+console.log("🔧 Setting up routes...");
 
 // Routes
 app.use("/user", userRoutes);

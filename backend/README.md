@@ -17,6 +17,7 @@ powershell -File start.ps1
 ```
 
 Script ini akan:
+
 1. Memperbarui konfigurasi CORS
 2. Menjalankan server backend di http://localhost:5000
 3. Membuat tunnel dengan localtunnel.me untuk akses eksternal

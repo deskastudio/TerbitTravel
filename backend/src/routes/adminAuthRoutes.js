@@ -7,11 +7,11 @@ import {
   verifyAdminToken,
   updateAdminProfile,
   changeAdminPassword,
-  createAdminAccount
+  createAdminAccount,
 } from "../controllers/adminAuthController.js";
 import {
   adminAuthMiddleware,
-  requireSuperAdmin
+  requireSuperAdmin,
 } from "../middleware/adminAuthMiddleware.js";
 import {
   validateAdminLogin,
@@ -19,7 +19,7 @@ import {
   validateAdminPasswordChange,
   validateCreateAdmin,
   loginRateLimit,
-  sanitizeAdminInput
+  sanitizeAdminInput,
 } from "../middleware/adminAuthValidator.js";
 
 const router = express.Router();
@@ -78,7 +78,8 @@ const router = express.Router();
  *       429:
  *         description: Too many attempts
  */
-router.post("/login", 
+router.post(
+  "/login",
   loginRateLimit,
   sanitizeAdminInput,
   validateAdminLogin,
@@ -99,10 +100,7 @@ router.post("/login",
  *       401:
  *         description: Unauthorized
  */
-router.post("/logout", 
-  adminAuthMiddleware, 
-  logoutAdmin
-);
+router.post("/logout", adminAuthMiddleware, logoutAdmin);
 
 /**
  * @swagger
@@ -127,10 +125,7 @@ router.post("/logout",
  *       404:
  *         description: Admin not found
  */
-router.get("/profile", 
-  adminAuthMiddleware, 
-  getAdminProfile
-);
+router.get("/profile", adminAuthMiddleware, getAdminProfile);
 
 /**
  * @swagger
@@ -146,10 +141,7 @@ router.get("/profile",
  *       401:
  *         description: Invalid or expired token
  */
-router.get("/verify-token", 
-  adminAuthMiddleware, 
-  verifyAdminToken
-);
+router.get("/verify-token", adminAuthMiddleware, verifyAdminToken);
 
 /**
  * @swagger
@@ -187,7 +179,8 @@ router.get("/verify-token",
  *       500:
  *         description: Server error
  */
-router.post("/create", 
+router.post(
+  "/create",
   validateCreateAdmin,
   sanitizeAdminInput,
   createAdminAccount

@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Calendar,
@@ -21,19 +21,20 @@ import {
   ParkingCircle,
   Coffee,
   Bed,
-  Bus
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useDestination } from "@/hooks/use-destination"
-import { IDestination } from "@/types/destination.types"
+  Bus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDestination } from "@/hooks/use-destination";
+import { IDestination } from "@/types/destination.types";
+import { getImageUrl } from "@/utils/image-helper";
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -42,8 +43,8 @@ const formatCurrency = (amount: number): string => {
     currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
-}
+  }).format(amount);
+};
 
 // Komponen Skeleton untuk loading
 const DetailSkeleton = () => {
@@ -71,8 +72,8 @@ const DetailSkeleton = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Data default untuk melengkapi data dari API
 const defaultData = {
@@ -81,13 +82,15 @@ const defaultData = {
   Dikelilingi oleh pegunungan dan hutan yang asri, tempat ini menawarkan pengalaman yang berbeda dari kehidupan perkotaan yang sibuk. Cocok untuk liburan keluarga, bulan madu, atau perjalanan solo.
   
   Berbagai aktivitas seperti hiking, berenang, berkemah, fotografi, dan menikmati budaya lokal dapat dilakukan di sini. Jangan lupa untuk mencoba kuliner khas daerah yang lezat selama kunjungan Anda.`,
-  
-  alamatLengkap: "Alamat lengkap akan ditampilkan berdasarkan data lokasi dari API",
-  
-  jamOperasional: "Buka 24 jam (beberapa atraksi memiliki jam operasional tersendiri)",
-  
+
+  alamatLengkap:
+    "Alamat lengkap akan ditampilkan berdasarkan data lokasi dari API",
+
+  jamOperasional:
+    "Buka 24 jam (beberapa atraksi memiliki jam operasional tersendiri)",
+
   hargaTiket: "Gratis (beberapa atraksi mungkin memerlukan tiket masuk)",
-  
+
   fasilitas: [
     "Area Parkir",
     "Toilet Umum",
@@ -98,7 +101,7 @@ const defaultData = {
     "Tempat Ibadah",
     "Pemandu Wisata",
   ],
-  
+
   tips: [
     "Kunjungi pada pagi hari untuk menghindari keramaian",
     "Bawa pakaian hangat karena suhu bisa berubah-ubah",
@@ -106,7 +109,7 @@ const defaultData = {
     "Bawa air minum yang cukup selama perjalanan",
     "Gunakan alas kaki yang nyaman untuk berjalan-jalan",
   ],
-  
+
   ulasan: [
     {
       id: "u1",
@@ -136,13 +139,13 @@ const defaultData = {
         "Tempat yang sempurna untuk liburan keluarga. Penduduk lokalnya juga sangat ramah dan membantu.",
     },
   ],
-  
+
   ratingStats: {
     total: 256,
     average: 4.7,
     distribution: [5, 10, 15, 86, 140],
   },
-  
+
   galeri: [
     "/placeholder.svg?height=600&width=800",
     "/placeholder.svg?height=600&width=800",
@@ -150,7 +153,7 @@ const defaultData = {
     "/placeholder.svg?height=600&width=800",
     "/placeholder.svg?height=600&width=800",
   ],
-  
+
   aktivitas: [
     "Menikmati Pemandangan Alam",
     "Berfoto di Spot Instagramable",
@@ -158,41 +161,39 @@ const defaultData = {
     "Berinteraksi dengan Penduduk Setempat",
     "Mengikuti Tur Budaya",
   ],
-  
+
   waktuTerbaik: {
     musim: "Musim Kemarau (Mei-September)",
     jam: "Pagi (06.00-10.00) atau Sore (15.00-18.00)",
   },
-  
+
   transportasi: [
     "Kendaraan Pribadi",
     "Bus Umum",
     "Ojek Online",
     "Rental Kendaraan",
   ],
-  
-  akomodasi: [
-    "Hotel",
-    "Homestay",
-    "Villa",
-    "Penginapan",
-  ],
-  
+
+  akomodasi: ["Hotel", "Homestay", "Villa", "Penginapan"],
+
   faq: [
     {
       pertanyaan: "Berapa harga tiket masuk?",
-      jawaban: "Tiket masuk bervariasi tergantung musim dan hari. Harga tiket dewasa sekitar Rp20.000-Rp50.000, sementara anak-anak di bawah 5 tahun gratis.",
+      jawaban:
+        "Tiket masuk bervariasi tergantung musim dan hari. Harga tiket dewasa sekitar Rp20.000-Rp50.000, sementara anak-anak di bawah 5 tahun gratis.",
     },
     {
       pertanyaan: "Apakah tempat ini cocok untuk anak-anak?",
-      jawaban: "Ya, tempat ini cocok untuk semua usia. Terdapat area bermain untuk anak-anak dan jalur yang mudah diakses.",
+      jawaban:
+        "Ya, tempat ini cocok untuk semua usia. Terdapat area bermain untuk anak-anak dan jalur yang mudah diakses.",
     },
     {
       pertanyaan: "Apakah tersedia pemandu wisata?",
-      jawaban: "Ya, tersedia jasa pemandu wisata lokal yang dapat memberi informasi lebih detail tentang sejarah dan keunikan tempat ini.",
+      jawaban:
+        "Ya, tersedia jasa pemandu wisata lokal yang dapat memberi informasi lebih detail tentang sejarah dan keunikan tempat ini.",
     },
   ],
-}
+};
 
 // Interface untuk destinasi dengan data UI
 interface EnhancedDestination extends IDestination {
@@ -230,14 +231,15 @@ interface EnhancedDestination extends IDestination {
 }
 
 export default function DestinationDetail() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const { useDestinationDetail } = useDestination()
-  const { destination, isLoading, error } = useDestinationDetail(id || "")
-  
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [enhancedDestination, setEnhancedDestination] = useState<EnhancedDestination | null>(null)
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { useDestinationDetail } = useDestination();
+  const { destination, isLoading, error } = useDestinationDetail(id || "");
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [enhancedDestination, setEnhancedDestination] =
+    useState<EnhancedDestination | null>(null);
 
   console.log("Detail page loaded with ID:", id);
 
@@ -254,29 +256,34 @@ export default function DestinationDetail() {
         // Gunakan alamat lokasi dari API sebagai alamat lengkap
         alamatLengkap: destination.lokasi || defaultData.alamatLengkap,
         // Konversi array foto API ke format galeri yang dibutuhkan UI
-        galeri: destination.foto && destination.foto.length > 0 
-          ? destination.foto 
-          : defaultData.galeri
-      })
+        galeri:
+          destination.foto && destination.foto.length > 0
+            ? destination.foto
+            : defaultData.galeri,
+      });
     }
-  }, [destination])
+  }, [destination]);
 
   // Fungsi navigasi galeri
   const nextImage = () => {
     if (enhancedDestination?.galeri) {
-      setCurrentImageIndex((prev) => (prev === (enhancedDestination.galeri!.length - 1) ? 0 : prev + 1))
+      setCurrentImageIndex((prev) =>
+        prev === enhancedDestination.galeri!.length - 1 ? 0 : prev + 1
+      );
     }
-  }
+  };
 
   const prevImage = () => {
     if (enhancedDestination?.galeri) {
-      setCurrentImageIndex((prev) => (prev === 0 ? enhancedDestination.galeri!.length - 1 : prev - 1))
+      setCurrentImageIndex((prev) =>
+        prev === 0 ? enhancedDestination.galeri!.length - 1 : prev - 1
+      );
     }
-  }
+  };
 
   // Jika masih loading, tampilkan skeleton
   if (isLoading || !enhancedDestination) {
-    return <DetailSkeleton />
+    return <DetailSkeleton />;
   }
 
   // Jika terjadi error, tampilkan pesan error
@@ -285,23 +292,29 @@ export default function DestinationDetail() {
       <div className="container mx-auto px-4 py-8">
         <Alert variant="destructive">
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error.message || "Tidak dapat memuat data destinasi"}</AlertDescription>
+          <AlertDescription>
+            {error.message || "Tidak dapat memuat data destinasi"}
+          </AlertDescription>
         </Alert>
-        <Button variant="outline" className="mt-4" onClick={() => navigate("/destination")}>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => navigate("/destination")}
+        >
           Kembali ke Daftar Destinasi
         </Button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb dan Tombol Kembali */}
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="gap-1 p-0 hover:bg-transparent" 
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1 p-0 hover:bg-transparent"
           onClick={() => navigate("/destination")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -316,12 +329,15 @@ export default function DestinationDetail() {
           <div className="flex items-center">
             <Star className="mr-1 h-4 w-4 fill-yellow-500 text-yellow-500" />
             <span>
-              {enhancedDestination.ratingStats?.average} ({enhancedDestination.ratingStats?.total} ulasan)
+              {enhancedDestination.ratingStats?.average} (
+              {enhancedDestination.ratingStats?.total} ulasan)
             </span>
           </div>
           {enhancedDestination.category && (
             <div className="flex items-center">
-              <Badge variant="secondary">{enhancedDestination.category.title}</Badge>
+              <Badge variant="secondary">
+                {enhancedDestination.category.title}
+              </Badge>
             </div>
           )}
         </div>
@@ -331,9 +347,18 @@ export default function DestinationDetail() {
       <div className="relative mb-8 overflow-hidden rounded-xl">
         <div className="relative aspect-[16/9] w-full overflow-hidden">
           <img
-            src={enhancedDestination.galeri?.[currentImageIndex] || "/placeholder.svg"}
+            src={
+              enhancedDestination.foto && enhancedDestination.foto.length > 0
+                ? getImageUrl(enhancedDestination.foto[currentImageIndex])
+                : enhancedDestination.galeri?.[currentImageIndex] ||
+                  "/placeholder.svg"
+            }
             alt={`${enhancedDestination.nama} - Foto ${currentImageIndex + 1}`}
             className="h-full w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src =
+                "https://placehold.co/1200x675?text=No+Image";
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
@@ -381,9 +406,17 @@ export default function DestinationDetail() {
             className="rounded-full bg-white/80 hover:bg-white"
             onClick={() => setIsFavorite(!isFavorite)}
           >
-            <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+            <Heart
+              className={`h-5 w-5 ${
+                isFavorite ? "fill-red-500 text-red-500" : ""
+              }`}
+            />
           </Button>
-          <Button variant="outline" size="icon" className="rounded-full bg-white/80 hover:bg-white">
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full bg-white/80 hover:bg-white"
+          >
             <Share2 className="h-5 w-5" />
           </Button>
         </div>
@@ -403,14 +436,20 @@ export default function DestinationDetail() {
             <TabsContent value="overview">
               <div className="space-y-6">
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Tentang {enhancedDestination.nama}</h2>
-                  <div className="text-muted-foreground whitespace-pre-line">{enhancedDestination.deskripsiLengkap}</div>
+                  <h2 className="mb-3 text-xl font-semibold">
+                    Tentang {enhancedDestination.nama}
+                  </h2>
+                  <div className="text-muted-foreground whitespace-pre-line">
+                    {enhancedDestination.deskripsiLengkap}
+                  </div>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Aktivitas Populer</h2>
+                  <h2 className="mb-3 text-xl font-semibold">
+                    Aktivitas Populer
+                  </h2>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {enhancedDestination.aktivitas?.map((aktivitas, index) => (
                       <div key={index} className="flex items-start gap-3">
@@ -426,7 +465,9 @@ export default function DestinationDetail() {
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Tips Berkunjung</h2>
+                  <h2 className="mb-3 text-xl font-semibold">
+                    Tips Berkunjung
+                  </h2>
                   <ul className="ml-6 list-disc space-y-2 text-muted-foreground">
                     {enhancedDestination.tips?.map((tip, index) => (
                       <li key={index}>{tip}</li>
@@ -437,7 +478,9 @@ export default function DestinationDetail() {
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Pertanyaan Umum</h2>
+                  <h2 className="mb-3 text-xl font-semibold">
+                    Pertanyaan Umum
+                  </h2>
                   <div className="space-y-4">
                     {enhancedDestination.faq?.map((item, index) => (
                       <div key={index} className="rounded-lg border p-4">
@@ -453,7 +496,9 @@ export default function DestinationDetail() {
             <TabsContent value="facilities">
               <div className="space-y-6">
                 <div>
-                  <h2 className="mb-4 text-xl font-semibold">Fasilitas yang Tersedia</h2>
+                  <h2 className="mb-4 text-xl font-semibold">
+                    Fasilitas yang Tersedia
+                  </h2>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {enhancedDestination.fasilitas?.map((fasilitas, index) => (
                       <div key={index} className="flex items-center gap-2">
@@ -471,19 +516,23 @@ export default function DestinationDetail() {
                 <div>
                   <h2 className="mb-3 text-xl font-semibold">Transportasi</h2>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {enhancedDestination.transportasi?.map((transport, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <Bus className="h-5 w-5 text-primary" />
-                        <span>{transport}</span>
-                      </div>
-                    ))}
+                    {enhancedDestination.transportasi?.map(
+                      (transport, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <Bus className="h-5 w-5 text-primary" />
+                          <span>{transport}</span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Akomodasi di Sekitar</h2>
+                  <h2 className="mb-3 text-xl font-semibold">
+                    Akomodasi di Sekitar
+                  </h2>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     {enhancedDestination.akomodasi?.map((akomodasi, index) => (
                       <div key={index} className="flex items-center gap-3">
@@ -497,23 +546,35 @@ export default function DestinationDetail() {
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Informasi Tambahan</h2>
+                  <h2 className="mb-3 text-xl font-semibold">
+                    Informasi Tambahan
+                  </h2>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <div className="text-sm font-medium">Alamat</div>
-                      <div className="text-muted-foreground">{enhancedDestination.alamatLengkap}</div>
+                      <div className="text-muted-foreground">
+                        {enhancedDestination.alamatLengkap}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <div className="text-sm font-medium">Jam Operasional</div>
-                      <div className="text-muted-foreground">{enhancedDestination.jamOperasional}</div>
+                      <div className="text-muted-foreground">
+                        {enhancedDestination.jamOperasional}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <div className="text-sm font-medium">Harga Tiket</div>
-                      <div className="text-muted-foreground">{enhancedDestination.hargaTiket}</div>
+                      <div className="text-muted-foreground">
+                        {enhancedDestination.hargaTiket}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <div className="text-sm font-medium">Kategori</div>
-                      <div className="text-muted-foreground">{enhancedDestination.category ? enhancedDestination.category.title : "Umum"}</div>
+                      <div className="text-muted-foreground">
+                        {enhancedDestination.category
+                          ? enhancedDestination.category.title
+                          : "Umum"}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -526,13 +587,18 @@ export default function DestinationDetail() {
                   {/* Rating Summary */}
                   <div className="md:w-1/3">
                     <div className="rounded-lg bg-muted/50 p-4">
-                      <div className="mb-2 text-center text-4xl font-bold">{enhancedDestination.ratingStats?.average}</div>
+                      <div className="mb-2 text-center text-4xl font-bold">
+                        {enhancedDestination.ratingStats?.average}
+                      </div>
                       <div className="mb-4 flex justify-center">
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
                             className={`h-5 w-5 ${
-                              i < Math.floor(enhancedDestination.ratingStats?.average || 0)
+                              i <
+                              Math.floor(
+                                enhancedDestination.ratingStats?.average || 0
+                              )
                                 ? "fill-yellow-500 text-yellow-500"
                                 : "text-gray-300"
                             }`}
@@ -540,7 +606,8 @@ export default function DestinationDetail() {
                         ))}
                       </div>
                       <div className="text-center text-sm text-muted-foreground">
-                        Berdasarkan {enhancedDestination.ratingStats?.total} ulasan
+                        Berdasarkan {enhancedDestination.ratingStats?.total}{" "}
+                        ulasan
                       </div>
 
                       <div className="mt-4 space-y-2">
@@ -549,14 +616,18 @@ export default function DestinationDetail() {
                             <div className="w-8 text-sm">{rating} ★</div>
                             <Progress
                               value={
-                                ((enhancedDestination.ratingStats?.distribution?.[5 - rating] || 0) /
-                                  (enhancedDestination.ratingStats?.total || 1)) *
+                                ((enhancedDestination.ratingStats
+                                  ?.distribution?.[5 - rating] || 0) /
+                                  (enhancedDestination.ratingStats?.total ||
+                                    1)) *
                                 100
                               }
                               className="h-2"
                             />
                             <div className="w-8 text-right text-sm text-muted-foreground">
-                              {enhancedDestination.ratingStats?.distribution?.[5 - rating] || 0}
+                              {enhancedDestination.ratingStats?.distribution?.[
+                                5 - rating
+                              ] || 0}
                             </div>
                           </div>
                         ))}
@@ -566,7 +637,9 @@ export default function DestinationDetail() {
 
                   {/* Reviews List */}
                   <div className="md:w-2/3">
-                    <h2 className="mb-4 text-xl font-semibold">Ulasan Pengunjung</h2>
+                    <h2 className="mb-4 text-xl font-semibold">
+                      Ulasan Pengunjung
+                    </h2>
                     <div className="space-y-4">
                       {enhancedDestination.ulasan?.map((ulasan) => (
                         <Card key={ulasan.id}>
@@ -574,12 +647,21 @@ export default function DestinationDetail() {
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
                                 <Avatar>
-                                  <AvatarImage src={ulasan.foto || "/placeholder.svg"} alt={ulasan.nama} />
-                                  <AvatarFallback>{ulasan.nama.charAt(0)}</AvatarFallback>
+                                  <AvatarImage
+                                    src={ulasan.foto || "/placeholder.svg"}
+                                    alt={ulasan.nama}
+                                  />
+                                  <AvatarFallback>
+                                    {ulasan.nama.charAt(0)}
+                                  </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <div className="font-medium">{ulasan.nama}</div>
-                                  <div className="text-sm text-muted-foreground">{ulasan.tanggal}</div>
+                                  <div className="font-medium">
+                                    {ulasan.nama}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {ulasan.tanggal}
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex">
@@ -587,13 +669,17 @@ export default function DestinationDetail() {
                                   <Star
                                     key={i}
                                     className={`h-4 w-4 ${
-                                      i < ulasan.rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"
+                                      i < ulasan.rating
+                                        ? "fill-yellow-500 text-yellow-500"
+                                        : "text-gray-300"
                                     }`}
                                   />
                                 ))}
                               </div>
                             </div>
-                            <div className="mt-3 text-muted-foreground">{ulasan.komentar}</div>
+                            <div className="mt-3 text-muted-foreground">
+                              {ulasan.komentar}
+                            </div>
                           </CardContent>
                         </Card>
                       ))}
@@ -613,7 +699,9 @@ export default function DestinationDetail() {
           <div className="sticky top-8 space-y-6">
             <Card>
               <CardContent className="p-6">
-                <h3 className="mb-4 text-lg font-semibold">Informasi Destinasi</h3>
+                <h3 className="mb-4 text-lg font-semibold">
+                  Informasi Destinasi
+                </h3>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -621,7 +709,9 @@ export default function DestinationDetail() {
                     </div>
                     <div>
                       <div className="text-sm font-medium">Lokasi</div>
-                      <div className="text-sm text-muted-foreground">{enhancedDestination.lokasi}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {enhancedDestination.lokasi}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -630,7 +720,9 @@ export default function DestinationDetail() {
                     </div>
                     <div>
                       <div className="text-sm font-medium">Jam Operasional</div>
-                      <div className="text-sm text-muted-foreground">{enhancedDestination.jamOperasional}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {enhancedDestination.jamOperasional}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -638,8 +730,12 @@ export default function DestinationDetail() {
                       <Sun className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="text-sm font-medium">Waktu Terbaik untuk Berkunjung</div>
-                      <div className="text-sm text-muted-foreground">{enhancedDestination.waktuTerbaik?.musim}</div>
+                      <div className="text-sm font-medium">
+                        Waktu Terbaik untuk Berkunjung
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {enhancedDestination.waktuTerbaik?.musim}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -650,7 +746,9 @@ export default function DestinationDetail() {
                   <div>
                     <div className="text-sm font-medium">Kategori</div>
                     <div className="mt-2">
-                      <Badge variant="secondary">{enhancedDestination.category?.title || "Umum"}</Badge>
+                      <Badge variant="secondary">
+                        {enhancedDestination.category?.title || "Umum"}
+                      </Badge>
                     </div>
                   </div>
                   <div>
@@ -696,7 +794,9 @@ export default function DestinationDetail() {
 
             <Card>
               <CardContent className="p-6">
-                <h3 className="mb-4 text-lg font-semibold">Destinasi Terdekat</h3>
+                <h3 className="mb-4 text-lg font-semibold">
+                  Destinasi Terdekat
+                </h3>
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="flex gap-3">
@@ -706,8 +806,12 @@ export default function DestinationDetail() {
                         className="h-14 w-14 rounded-md object-cover"
                       />
                       <div>
-                        <div className="font-medium">Destinasi Terdekat {i}</div>
-                        <div className="text-sm text-muted-foreground">15 km dari sini</div>
+                        <div className="font-medium">
+                          Destinasi Terdekat {i}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          15 km dari sini
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -718,5 +822,5 @@ export default function DestinationDetail() {
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

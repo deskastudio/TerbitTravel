@@ -1,7 +1,13 @@
 // src/providers/AdminAuthProvider.tsx
-import { createContext, useContext, ReactNode } from 'react';
-import { useAdminAuth } from '@/hooks/use-admin-auth';
-import { AdminAuthState, AdminUser, AdminLoginRequest, AdminUpdateProfileRequest, AdminChangePasswordRequest } from '@/types/authAdmin-types';
+import { createContext, useContext, ReactNode } from "react";
+import { useAdminAuth } from "@/hooks/use-admin-auth";
+import {
+  AdminAuthState,
+  AdminUser,
+  AdminLoginRequest,
+  AdminUpdateProfileRequest,
+  AdminChangePasswordRequest,
+} from "@/types/authAdmin-types";
 
 interface AdminAuthContextType extends AdminAuthState {
   login: (credentials: AdminLoginRequest) => Promise<any>;
@@ -34,7 +40,9 @@ export const AdminAuthProvider = ({ children }: AdminAuthProviderProps) => {
 export const useAdminAuthContext = () => {
   const context = useContext(AdminAuthContext);
   if (!context) {
-    throw new Error('useAdminAuthContext must be used within AdminAuthProvider');
+    throw new Error(
+      "useAdminAuthContext must be used within AdminAuthProvider"
+    );
   }
   return context;
 };

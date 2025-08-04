@@ -1,14 +1,14 @@
 // src/App.tsx
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AdminRoutes from './routes/AdminRoutes';
-import MainRoutes from './routes/MainRoutes';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import AdminRoutes from "./routes/AdminRoutes";
+import MainRoutes from "./routes/MainRoutes";
 
 // ✅ Import AdminAuthProvider
-import AdminAuthProvider from '@/providers/AdminAuthProvider';
+import AdminAuthProvider from "@/providers/AdminAuthProvider";
 
 function App() {
-  console.log('🚀 App.tsx rendered');
-  
+  console.log("🚀 App.tsx rendered");
+
   return (
     <Router>
       <AdminAuthProvider>
@@ -16,7 +16,7 @@ function App() {
         <Routes>
           {/* Admin routes take priority */}
           <Route path="/admin/*" element={<AdminRoutes />} />
-          
+
           {/* Main routes for everything else */}
           <Route path="/*" element={<MainRoutes />} />
         </Routes>

@@ -1,40 +1,44 @@
 // src/pages/adminPages/auth/AdminLogin.tsx
-import { useState, useEffect } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, Shield, AlertCircle } from 'lucide-react';
-import { adminAuthService } from '@/services/adminAuth.service';
-import { useAdminAuthContext } from '@/providers/AdminAuthProvider';
-import { AdminLoginRequest } from '@/types/authAdmin-types';
+import { useState, useEffect } from "react";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Lock, Mail, Shield, AlertCircle } from "lucide-react";
+import { adminAuthService } from "@/services/adminAuth.service";
+import { useAdminAuthContext } from "@/providers/AdminAuthProvider";
+import { AdminLoginRequest } from "@/types/authAdmin-types";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, checkAuth, login: contextLogin } = useAdminAuthContext(); // ✅ Use context login
+  const {
+    isAuthenticated,
+    checkAuth,
+    login: contextLogin,
+  } = useAdminAuthContext(); // ✅ Use context login
   const [formData, setFormData] = useState<AdminLoginRequest>({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   // Debug environment variables
   useEffect(() => {
-    console.log('🔧 Admin Login Debug:', {
+    console.log("🔧 Admin Login Debug:", {
       VITE_API_URL: import.meta.env.VITE_API_URL,
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/',
-      currentURL: window.location.href
+      baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/",
+      currentURL: window.location.href,
     });
 
     // ✅ FIXED: Force auth check on login page load
-    console.log('🔄 AdminLogin: Checking existing auth...');
+    console.log("🔄 AdminLogin: Checking existing auth...");
     const authResult = checkAuth();
-    console.log('🔄 AdminLogin auth result:', authResult);
-    
+    console.log("🔄 AdminLogin auth result:", authResult);
+
     // If authenticated, redirect
     if (authResult) {
-      console.log('✅ Already authenticated, redirecting to dashboard');
-      navigate('/admin/dashboard', { replace: true });
+      console.log("✅ Already authenticated, redirecting to dashboard");
+      navigate("/admin/dashboard", { replace: true });
     }
   }, [navigate, checkAuth]);
 
@@ -42,15 +46,15 @@ const AdminLogin = () => {
     const errors: Record<string, string> = {};
 
     if (!formData.email.trim()) {
-      errors.email = 'Email wajib diisi';
+      errors.email = "Email wajib diisi";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = 'Format email tidak valid';
+      errors.email = "Format email tidak valid";
     }
 
     if (!formData.password) {
-      errors.password = 'Password wajib diisi';
+      errors.password = "Password wajib diisi";
     } else if (formData.password.length < 6) {
-      errors.password = 'Password minimal 6 karakter';
+      errors.password = "Password minimal 6 karakter";
     }
 
     setFormErrors(errors);
@@ -59,55 +63,57 @@ const AdminLogin = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     // Clear error when user starts typing
     if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: '' }));
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
     if (error) {
-      setError('');
+      setError("");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log('📝 Admin Login Form Submission:', {
+
+    console.log("📝 Admin Login Form Submission:", {
       email: formData.email,
       passwordLength: formData.password.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    
+
     if (!validateForm()) {
-      console.log('❌ Form validation failed:', formErrors);
+      console.log("❌ Form validation failed:", formErrors);
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
+    setError("");
 
     try {
-      console.log('🚀 Attempting admin login...');
+      console.log("🚀 Attempting admin login...");
       await contextLogin(formData); // ✅ Use context login instead
-      console.log('✅ Admin login successful');
-      
+      console.log("✅ Admin login successful");
+
       // Navigate handled by context login function
     } catch (err: any) {
-      console.error('❌ Admin login failed:', err);
-      setError(err.message || 'Login gagal');
+      console.error("❌ Admin login failed:", err);
+      setError(err.message || "Login gagal");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const togglePasswordVisibility = () => {
-    setShowPassword(prev => !prev);
+    setShowPassword((prev) => !prev);
   };
 
   // ✅ FIXED: Redirect check using context state
   if (isAuthenticated) {
-    console.log('✅ Already authenticated via context, redirecting to dashboard');
+    console.log(
+      "✅ Already authenticated via context, redirecting to dashboard"
+    );
     return <Navigate to="/admin/dashboard" replace />;
   }
 
@@ -121,12 +127,8 @@ const AdminLogin = () => {
               <Shield className="h-12 w-12 text-blue-600" />
             </div>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-white">
-            Admin Panel
-          </h2>
-          <p className="mt-2 text-blue-100">
-            Masuk ke panel administrasi
-          </p>
+          <h2 className="mt-6 text-3xl font-bold text-white">Admin Panel</h2>
+          <p className="mt-2 text-blue-100">Masuk ke panel administrasi</p>
         </div>
 
         {/* Login Form */}
@@ -142,7 +144,10 @@ const AdminLogin = () => {
 
             {/* Email Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email
               </label>
               <div className="relative">
@@ -157,7 +162,9 @@ const AdminLogin = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    formErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    formErrors.email
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
                   }`}
                   placeholder="admin@example.com"
                 />
@@ -169,7 +176,10 @@ const AdminLogin = () => {
 
             {/* Password Field */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -179,12 +189,14 @@ const AdminLogin = () => {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleInputChange}
                   className={`block w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    formErrors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    formErrors.password
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300"
                   }`}
                   placeholder="••••••••"
                 />
@@ -201,7 +213,9 @@ const AdminLogin = () => {
                 </button>
               </div>
               {formErrors.password && (
-                <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {formErrors.password}
+                </p>
               )}
             </div>
 
@@ -217,7 +231,7 @@ const AdminLogin = () => {
                   <span>Memproses...</span>
                 </div>
               ) : (
-                'Masuk'
+                "Masuk"
               )}
             </button>
           </form>

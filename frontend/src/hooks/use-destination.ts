@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { DestinationService } from "@/services/destination.service";
-import { IDestination, IDestinationInput, IDestinationCategory } from "@/types/destination.types";
+import {
+  IDestination,
+  IDestinationInput,
+  IDestinationCategory,
+} from "@/types/destination.types";
 import { useToast } from "@/hooks/use-toast";
 
 export const useDestination = () => {
@@ -10,12 +14,14 @@ export const useDestination = () => {
   const [categories, setCategories] = useState<IDestinationCategory[]>([]);
   const [isLoadingDestinations, setIsLoadingDestinations] = useState(false);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [destinationsError, setDestinationsError] = useState<Error | null>(null);
+  const [destinationsError, setDestinationsError] = useState<Error | null>(
+    null
+  );
   const [categoriesError, setCategoriesError] = useState<Error | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const { toast } = useToast();
 
   // Fetch all destinations
@@ -81,20 +87,24 @@ export const useDestination = () => {
           console.warn("Cannot fetch destination: ID is empty");
           return;
         }
-        
+
         setIsLoading(true);
         console.log(`Fetching destination with ID: ${id}`);
-        
+
         try {
           const data = await DestinationService.getDestinationById(id);
           console.log("Destination detail fetched successfully:", data);
           setDestination(data);
           setError(null);
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          console.error(`Error fetching destination detail for ID ${id}:`, errorMessage);
+          const errorMessage =
+            error instanceof Error ? error.message : String(error);
+          console.error(
+            `Error fetching destination detail for ID ${id}:`,
+            errorMessage
+          );
           setError(error as Error);
-          
+
           toast({
             variant: "destructive",
             title: "Error!",
@@ -109,9 +119,9 @@ export const useDestination = () => {
       fetchDestination();
     }, [id, toast]);
 
-    return { 
-      destination, 
-      isLoading, 
+    return {
+      destination,
+      isLoading,
       error,
       isInitialized, // New flag to indicate if initial fetch is complete
       refetch: () => {
@@ -119,18 +129,18 @@ export const useDestination = () => {
           // Function to manually refetch data
           setIsLoading(true);
           DestinationService.getDestinationById(id)
-            .then(data => {
+            .then((data) => {
               setDestination(data);
               setError(null);
             })
-            .catch(err => {
+            .catch((err) => {
               setError(err as Error);
             })
             .finally(() => {
               setIsLoading(false);
             });
         }
-      }
+      },
     };
   };
 
@@ -159,7 +169,11 @@ export const useDestination = () => {
   };
 
   // Update destination
-  const updateDestination = async (id: string, data: IDestinationInput, newImages?: File[]) => {
+  const updateDestination = async (
+    id: string,
+    data: IDestinationInput,
+    newImages?: File[]
+  ) => {
     try {
       setIsUpdating(true);
       console.log(`Updating destination with ID ${id}:`, data);

@@ -21,6 +21,7 @@ run-app.bat
 ```
 
 Script ini akan:
+
 1. Memperbarui konfigurasi CORS
 2. Menjalankan server backend di http://localhost:5000
 3. Membuat tunnel dengan localtunnel.me untuk akses eksternal
@@ -61,7 +62,7 @@ npm run dev
 ## URL Aplikasi
 
 - Frontend local: http://localhost:5173
-- Backend local: http://localhost:5000 
+- Backend local: http://localhost:5000
 - Backend API (external): https://terbit-travel.loca.lt (atau URL lain dari tunnel)
 - Swagger API docs: https://terbit-travel.loca.lt/swagger
 

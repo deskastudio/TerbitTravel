@@ -1,17 +1,30 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { Search, MapPin, Calendar, Users, Filter } from "lucide-react"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, MapPin, Calendar, Users, Filter } from "lucide-react";
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Pagination,
   PaginationContent,
@@ -20,7 +33,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
+} from "@/components/ui/pagination";
 import {
   Sheet,
   SheetClose,
@@ -30,26 +43,27 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useDestination } from "@/hooks/use-destination"
-import { IDestination } from "@/types/destination.types"
+} from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDestination } from "@/hooks/use-destination";
+import { IDestination } from "@/types/destination.types";
+import { getImageUrl } from "@/utils/image-helper";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
+      setDebouncedValue(value);
+    }, delay);
 
     return () => {
-      clearTimeout(timer)
-    }
-  }, [value, delay])
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
 
-  return debouncedValue
+  return debouncedValue;
 }
 
 // Enhanced destination type (API data + UI specific fields)
@@ -69,15 +83,20 @@ const formatCurrency = (amount: number): string => {
     currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
-}
+  }).format(amount);
+};
 
 // Destination Card Component
-const DestinationCard = ({ destination }: { destination: EnhancedDestination }) => {
-  const navigate = useNavigate()
+const DestinationCard = ({
+  destination,
+}: {
+  destination: EnhancedDestination;
+}) => {
+  const navigate = useNavigate();
   const discountedPrice = destination.discount
-    ? (destination.price || 0) - ((destination.price || 0) * destination.discount) / 100
-    : destination.price || 0
+    ? (destination.price || 0) -
+      ((destination.price || 0) * destination.discount) / 100
+    : destination.price || 0;
 
   const handleViewDetail = () => {
     console.log("Navigating to destination detail:", destination._id);
@@ -85,17 +104,29 @@ const DestinationCard = ({ destination }: { destination: EnhancedDestination }) 
   };
 
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-md cursor-pointer" onClick={handleViewDetail}>
+    <Card
+      className="overflow-hidden transition-all hover:shadow-md cursor-pointer"
+      onClick={handleViewDetail}
+    >
       <div className="relative">
         <img
-          src={destination.foto?.[0] || destination.image || "/placeholder.svg"}
+          src={
+            destination.foto?.[0]
+              ? getImageUrl(destination.foto[0])
+              : destination.image || "/placeholder.svg"
+          }
           alt={destination.nama}
           className="h-48 w-full object-cover"
+          onError={(e) => {
+            e.currentTarget.src = "https://placehold.co/400x250?text=No+Image";
+          }}
         />
       </div>
       <CardHeader className="p-4 pb-0">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-bold line-clamp-1">{destination.nama}</CardTitle>
+          <CardTitle className="text-lg font-bold line-clamp-1">
+            {destination.nama}
+          </CardTitle>
           <div className="flex items-center text-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -114,7 +145,9 @@ const DestinationCard = ({ destination }: { destination: EnhancedDestination }) 
         </div>
         <CardDescription className="flex items-center mt-1">
           <MapPin className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-          <span className="text-sm text-muted-foreground line-clamp-1">{destination.lokasi}</span>
+          <span className="text-sm text-muted-foreground line-clamp-1">
+            {destination.lokasi}
+          </span>
         </CardDescription>
       </CardHeader>
       <CardContent className="p-4 pt-2">
@@ -138,24 +171,33 @@ const DestinationCard = ({ destination }: { destination: EnhancedDestination }) 
         <div>
           {destination.discount ? (
             <div>
-              <span className="text-sm line-through text-muted-foreground">{formatCurrency(destination.price || 0)}</span>
-              <div className="text-lg font-bold text-primary">{formatCurrency(discountedPrice)}</div>
+              <span className="text-sm line-through text-muted-foreground">
+                {formatCurrency(destination.price || 0)}
+              </span>
+              <div className="text-lg font-bold text-primary">
+                {formatCurrency(discountedPrice)}
+              </div>
             </div>
           ) : (
-            <div className="text-lg font-bold text-primary">{formatCurrency(destination.price || 2500000)}</div>
+            <div className="text-lg font-bold text-primary">
+              {formatCurrency(destination.price || 2500000)}
+            </div>
           )}
           <div className="text-xs text-muted-foreground">per orang</div>
         </div>
-        <Button size="sm" onClick={(e) => {
-          e.stopPropagation();
-          handleViewDetail();
-        }}>
+        <Button
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewDetail();
+          }}
+        >
           Lihat Detail
         </Button>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
 
 // Loading Skeleton
 const DestinationCardSkeleton = () => (
@@ -173,10 +215,14 @@ const DestinationCardSkeleton = () => (
       <Skeleton className="h-9 w-24" />
     </CardFooter>
   </Card>
-)
+);
 
 // Recommendation Component
-const RecommendationSection = ({ destinations }: { destinations: EnhancedDestination[] }) => {
+const RecommendationSection = ({
+  destinations,
+}: {
+  destinations: EnhancedDestination[];
+}) => {
   // Get 3 random destinations for recommendations
   const recommendedDestinations = [...destinations]
     .sort(() => 0.5 - Math.random())
@@ -191,26 +237,32 @@ const RecommendationSection = ({ destinations }: { destinations: EnhancedDestina
       <h2 className="text-2xl font-bold mb-4">Rekomendasi Untuk Anda</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {recommendedDestinations.map((destination) => (
-          <DestinationCard key={`rec-${destination._id}`} destination={destination} />
+          <DestinationCard
+            key={`rec-${destination._id}`}
+            destination={destination}
+          />
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Main Component
 export default function DestinationPage() {
-  const { destinations, isLoadingDestinations, destinationsError, categories } = useDestination();
-  const [searchQuery, setSearchQuery] = useState("")
-  const debouncedSearchQuery = useDebounce(searchQuery, 500)
-  const [selectedCategory, setSelectedCategory] = useState<string>("semua")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [sortBy, setSortBy] = useState("recommended")
-  const [locationFilter, setLocationFilter] = useState("")
-  const [priceRangeFilter, setPriceRangeFilter] = useState("")
-  const [durationFilter, setDurationFilter] = useState("")
-  const [enhancedDestinations, setEnhancedDestinations] = useState<EnhancedDestination[]>([]);
+  const { destinations, isLoadingDestinations, destinationsError, categories } =
+    useDestination();
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const [selectedCategory, setSelectedCategory] = useState<string>("semua");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sortBy, setSortBy] = useState("recommended");
+  const [locationFilter, setLocationFilter] = useState("");
+  const [priceRangeFilter, setPriceRangeFilter] = useState("");
+  const [durationFilter, setDurationFilter] = useState("");
+  const [enhancedDestinations, setEnhancedDestinations] = useState<
+    EnhancedDestination[]
+  >([]);
 
   const itemsPerPage = 6;
 
@@ -226,13 +278,19 @@ export default function DestinationPage() {
       const enhanced = destinations.map((dest) => {
         const price = Math.floor(Math.random() * 3000000) + 1500000;
         const hasDiscount = Math.random() > 0.7;
-        
+        // Mengubah dari string ke number dengan parseFloat
+        const ratingValue = parseFloat((Math.random() * 0.9 + 4.0).toFixed(1));
+
         return {
           ...dest,
           price,
-          discount: hasDiscount ? Math.floor(Math.random() * 15) + 5 : undefined,
-          rating: (Math.random() * 0.9 + 4.0).toFixed(1), // Rating between 4.0 and 4.9
-          duration: `${Math.floor(Math.random() * 4) + 2} hari ${Math.floor(Math.random() * 3) + 1} malam`,
+          discount: hasDiscount
+            ? Math.floor(Math.random() * 15) + 5
+            : undefined,
+          rating: ratingValue, // Sekarang rating adalah number, bukan string
+          duration: `${Math.floor(Math.random() * 4) + 2} hari ${
+            Math.floor(Math.random() * 3) + 1
+          } malam`,
           maxPeople: Math.floor(Math.random() * 6) + 2,
         };
       });
@@ -247,8 +305,12 @@ export default function DestinationPage() {
     // Search filter
     const matchesSearch =
       debouncedSearchQuery === "" ||
-      destination.nama.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      destination.lokasi.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
+      destination.nama
+        .toLowerCase()
+        .includes(debouncedSearchQuery.toLowerCase()) ||
+      destination.lokasi
+        .toLowerCase()
+        .includes(debouncedSearchQuery.toLowerCase());
 
     // Category filter
     let matchesCategory = true;
@@ -259,14 +321,17 @@ export default function DestinationPage() {
 
     // Location filter
     const matchesLocation =
-      locationFilter === "" || destination.lokasi.toLowerCase().includes(locationFilter.toLowerCase());
+      locationFilter === "" ||
+      destination.lokasi.toLowerCase().includes(locationFilter.toLowerCase());
 
     // Price range filter
     let matchesPriceRange = true;
     if (priceRangeFilter === "under-2m") {
       matchesPriceRange = (destination.price || 0) < 2000000;
     } else if (priceRangeFilter === "2m-4m") {
-      matchesPriceRange = (destination.price || 0) >= 2000000 && (destination.price || 0) <= 4000000;
+      matchesPriceRange =
+        (destination.price || 0) >= 2000000 &&
+        (destination.price || 0) <= 4000000;
     } else if (priceRangeFilter === "above-4m") {
       matchesPriceRange = (destination.price || 0) > 4000000;
     }
@@ -274,9 +339,13 @@ export default function DestinationPage() {
     // Duration filter
     let matchesDuration = true;
     if (durationFilter === "1-2-days") {
-      matchesDuration = (destination.duration || "").includes("1 malam") || (destination.duration || "").includes("2 hari");
+      matchesDuration =
+        (destination.duration || "").includes("1 malam") ||
+        (destination.duration || "").includes("2 hari");
     } else if (durationFilter === "3-4-days") {
-      matchesDuration = (destination.duration || "").includes("3 hari") || (destination.duration || "").includes("4 hari");
+      matchesDuration =
+        (destination.duration || "").includes("3 hari") ||
+        (destination.duration || "").includes("4 hari");
     } else if (durationFilter === "5-plus-days") {
       matchesDuration =
         (destination.duration || "").includes("5 hari") ||
@@ -284,7 +353,13 @@ export default function DestinationPage() {
         (destination.duration || "").includes("7 hari");
     }
 
-    return matchesSearch && matchesCategory && matchesLocation && matchesPriceRange && matchesDuration;
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesLocation &&
+      matchesPriceRange &&
+      matchesDuration
+    );
   });
 
   // Sort destinations
@@ -294,7 +369,10 @@ export default function DestinationPage() {
     } else if (sortBy === "price-high") {
       return (b.price || 0) - (a.price || 0);
     } else if (sortBy === "rating") {
-      return parseFloat(b.rating?.toString() || '0') - parseFloat(a.rating?.toString() || '0');
+      return (
+        parseFloat(b.rating?.toString() || "0") -
+        parseFloat(a.rating?.toString() || "0")
+      );
     }
     // Default: recommended (no specific sort)
     return 0;
@@ -303,7 +381,10 @@ export default function DestinationPage() {
   // Pagination
   const totalPages = Math.ceil(sortedDestinations.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedDestinations = sortedDestinations.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedDestinations = sortedDestinations.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -342,15 +423,25 @@ export default function DestinationPage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [debouncedSearchQuery, selectedCategory, locationFilter, priceRangeFilter, durationFilter, sortBy]);
+  }, [
+    debouncedSearchQuery,
+    selectedCategory,
+    locationFilter,
+    priceRangeFilter,
+    durationFilter,
+    sortBy,
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Jelajahi Destinasi Wisata Kami</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          Jelajahi Destinasi Wisata Kami
+        </h1>
         <p className="text-muted-foreground">
-          Temukan berbagai destinasi wisata dan persiapkan petualangan Anda berikutnya!
+          Temukan berbagai destinasi wisata dan persiapkan petualangan Anda
+          berikutnya!
         </p>
       </div>
 
@@ -367,7 +458,12 @@ export default function DestinationPage() {
       </div>
 
       {/* Category Tabs */}
-      <Tabs defaultValue="semua" value={selectedCategory} onValueChange={handleCategoryChange} className="mb-8">
+      <Tabs
+        defaultValue="semua"
+        value={selectedCategory}
+        onValueChange={handleCategoryChange}
+        className="mb-8"
+      >
         <div className="flex justify-between items-center mb-4">
           <div className="flex overflow-x-auto">
             <TabsList>
@@ -388,8 +484,12 @@ export default function DestinationPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recommended">Rekomendasi</SelectItem>
-                <SelectItem value="price-low">Harga: Rendah ke Tinggi</SelectItem>
-                <SelectItem value="price-high">Harga: Tinggi ke Rendah</SelectItem>
+                <SelectItem value="price-low">
+                  Harga: Rendah ke Tinggi
+                </SelectItem>
+                <SelectItem value="price-high">
+                  Harga: Tinggi ke Rendah
+                </SelectItem>
                 <SelectItem value="rating">Rating Tertinggi</SelectItem>
               </SelectContent>
             </Select>
@@ -403,12 +503,17 @@ export default function DestinationPage() {
               <SheetContent>
                 <SheetHeader>
                   <SheetTitle>Filter</SheetTitle>
-                  <SheetDescription>Sesuaikan pencarian Anda dengan filter berikut</SheetDescription>
+                  <SheetDescription>
+                    Sesuaikan pencarian Anda dengan filter berikut
+                  </SheetDescription>
                 </SheetHeader>
                 <div className="py-4 space-y-4">
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium">Lokasi</h3>
-                    <Select value={locationFilter} onValueChange={setLocationFilter}>
+                    <Select
+                      value={locationFilter}
+                      onValueChange={setLocationFilter}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih lokasi" />
                       </SelectTrigger>
@@ -418,7 +523,9 @@ export default function DestinationPage() {
                         <SelectItem value="jawa">Jawa</SelectItem>
                         <SelectItem value="sumatera">Sumatera</SelectItem>
                         <SelectItem value="papua">Papua</SelectItem>
-                        <SelectItem value="nusa tenggara">Nusa Tenggara</SelectItem>
+                        <SelectItem value="nusa tenggara">
+                          Nusa Tenggara
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -427,15 +534,24 @@ export default function DestinationPage() {
 
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium">Rentang Harga</h3>
-                    <Select value={priceRangeFilter} onValueChange={setPriceRangeFilter}>
+                    <Select
+                      value={priceRangeFilter}
+                      onValueChange={setPriceRangeFilter}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih rentang harga" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">Semua Harga</SelectItem>
-                        <SelectItem value="under-2m">Di bawah Rp2.000.000</SelectItem>
-                        <SelectItem value="2m-4m">Rp2.000.000 - Rp4.000.000</SelectItem>
-                        <SelectItem value="above-4m">Di atas Rp4.000.000</SelectItem>
+                        <SelectItem value="under-2m">
+                          Di bawah Rp2.000.000
+                        </SelectItem>
+                        <SelectItem value="2m-4m">
+                          Rp2.000.000 - Rp4.000.000
+                        </SelectItem>
+                        <SelectItem value="above-4m">
+                          Di atas Rp4.000.000
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -444,7 +560,10 @@ export default function DestinationPage() {
 
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium">Durasi</h3>
-                    <Select value={durationFilter} onValueChange={setDurationFilter}>
+                    <Select
+                      value={durationFilter}
+                      onValueChange={setDurationFilter}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Pilih durasi" />
                       </SelectTrigger>
@@ -484,28 +603,37 @@ export default function DestinationPage() {
             // Tampilkan pesan error jika gagal memuat data
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+                <svg
+                  className="w-8 h-8 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
               </div>
               <h3 className="text-lg font-medium mb-2">Gagal Memuat Data</h3>
               <p className="text-muted-foreground mb-4">
-                Terjadi kesalahan saat memuat data destinasi. Silakan coba lagi nanti.
+                Terjadi kesalahan saat memuat data destinasi. Silakan coba lagi
+                nanti.
               </p>
-              <Button onClick={() => window.location.reload()}>Muat Ulang</Button>
+              <Button onClick={() => window.location.reload()}>
+                Muat Ulang
+              </Button>
             </div>
           ) : (
             // Tampilkan konten utama jika data sudah dimuat
             <>
               {/* Recommendation Section - jika ini tab "semua" dan ada data */}
-              {selectedCategory === "semua" && enhancedDestinations.length > 0 && (
-                <RecommendationSection destinations={enhancedDestinations} />
-              )}
+              {selectedCategory === "semua" &&
+                enhancedDestinations.length > 0 && (
+                  <RecommendationSection destinations={enhancedDestinations} />
+                )}
 
               {/* Destinations Grid */}
               {isLoading ? (
@@ -513,13 +641,18 @@ export default function DestinationPage() {
                   {Array(6)
                     .fill(0)
                     .map((_, index) => (
-                      <DestinationCardSkeleton key={`filter-skeleton-${index}`} />
+                      <DestinationCardSkeleton
+                        key={`filter-skeleton-${index}`}
+                      />
                     ))}
                 </div>
               ) : paginatedDestinations.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {paginatedDestinations.map((destination) => (
-                    <DestinationCard key={destination._id} destination={destination} />
+                    <DestinationCard
+                      key={destination._id}
+                      destination={destination}
+                    />
                   ))}
                 </div>
               ) : (
@@ -529,8 +662,8 @@ export default function DestinationPage() {
                   </div>
                   <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
                   <p className="text-muted-foreground mb-4">
-                    Tidak ada destinasi wisata yang sesuai dengan filter Anda. Coba ubah filter atau cari dengan kata kunci
-                    lain.
+                    Tidak ada destinasi wisata yang sesuai dengan filter Anda.
+                    Coba ubah filter atau cari dengan kata kunci lain.
                   </p>
                   <Button onClick={resetFilters}>Reset Filter</Button>
                 </div>
@@ -544,32 +677,41 @@ export default function DestinationPage() {
                       <PaginationPrevious
                         href="#"
                         onClick={(e) => {
-                          e.preventDefault()
-                          if (currentPage > 1) handlePageChange(currentPage - 1)
+                          e.preventDefault();
+                          if (currentPage > 1)
+                            handlePageChange(currentPage - 1);
                         }}
-                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                        className={
+                          currentPage === 1
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
                       />
                     </PaginationItem>
 
                     {Array.from({ length: totalPages }).map((_, index) => {
-                      const page = index + 1
+                      const page = index + 1;
 
                       // Show first page, last page, current page, and pages around current page
-                      if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
                         return (
                           <PaginationItem key={page}>
                             <PaginationLink
                               href="#"
                               isActive={page === currentPage}
                               onClick={(e) => {
-                                e.preventDefault()
-                                handlePageChange(page)
+                                e.preventDefault();
+                                handlePageChange(page);
                               }}
                             >
                               {page}
                             </PaginationLink>
                           </PaginationItem>
-                        )
+                        );
                       }
 
                       // Show ellipsis for gaps
@@ -578,20 +720,25 @@ export default function DestinationPage() {
                           <PaginationItem key={`ellipsis-${page}`}>
                             <PaginationEllipsis />
                           </PaginationItem>
-                        )
+                        );
                       }
 
-                      return null
+                      return null;
                     })}
 
                     <PaginationItem>
                       <PaginationNext
                         href="#"
                         onClick={(e) => {
-                          e.preventDefault()
-                          if (currentPage < totalPages) handlePageChange(currentPage + 1)
+                          e.preventDefault();
+                          if (currentPage < totalPages)
+                            handlePageChange(currentPage + 1);
                         }}
-                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                        className={
+                          currentPage === totalPages
+                            ? "pointer-events-none opacity-50"
+                            : ""
+                        }
                       />
                     </PaginationItem>
                   </PaginationContent>
@@ -603,31 +750,36 @@ export default function DestinationPage() {
       </Tabs>
 
       {/* "Under Development" Section for when there are no destinations */}
-      {enhancedDestinations.length === 0 && !isLoadingDestinations && !destinationsError && (
-        <div className="bg-blue-50 rounded-xl p-8 text-center my-8">
-          <div className="flex justify-center mb-4">
-            <svg
-              className="w-16 h-16 text-blue-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+      {enhancedDestinations.length === 0 &&
+        !isLoadingDestinations &&
+        !destinationsError && (
+          <div className="bg-blue-50 rounded-xl p-8 text-center my-8">
+            <div className="flex justify-center mb-4">
+              <svg
+                className="w-16 h-16 text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold mb-2">
+              Sedang Dalam Pengembangan
+            </h2>
+            <p className="text-gray-600 max-w-md mx-auto">
+              Kami sedang bekerja keras untuk menyiapkan destinasi wisata yang
+              luar biasa untuk Anda. Silakan kembali lagi nanti untuk melihat
+              penawaran terbaru kami!
+            </p>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Sedang Dalam Pengembangan</h2>
-          <p className="text-gray-600 max-w-md mx-auto">
-            Kami sedang bekerja keras untuk menyiapkan destinasi wisata yang luar biasa untuk Anda. Silakan kembali lagi
-            nanti untuk melihat penawaran terbaru kami!
-          </p>
-        </div>
-      )}
+        )}
     </div>
-  )
+  );
 }
