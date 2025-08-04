@@ -19,7 +19,7 @@ export const useAdminAuth = () => {
     error: null,
   });
 
-  // ✅ SIMPLIFIED: Check authentication dari localStorage saja
+  // ✅ FIXED: Check authentication from localStorage
   const checkAuth = useCallback(() => {
     console.log('🔍 Checking admin auth from localStorage...');
     
@@ -44,6 +44,7 @@ export const useAdminAuth = () => {
           loading: false,
           error: null,
         });
+        return true; // ✅ Return success status
       } else {
         console.log('❌ Admin not authenticated, clearing data');
         adminAuthService.clearAuthData();
@@ -54,6 +55,7 @@ export const useAdminAuth = () => {
           loading: false,
           error: null,
         });
+        return false; // ✅ Return failure status
       }
     } catch (error) {
       console.error('❌ Error checking auth:', error);
@@ -65,10 +67,11 @@ export const useAdminAuth = () => {
         loading: false,
         error: error instanceof Error ? error.message : 'Auth check failed'
       });
+      return false; // ✅ Return failure status
     }
-  }, []); // ✅ No dependencies = no infinite loop
+  }, []); // ✅ No dependencies to prevent infinite loop
 
-  // Login function
+  // ✅ FIXED: Login function with proper state sync
   const login = useCallback(async (credentials: AdminLoginRequest) => {
     try {
       setState(prev => ({ ...prev, loading: true, error: null }));
@@ -84,6 +87,11 @@ export const useAdminAuth = () => {
         error: null,
       });
 
+      // ✅ Force re-check to ensure state sync
+      setTimeout(() => {
+        checkAuth();
+      }, 100);
+
       navigate('/admin/dashboard');
       return response;
     } catch (error) {
@@ -96,9 +104,9 @@ export const useAdminAuth = () => {
       }));
       throw error;
     }
-  }, [navigate]);
+  }, [navigate, checkAuth]); // ✅ Add checkAuth dependency
 
-  // Logout function
+  // ✅ FIXED: Logout function with proper cleanup
   const logout = useCallback(async () => {
     try {
       setState(prev => ({ ...prev, loading: true }));
@@ -199,15 +207,26 @@ export const useAdminAuth = () => {
     return roles.includes(state.admin.role);
   }, [state.admin]);
 
-  // ✅ SIMPLIFIED: Check auth hanya sekali pada mount
+  // ✅ FIXED: Check auth on mount and localStorage changes
   useEffect(() => {
     console.log('🔄 useAdminAuth: Initial auth check');
     checkAuth();
-  }, []); // ✅ Empty dependency = hanya run sekali
 
-  // ✅ SIMPLIFIED: Auto logout hanya ketika benar-benar expired
+    // ✅ Listen for localStorage changes (cross-tab sync)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'adminToken' || e.key === 'adminUser' || e.key === 'adminTokenExpiration') {
+        console.log('📱 localStorage changed, re-checking auth');
+        checkAuth();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [checkAuth]); // ✅ Add checkAuth dependency
+
+  // ✅ FIXED: Auto logout with proper state management
   useEffect(() => {
-    if (!state.isAuthenticated) return;
+    if (!state.isAuthenticated || !state.token) return;
 
     const checkExpiration = () => {
       if (adminAuthService.isTokenExpired()) {
@@ -220,7 +239,7 @@ export const useAdminAuth = () => {
     const interval = setInterval(checkExpiration, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [state.isAuthenticated, logout]);
+  }, [state.isAuthenticated, state.token, logout]); // ✅ More specific dependencies
 
   return {
     ...state,

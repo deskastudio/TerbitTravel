@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, Shield, AlertCircle } from 'lucide-react';
 import { adminAuthService } from '@/services/adminAuth.service';
+import { useAdminAuthContext } from '@/providers/AdminAuthProvider';
 import { AdminLoginRequest } from '@/types/authAdmin-types';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, checkAuth, login: contextLogin } = useAdminAuthContext(); // ✅ Use context login
   const [formData, setFormData] = useState<AdminLoginRequest>({
     email: '',
     password: '',
@@ -24,11 +26,17 @@ const AdminLogin = () => {
       currentURL: window.location.href
     });
 
-    // Check if already logged in
-    if (adminAuthService.isAuthenticated()) {
+    // ✅ FIXED: Force auth check on login page load
+    console.log('🔄 AdminLogin: Checking existing auth...');
+    const authResult = checkAuth();
+    console.log('🔄 AdminLogin auth result:', authResult);
+    
+    // If authenticated, redirect
+    if (authResult) {
+      console.log('✅ Already authenticated, redirecting to dashboard');
       navigate('/admin/dashboard', { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, checkAuth]);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -81,11 +89,10 @@ const AdminLogin = () => {
 
     try {
       console.log('🚀 Attempting admin login...');
-      await adminAuthService.login(formData);
+      await contextLogin(formData); // ✅ Use context login instead
       console.log('✅ Admin login successful');
       
-      // Navigate to dashboard
-      navigate('/admin/dashboard', { replace: true });
+      // Navigate handled by context login function
     } catch (err: any) {
       console.error('❌ Admin login failed:', err);
       setError(err.message || 'Login gagal');
@@ -98,8 +105,9 @@ const AdminLogin = () => {
     setShowPassword(prev => !prev);
   };
 
-  // Redirect if already authenticated
-  if (adminAuthService.isAuthenticated()) {
+  // ✅ FIXED: Redirect check using context state
+  if (isAuthenticated) {
+    console.log('✅ Already authenticated via context, redirecting to dashboard');
     return <Navigate to="/admin/dashboard" replace />;
   }
 

@@ -1,6 +1,54 @@
 // src/middleware/adminAuthValidator.js
 import { body, validationResult } from "express-validator";
 
+// Validation rules for creating admin
+export const validateCreateAdmin = [
+  body('email')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+    
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long')
+    .matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'),
+    
+  body('name')
+    .notEmpty()
+    .withMessage('Name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be between 2 and 100 characters'),
+    
+  body('role')
+    .optional()
+    .isIn(['admin', 'super-admin'])
+    .withMessage('Role must be either admin or super-admin'),
+    
+  // Handle validation errors
+  (req, res, next) => {
+    const errors = validationResult(req);
+    
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array().map(error => ({
+          field: error.param,
+          message: error.msg,
+          value: error.value
+        }))
+      });
+    }
+    
+    next();
+  }
+];
+
 // ✅ DEBUG: Validation rules for admin login
 export const validateAdminLogin = [
   // Add debug logging

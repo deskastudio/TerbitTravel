@@ -8,7 +8,7 @@ interface AdminAuthContextType extends AdminAuthState {
   logout: () => Promise<void>;
   updateProfile: (profileData: AdminUpdateProfileRequest) => Promise<AdminUser>;
   changePassword: (passwordData: AdminChangePasswordRequest) => Promise<void>;
-  checkAuth: () => Promise<void>;
+  checkAuth: () => boolean; // ✅ Updated return type
   clearError: () => void;
   hasRole: (role: string) => boolean;
   hasAnyRole: (roles: string[]) => boolean;

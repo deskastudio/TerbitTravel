@@ -26,12 +26,13 @@ const adminAxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
-    // ✅ PERBAIKAN: Tambahan header untuk ngrok
-    ...(ADMIN_API_BASE_URL.includes('ngrok') && {
+    // ✅ PERBAIKAN: Tambahan header untuk tunnel services, removed Origin header
+    ...((ADMIN_API_BASE_URL.includes('ngrok') || ADMIN_API_BASE_URL.includes('loca.lt')) && {
       "ngrok-skip-browser-warning": "true"
+      // Browser blocked Origin header removed - set automatically by browser
     })
   },
-  withCredentials: false, // ✅ False untuk ngrok cross-origin
+  withCredentials: true, // ✅ Diubah ke true agar cookies dikirim pada cross-origin request
   timeout: 30000,
   // ✅ PERBAIKAN: Validate status yang lebih permisif untuk debugging
   validateStatus: function (status) {
@@ -207,14 +208,15 @@ export const testAdminConnection = async () => {
     const response = await adminAxiosInstance.get('/api/health');
     console.log('✅ Admin API connection successful:', response.data);
     return { success: true, data: response.data };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Admin API connection failed:', error);
+    const axiosError = error as any;
     return { 
       success: false, 
-      error: error.message,
+      error: axiosError.message || 'Unknown error',
       details: {
-        code: error.code,
-        status: error.response?.status,
+        code: axiosError.code,
+        status: axiosError.response?.status,
         baseURL: ADMIN_API_BASE_URL
       }
     };
@@ -242,9 +244,9 @@ export const checkBackendHealth = async () => {
       console.error('❌ Backend health check failed:', response.status, response.statusText);
       return { success: false, status: response.status, statusText: response.statusText };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('❌ Backend health check error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
 

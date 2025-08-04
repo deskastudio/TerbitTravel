@@ -17,6 +17,100 @@ const generateToken = (adminData) => {
   return jwt.sign(payload, jwtSecret, { expiresIn });
 };
 
+// Membuat akun admin / super admin
+export const createAdminAccount = async (req, res) => {
+  try {
+    console.log("🚀 Starting Admin Account Creation...");
+    
+    // Validasi input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation errors",
+        errors: errors.array()
+      });
+    }
+    
+    const { email, password, name, role = "admin", createdBy = null } = req.body;
+    
+    // Periksa apakah email sudah digunakan
+    const existingAdmin = await AdminUser.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already in use",
+        error: "EMAIL_EXISTS"
+      });
+    }
+    
+    // Jika membuat super-admin, pastikan tidak ada super-admin lain
+    if (role === "super-admin") {
+      const existingSuperAdmin = await AdminUser.findOne({ role: "super-admin" });
+      
+      if (existingSuperAdmin) {
+        return res.status(400).json({
+          success: false,
+          message: "Super Admin already exists",
+          error: "SUPER_ADMIN_EXISTS"
+        });
+      }
+      
+      // Buat super admin menggunakan metode statis dari model
+      const superAdmin = await AdminUser.createSuperAdmin({
+        email,
+        password,
+        name,
+        role: "super-admin",
+        isActive: true
+      });
+      
+      return res.status(201).json({
+        success: true,
+        message: "Super Admin created successfully",
+        admin: superAdmin
+      });
+    }
+    
+    // Jika bukan super-admin, buat admin biasa
+    const adminData = {
+      email,
+      password,
+      name,
+      role: "admin",
+      isActive: true,
+      createdBy
+    };
+    
+    const admin = new AdminUser(adminData);
+    await admin.save();
+    
+    res.status(201).json({
+      success: true,
+      message: "Admin created successfully",
+      admin
+    });
+    
+  } catch (error) {
+    console.error("❌ Error creating admin account:", error.message);
+    
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        success: false,
+        message: `Duplicate ${field}`,
+        error: "DUPLICATE_FIELD"
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: "Server error while creating admin",
+      error: error.message
+    });
+  }
+};
+
 // Login admin
 export const loginAdmin = async (req, res) => {
   try {

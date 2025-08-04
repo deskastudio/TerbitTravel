@@ -8,11 +8,15 @@
     "dev": "nodemon index.js",
     "dev-ngrok": "concurrently \"npm run dev\" \"ngrok http 5000\"",
     "ngrok": "ngrok http 5000 --log=stdout",
+    "tunnel": "node scripts/startTunnel.js",
+    "dev-tunnel": "concurrently \"npm run dev\" \"npm run tunnel\"",
+    "start-all": "npm run cors-fix && concurrently --kill-others \"npm run dev\" \"npm run tunnel\"",
+    "cors-check": "node scripts/corsDebug.js",
+    "cors-fix": "node scripts/fixCors.js",
     "create-admin": "node scripts/createSuperAdmin.js",
     "list-admins": "node scripts/createSuperAdmin.js list",
     "reset-admin": "node scripts/resetAdmin.js",
     "seed:travel": "node seeders/travelSeeder.js"
-
   },
   "keywords": [],
   "author": "",
@@ -48,6 +52,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "localtunnel": "^2.0.2",
     "nodemon": "^3.1.10"
   }
 }

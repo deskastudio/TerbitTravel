@@ -1,5 +1,5 @@
 // src/routes/AdminRoutes.tsx
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import AdminProtectedRoute from '@/components/partials/adminPartials/adminProtect/Index';
 import AdminLogin from '@/pages/adminPages/auth/Index';
 
@@ -48,24 +48,16 @@ import DetailArticle from '@/pages/adminPages/article/detail-article';
 import EditArticle from '@/pages/adminPages/article/edit-article';
 
 function AdminRoutes() {
-  const location = useLocation();
-  
-  console.log('🔄 AdminRoutes rendered for path:', location.pathname);
-  
-  // Hanya render admin routes jika path dimulai dengan /admin
-  if (!location.pathname.startsWith('/admin')) {
-    console.log('❌ Not admin path, skipping AdminRoutes');
-    return null;
-  }
+  console.log('🔄 AdminRoutes rendered');
 
   return (
     <Routes>
-      {/* ✅ Admin Login Route - Public (tanpa layout) */}
-      <Route path="/admin/login" element={<AdminLogin />} />
+      {/* ✅ FIXED: Login route is now using a relative path */}
+      <Route path="login" element={<AdminLogin />} />
       
-      {/* ✅ Protected Admin Routes - Menggunakan AdminLayout yang sudah ada */}
+      {/* ✅ FIXED: All other admin routes use relative paths and are properly nested */}
       <Route 
-        path="/admin/*" 
+        path="/*" 
         element={
           <AdminProtectedRoute>
               <Routes>
@@ -118,8 +110,7 @@ function AdminRoutes() {
 
                 {/* ✅ User Management */}
                 <Route path="user" element={<AdminAllUser />} />
-                <Route path="user" element={<DetailUser />} />
-
+                <Route path="user/:id" element={<DetailUser />} />
 
                 {/* ✅ Company Profile Management */}
                 <Route path="tentang-terbit" element={<AdminAbout />} />

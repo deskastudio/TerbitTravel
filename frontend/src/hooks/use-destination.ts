@@ -27,7 +27,7 @@ export const useDestination = () => {
       console.log("Destinations fetched successfully:", data.length);
       setDestinations(data);
       setDestinationsError(null);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching destinations:", error);
       setDestinationsError(error as Error);
       toast({

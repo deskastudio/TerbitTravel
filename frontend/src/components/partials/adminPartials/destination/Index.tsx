@@ -1,20 +1,24 @@
-// pages/destination/Index.tsx - IMPROVED VERSION
+// pages/destination/Index.tsx - IMPROVED VERSION with DEBUG
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { 
-  MoreHorizontal, 
-  Pencil, 
-  Trash, 
-  Eye, 
+import {
+  MoreHorizontal,
+  Pencil,
+  Trash,
+  Eye,
   Search,
   Plus,
   Loader2,
   FilterX,
   SlidersHorizontal,
   MapPin,
-  Tag
-} from 'lucide-react';
+  Tag,
+  Bug, // Added for debug icon
+} from "lucide-react";
 import { useDestination } from "@/hooks/use-destination";
+// import APIConnectionTest from "@/components/debug/APIConnectionTest";
+import CORSHeader from "@/components/debug/CORSHeader";
+import { APIError, toAPIError } from "@/types/api.types";
 
 import {
   Table,
@@ -62,6 +66,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getImageUrl } from "@/utils/image-helper";
+import APIConnectionTest from "@/components/debug/APIConnectionTest";
 
 const DestinationPage = () => {
   const navigate = useNavigate();
@@ -70,8 +75,12 @@ const DestinationPage = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [locationsRange, setLocationsRange] = useState<[string, string]>(["", ""]);
+  const [locationsRange, setLocationsRange] = useState<[string, string]>([
+    "",
+    "",
+  ]);
   const [isFilterActive, setIsFilterActive] = useState(false);
+  const [showDebug, setShowDebug] = useState(false); // Added debug state
   const itemsPerPage = 8;
 
   const {
@@ -79,49 +88,70 @@ const DestinationPage = () => {
     isLoadingDestinations,
     deleteDestination,
     isDeleting,
+    destinationsError, // ✅ Add error state
+    refreshDestinations, // ✅ Add refresh function
   } = useDestination();
 
-  const {
-    uniqueLocations,
-    uniqueCategories,
-  } = useMemo(() => {
+  const { uniqueLocations, uniqueCategories } = useMemo(() => {
     if (!destinations?.length) {
       return {
         uniqueLocations: [],
-        uniqueCategories: []
+        uniqueCategories: [],
       };
     }
 
     return {
-      uniqueLocations: Array.from(new Set(destinations.map(d => d.lokasi))).sort(),
-      uniqueCategories: Array.from(new Set(destinations.map(d => d.category.title))).sort(),
+      uniqueLocations: Array.from(
+        new Set(destinations.map((d) => d.lokasi))
+      ).sort(),
+      uniqueCategories: Array.from(
+        new Set(
+          destinations
+            .filter((d) => d.category && d.category.title) // ✅ Filter out destinations without category
+            .map((d) => d.category.title)
+        )
+      ).sort(),
     };
   }, [destinations]);
 
   useEffect(() => {
     setIsFilterActive(
       selectedCategory !== "all" ||
-      locationsRange[0] !== "" ||
-      locationsRange[1] !== ""
+        locationsRange[0] !== "" ||
+        locationsRange[1] !== ""
     );
   }, [selectedCategory, locationsRange]);
 
   const filteredDestinations = useMemo(() => {
-    return destinations?.filter((destination) => {
-      const matchesSearch = 
+    if (!destinations?.length) return [];
+
+    // ✅ Additional data validation
+    const validDestinations = destinations.filter((destination) => {
+      // Basic validation
+      if (!destination || !destination._id || !destination.nama) {
+        console.warn("⚠️ Invalid destination data:", destination);
+        return false;
+      }
+      return true;
+    });
+
+    return validDestinations.filter((destination) => {
+      const matchesSearch =
         destination.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
         destination.lokasi.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesCategory =
         selectedCategory === "all" ||
-        destination.category.title === selectedCategory;
+        (destination.category &&
+          destination.category.title === selectedCategory); // ✅ Safe access to category
 
       const matchesLocation =
-        !locationsRange[0] && !locationsRange[1] ||
-        (destination.lokasi >= locationsRange[0] && destination.lokasi <= locationsRange[1]);
+        (!locationsRange[0] && !locationsRange[1]) ||
+        (destination.lokasi >= locationsRange[0] &&
+          destination.lokasi <= locationsRange[1]);
 
       return matchesSearch && matchesCategory && matchesLocation;
-    }) || [];
+    });
   }, [destinations, searchTerm, selectedCategory, locationsRange]);
 
   const resetFilters = () => {
@@ -132,7 +162,10 @@ const DestinationPage = () => {
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredDestinations.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredDestinations.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
 
   const handleDelete = async () => {
@@ -140,30 +173,187 @@ const DestinationPage = () => {
       try {
         await deleteDestination(selectedId);
         setIsDeleteDialogOpen(false);
-      } catch (error) {
-        console.error('Error deleting destination:', error);
+      } catch (error: unknown) {
+        const apiError = toAPIError(error);
+        console.error("Error deleting destination:", apiError.message);
       }
     }
   };
 
+  // ✅ Add error handling
+  if (destinationsError) {
+    return (
+      <div className="space-y-6">
+        {/* Debug Panel Toggle for Error State */}
+        <div className="flex justify-between items-center">
+          <div className="flex-1" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDebug(!showDebug)}
+            className="flex items-center gap-2"
+          >
+            <Bug className="h-4 w-4" />
+            {showDebug ? "Hide Debug" : "Show Debug"}
+          </Button>
+        </div>
+
+        {/* Debug Panel */}
+        {showDebug && (
+          <div className="border-2 border-dashed border-orange-300 p-4 bg-orange-50 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-orange-800">
+              🔧 Debug Panel - Error State
+            </h3>
+            <div className="mb-4 text-sm space-y-2">
+              <div>
+                <strong>Error:</strong> {toAPIError(destinationsError).message}
+              </div>
+              <div>
+                <strong>API URL:</strong> {import.meta.env.VITE_API_URL}
+              </div>
+              <div>
+                <strong>Full URL:</strong> {import.meta.env.VITE_API_URL}
+                /destination/getAll
+              </div>
+            </div>
+            {/* <APIConnectionTest /> */}
+          </div>
+        )}
+
+        {/* Error State */}
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center max-w-md">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Gagal Memuat Data Destinasi
+            </h2>
+            <p className="text-gray-600 mb-4">
+              Terjadi kesalahan saat mengambil data destinasi dari server.
+            </p>
+            <div className="text-sm text-gray-500 mb-4">
+              Error: {toAPIError(destinationsError).message}
+            </div>
+            <div className="space-x-2">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+              >
+                Refresh Halaman
+              </Button>
+              <Button onClick={() => refreshDestinations()} variant="outline">
+                Refresh Data
+              </Button>
+              <Link to="/admin/dashboard">
+                <Button variant="default">Kembali ke Dashboard</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoadingDestinations) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Memuat data destinasi...</p>
+      <div className="space-y-6">
+        {/* Debug Panel Toggle */}
+        <div className="flex justify-between items-center">
+          <div className="flex justify-center items-center h-32">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Memuat data destinasi...</p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDebug(!showDebug)}
+            className="flex items-center gap-2"
+          >
+            <Bug className="h-4 w-4" />
+            {showDebug ? "Hide Debug" : "Show Debug"}
+          </Button>
         </div>
+
+        {/* Debug Panel */}
+        {showDebug && (
+          <div className="border-2 border-dashed border-orange-300 p-4 bg-orange-50 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4 text-orange-800">
+              🔧 Debug Panel
+            </h3>
+            <APIConnectionTest />
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Debug Panel Toggle - Always visible */}
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowDebug(!showDebug)}
+          className="flex items-center gap-2"
+        >
+          <Bug className="h-4 w-4" />
+          {showDebug ? "Hide Debug" : "Show Debug"}
+        </Button>
+      </div>
+
+      {/* Debug Panel */}
+      {showDebug && (
+        <div className="border-2 border-dashed border-orange-300 p-4 bg-orange-50 rounded-lg">
+          <h3 className="text-lg font-semibold mb-4 text-orange-800">
+            🔧 Debug Panel
+          </h3>
+          <div className="mb-4 text-sm">
+            <div>
+              <strong>Total Destinations:</strong> {destinations?.length || 0}
+            </div>
+            <div>
+              <strong>Filtered Destinations:</strong>{" "}
+              {filteredDestinations.length}
+            </div>
+            <div>
+              <strong>Current Items:</strong> {currentItems.length}
+            </div>
+            <div>
+              <strong>Loading State:</strong>{" "}
+              {isLoadingDestinations ? "Loading" : "Loaded"}
+            </div>
+            <div>
+              <strong>API URL:</strong> {import.meta.env.VITE_API_URL}
+            </div>
+            <div>
+              <strong>Raw Destinations Data:</strong>
+            </div>
+            <pre className="text-xs bg-gray-100 p-2 rounded max-h-32 overflow-auto">
+              {JSON.stringify(destinations?.slice(0, 2), null, 2)}
+            </pre>
+          </div>
+
+          {/* CORS Header Debug */}
+          <div className="mb-4">
+            <h4 className="font-semibold mb-2">CORS Debug:</h4>
+            <CORSHeader />
+          </div>
+
+          <APIConnectionTest />
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Destination Management</h1>
-          <p className="text-gray-600 mt-1">Kelola semua destinasi wisata yang tersedia</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Destination Management
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Kelola semua destinasi wisata yang tersedia
+          </p>
         </div>
         <Link to="/admin/destination/add">
           <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
@@ -182,7 +372,9 @@ const DestinationPage = () => {
                 <MapPin className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{destinations?.length || 0}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {destinations?.length || 0}
+                </div>
                 <div className="text-sm text-gray-600">Total Destinasi</div>
               </div>
             </div>
@@ -195,7 +387,9 @@ const DestinationPage = () => {
                 <Tag className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{uniqueCategories.length}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {uniqueCategories.length}
+                </div>
                 <div className="text-sm text-gray-600">Kategori</div>
               </div>
             </div>
@@ -208,7 +402,9 @@ const DestinationPage = () => {
                 <Search className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{filteredDestinations.length}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {filteredDestinations.length}
+                </div>
                 <div className="text-sm text-gray-600">Hasil Filter</div>
               </div>
             </div>
@@ -235,7 +431,9 @@ const DestinationPage = () => {
                 <Button variant="outline" className="flex items-center gap-2">
                   <SlidersHorizontal className="h-4 w-4" />
                   Filter
-                  {isFilterActive && <span className="h-2 w-2 rounded-full bg-blue-600"></span>}
+                  {isFilterActive && (
+                    <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                  )}
                 </Button>
               </SheetTrigger>
               <SheetContent>
@@ -245,8 +443,8 @@ const DestinationPage = () => {
                 <div className="py-4 space-y-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Kategori</label>
-                    <Select 
-                      value={selectedCategory} 
+                    <Select
+                      value={selectedCategory}
                       onValueChange={setSelectedCategory}
                     >
                       <SelectTrigger>
@@ -280,8 +478,8 @@ const DestinationPage = () => {
                   </div>
                 </div>
                 <SheetFooter>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={resetFilters}
                     className="w-full flex items-center gap-2"
                   >
@@ -319,14 +517,21 @@ const DestinationPage = () => {
                     <TableCell colSpan={6} className="text-center py-8">
                       <div className="flex flex-col items-center gap-2">
                         <div className="text-4xl">🏝️</div>
-                        <p className="text-gray-500">Tidak ada destinasi yang ditemukan</p>
-                        <p className="text-sm text-gray-400">Coba ubah filter pencarian Anda</p>
+                        <p className="text-gray-500">
+                          Tidak ada destinasi yang ditemukan
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Coba ubah filter pencarian Anda
+                        </p>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
                   currentItems.map((destination) => (
-                    <TableRow key={destination._id} className="hover:bg-gray-50">
+                    <TableRow
+                      key={destination._id}
+                      className="hover:bg-gray-50"
+                    >
                       <TableCell>
                         {destination.foto && destination.foto.length > 0 && (
                           <div className="w-16 h-16 relative overflow-hidden rounded-lg bg-gray-100 group">
@@ -335,7 +540,8 @@ const DestinationPage = () => {
                               alt={destination.nama}
                               className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
                               onError={(e) => {
-                                e.currentTarget.src = 'https://placehold.co/200x200?text=No+Image';
+                                e.currentTarget.src =
+                                  "https://placehold.co/200x200?text=No+Image";
                               }}
                               loading="lazy"
                             />
@@ -343,7 +549,9 @@ const DestinationPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium text-gray-900">{destination.nama}</div>
+                        <div className="font-medium text-gray-900">
+                          {destination.nama}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1 text-gray-600">
@@ -352,13 +560,21 @@ const DestinationPage = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1 w-fit"
+                        >
                           <Tag className="h-3 w-3" />
-                          {destination.category.title}
+                          {destination.category?.title ||
+                            "Tidak ada kategori"}{" "}
+                          {/* ✅ Safe access with fallback */}
                         </Badge>
                       </TableCell>
                       <TableCell className="max-w-xs">
-                        <p className="truncate text-gray-600" title={destination.deskripsi}>
+                        <p
+                          className="truncate text-gray-600"
+                          title={destination.deskripsi}
+                        >
                           {destination.deskripsi}
                         </p>
                       </TableCell>
@@ -373,11 +589,23 @@ const DestinationPage = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Aksi</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => navigate(`/admin/destination/${destination._id}`)}>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                navigate(
+                                  `/admin/destination/${destination._id}`
+                                )
+                              }
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               Lihat detail
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => navigate(`/admin/destination/${destination._id}/edit`)}>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                navigate(
+                                  `/admin/destination/${destination._id}/edit`
+                                )
+                              }
+                            >
                               <Pencil className="mr-2 h-4 w-4" />
                               Edit
                             </DropdownMenuItem>
@@ -420,18 +648,23 @@ const DestinationPage = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Penghapusan</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus destinasi ini? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data termasuk foto yang terkait.
+              Apakah Anda yakin ingin menghapus destinasi ini? Tindakan ini
+              tidak dapat dibatalkan dan akan menghapus semua data termasuk foto
+              yang terkait.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
+            <AlertDialogAction
+              onClick={handleDelete}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
@@ -441,7 +674,7 @@ const DestinationPage = () => {
                   Menghapus...
                 </>
               ) : (
-                'Ya, Hapus'
+                "Ya, Hapus"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

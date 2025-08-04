@@ -6,7 +6,8 @@ import {
   getAdminProfile,
   verifyAdminToken,
   updateAdminProfile,
-  changeAdminPassword
+  changeAdminPassword,
+  createAdminAccount
 } from "../controllers/adminAuthController.js";
 import {
   adminAuthMiddleware,
@@ -16,6 +17,7 @@ import {
   validateAdminLogin,
   validateAdminProfileUpdate,
   validateAdminPasswordChange,
+  validateCreateAdmin,
   loginRateLimit,
   sanitizeAdminInput
 } from "../middleware/adminAuthValidator.js";
@@ -147,6 +149,48 @@ router.get("/profile",
 router.get("/verify-token", 
   adminAuthMiddleware, 
   verifyAdminToken
+);
+
+/**
+ * @swagger
+ * /admin/create:
+ *   post:
+ *     summary: Create new admin account (first request will create super-admin)
+ *     tags: [Admin Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               name:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [admin, super-admin]
+ *     responses:
+ *       201:
+ *         description: Admin created successfully
+ *       400:
+ *         description: Validation errors or admin already exists
+ *       500:
+ *         description: Server error
+ */
+router.post("/create", 
+  validateCreateAdmin,
+  sanitizeAdminInput,
+  createAdminAccount
 );
 
 export default router;

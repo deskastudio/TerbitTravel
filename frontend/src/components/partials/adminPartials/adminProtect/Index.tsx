@@ -1,4 +1,5 @@
 // src/components/partials/adminPartials/adminProtect/Index.tsx
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAdminAuthContext } from '@/providers/AdminAuthProvider';
 
@@ -13,8 +14,17 @@ const AdminProtectedRoute = ({
   allowedRoles = ['admin', 'super-admin'],
   requireSuperAdmin = false 
 }: AdminProtectedRouteProps) => {
-  const { isAuthenticated, admin, loading } = useAdminAuthContext();
+  const { isAuthenticated, admin, loading, checkAuth } = useAdminAuthContext();
   const location = useLocation();
+
+  // ✅ FIXED: Force auth check on mount if not authenticated but localStorage has data
+  React.useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      console.log('🔄 AdminProtectedRoute: Forcing auth check');
+      const authResult = checkAuth();
+      console.log('🔄 Auth check result:', authResult);
+    }
+  }, [isAuthenticated, loading, checkAuth]);
 
   console.log('🔐 AdminProtectedRoute Check:', {
     isAuthenticated,
@@ -27,7 +37,16 @@ const AdminProtectedRoute = ({
     loading,
     allowedRoles,
     requireSuperAdmin,
-    currentPath: location.pathname
+    currentPath: location.pathname,
+    // ✅ Add localStorage debug info
+    localStorageState: {
+      hasToken: !!localStorage.getItem('adminToken'),
+      hasUser: !!localStorage.getItem('adminUser'),
+      tokenExpired: (() => {
+        const exp = localStorage.getItem('adminTokenExpiration');
+        return exp ? Date.now() > parseInt(exp) : true;
+      })()
+    }
   });
 
   // ✅ Show loading while checking auth

@@ -15,19 +15,45 @@ const CATEGORY_BASE_URL = "/destination-category";
 export const DestinationService = {
   getAllDestinations: async (): Promise<IDestination[]> => {
     try {
+      console.log('🚀 Fetching destinations from:', `${DESTINATION_BASE_URL}/getAll`);
       const response = await axiosInstance.get<IDestination[] | DestinationsResponse>(`${DESTINATION_BASE_URL}/getAll`);
+      
+      console.log('📥 Raw response:', response);
+      console.log('📊 Response data type:', typeof response.data);
+      console.log('📊 Response data:', response.data);
       
       // Handle both cases: API returning array directly or wrapped in a data property
       if (Array.isArray(response.data)) {
-        return response.data;
+        console.log('✅ Response is array, length:', response.data.length);
+        // ✅ Add data validation
+        const validDestinations = response.data.filter(dest => {
+          const isValid = dest && dest._id && dest.nama;
+          if (!isValid) {
+            console.warn('⚠️ Invalid destination found:', dest);
+          }
+          return isValid;
+        });
+        console.log('✅ Valid destinations:', validDestinations.length);
+        return validDestinations;
       } else if (response.data && 'data' in response.data) {
-        return response.data.data;
+        console.log('✅ Response is wrapped object, data length:', response.data.data?.length);
+        const destinations = response.data.data || [];
+        // ✅ Add data validation
+        const validDestinations = destinations.filter(dest => {
+          const isValid = dest && dest._id && dest.nama;
+          if (!isValid) {
+            console.warn('⚠️ Invalid destination found:', dest);
+          }
+          return isValid;
+        });
+        console.log('✅ Valid destinations:', validDestinations.length);
+        return validDestinations;
       }
       
-      console.error("Unexpected API response format:", response.data);
+      console.error("❌ Unexpected API response format:", response.data);
       return [];
     } catch (error) {
-      console.error("Error fetching destinations:", error);
+      console.error("❌ Error fetching destinations:", error);
       throw error;
     }
   },

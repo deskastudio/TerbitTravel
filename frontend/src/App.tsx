@@ -1,5 +1,5 @@
 // src/App.tsx
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import AdminRoutes from './routes/AdminRoutes';
 import MainRoutes from './routes/MainRoutes';
 
@@ -11,13 +11,16 @@ function App() {
   
   return (
     <Router>
-      {/* ✅ PERBAIKAN: AdminAuthProvider membungkus SEMUA routes admin */}
       <AdminAuthProvider>
-        <AdminRoutes />
+        {/* FIXED: Wrap both route systems in a single Routes component */}
+        <Routes>
+          {/* Admin routes take priority */}
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          
+          {/* Main routes for everything else */}
+          <Route path="/*" element={<MainRoutes />} />
+        </Routes>
       </AdminAuthProvider>
-      
-      {/* ✅ MainRoutes tetap terpisah (menggunakan AuthProvider dari main.tsx) */}
-      <MainRoutes />
     </Router>
   );
 }
