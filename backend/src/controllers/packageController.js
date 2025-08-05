@@ -4,34 +4,65 @@ import Package from "../models/package.js";
 /**
  * Menambah paket baru
  */
-// packageController.js 
+// packageController.js
 export const addPackage = async (req, res) => {
   try {
     const {
-      nama, deskripsi, include, exclude, harga, status,
-      durasi, jadwal, destination, hotel, armada, consume, kategori
+      nama,
+      deskripsi,
+      include,
+      exclude,
+      harga,
+      status,
+      durasi,
+      jadwal,
+      destination,
+      hotel,
+      armada,
+      consume,
+      kategori,
     } = req.body;
 
     // Validate required fields
-    if (!nama || !deskripsi || !harga || !durasi || 
-        !destination || !hotel || !armada || !consume || !kategori) {
-      return res.status(400).json({ 
-        message: "Semua field wajib diisi"
+    if (
+      !nama ||
+      !deskripsi ||
+      !harga ||
+      !durasi ||
+      !destination ||
+      !hotel ||
+      !armada ||
+      !consume ||
+      !kategori
+    ) {
+      return res.status(400).json({
+        message: "Semua field wajib diisi",
       });
     }
 
     const newPackage = new Package({
-      nama, deskripsi, include, exclude, harga, status,
-      durasi, jadwal, destination, hotel, armada, consume, kategori
+      nama,
+      deskripsi,
+      include,
+      exclude,
+      harga,
+      status,
+      durasi,
+      jadwal,
+      destination,
+      hotel,
+      armada,
+      consume,
+      kategori,
     });
 
     await newPackage.save();
     res.status(201).json(newPackage);
   } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ 
+    console.error("Server error:", error);
+    res.status(500).json({
       message: "Error adding package",
-      error: error.message 
+      error: error.message,
     });
   }
 };
@@ -42,19 +73,18 @@ export const addPackage = async (req, res) => {
 export const getAllPackages = async (req, res) => {
   try {
     const packages = await Package.find()
-      .populate("destination", "nama lokasi")  
+      .populate("destination", "nama lokasi foto")
       .populate("hotel", "nama bintang")
       .populate("armada", "nama kapasitas")
       .populate("consume", "nama")
       .populate("kategori", "title");
- 
-    console.log('Found packages:', packages);
+
     res.json(packages);
   } catch (error) {
-    console.error('Error:', error);
+    console.error("Error:", error);
     res.status(500).json({ message: "Error fetching packages", error });
-  }  
- };
+  }
+};
 
 /**
  * Mengambil paket berdasarkan ID
@@ -64,11 +94,11 @@ export const getPackageById = async (req, res) => {
     const { packageId } = req.params;
 
     const foundPackage = await Package.findById(packageId)
-      .populate("destination", "lokasi gambar")
+      .populate("destination", "nama lokasi foto")
       .populate("hotel", "nama alamat bintang")
       .populate("armada", "nama kapasitas")
       .populate("consume", "nama lauk harga")
-      .populate("kategori", "nama"); // Populate kategori
+      .populate("kategori", "title");
 
     if (!foundPackage) {
       return res.status(404).json({ message: "Package not found" });
@@ -138,6 +168,40 @@ export const updatePackage = async (req, res) => {
   } catch (error) {
     console.error("Error updating package:", error);
     res.status(500).json({ message: "Error updating package", error });
+  }
+};
+
+/**
+ * Mengambil paket berdasarkan kategori
+ */
+export const getPackagesByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { limit = 10, excludeId } = req.query;
+
+    let query = { kategori: categoryId };
+
+    // Exclude specific package if provided
+    if (excludeId) {
+      query._id = { $ne: excludeId };
+    }
+
+    const packages = await Package.find(query)
+      .populate("destination", "nama lokasi foto")
+      .populate("hotel", "nama bintang")
+      .populate("armada", "nama kapasitas")
+      .populate("consume", "nama")
+      .populate("kategori", "title")
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    console.log(`Found ${packages.length} packages for category ${categoryId}`);
+    res.json(packages);
+  } catch (error) {
+    console.error("Error fetching packages by category:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching packages by category", error });
   }
 };
 

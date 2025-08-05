@@ -48,6 +48,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useBooking } from "@/hooks/use-booking";
 import type { ITourPackage, Schedule } from "@/types/tour-package.types";
 import { Badge } from "@/components/ui/badge";
+import ImageWithFallback from "@/components/ui/image-with-fallback";
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -71,7 +72,7 @@ const formatDate = (dateString: string): string => {
 
 // Komponen untuk menampilkan langkah-langkah alur pemesanan
 const BookingSteps = () => {
-  const currentStep = 1; // Form pemesanan adalah langkah pertama
+  const currentStep: number = 1; // Form pemesanan adalah langkah pertama
 
   return (
     <div className="mb-8 relative">
@@ -190,10 +191,10 @@ export default function BookingForm() {
 
         // Set jumlah peserta default
         if (data && data.armada) {
-          const defaultCount = Math.max(
-            1,
-            Math.min(2, data.armada.kapasitas || 10)
-          );
+          const kapasitas = Array.isArray(data.armada.kapasitas)
+            ? parseInt(data.armada.kapasitas[0])
+            : data.armada.kapasitas || 10;
+          const defaultCount = Math.max(1, Math.min(2, kapasitas));
           setJumlahPeserta(defaultCount);
         }
 
@@ -244,7 +245,7 @@ export default function BookingForm() {
         ...prev,
         nama: user.nama || "",
         email: user.email || "",
-        telepon: user.telepon || "",
+        telepon: user.noTelp || "",
         alamat: user.alamat || "",
       }));
     } else {
@@ -297,12 +298,13 @@ export default function BookingForm() {
 
   // Handle increment/decrement jumlah peserta
   const increaseJumlahPeserta = () => {
-    if (
-      paketWisata &&
-      paketWisata.armada &&
-      jumlahPeserta < paketWisata.armada.kapasitas
-    ) {
-      setJumlahPeserta((prev) => prev + 1);
+    if (paketWisata && paketWisata.armada) {
+      const kapasitas = Array.isArray(paketWisata.armada.kapasitas)
+        ? parseInt(paketWisata.armada.kapasitas[0])
+        : paketWisata.armada.kapasitas;
+      if (jumlahPeserta < kapasitas) {
+        setJumlahPeserta((prev) => prev + 1);
+      }
     }
   };
 
@@ -388,7 +390,7 @@ export default function BookingForm() {
           tanggalAwal: selectedSchedule.tanggalAwal,
           tanggalAkhir: selectedSchedule.tanggalAkhir,
         },
-        userId: isAuthenticated && user ? user.id : undefined,
+        userId: isAuthenticated && user ? user._id : undefined,
         metodePembayaran: formData.metodePembayaran, // Ini tetap untuk tracking di frontend
       };
 
@@ -436,26 +438,13 @@ export default function BookingForm() {
         "🔍 bookingResponse.data.bookingId:",
         bookingResponse.data?.bookingId
       );
-      console.log(
-        "🔍 bookingResponse.data.booking_id:",
-        bookingResponse.data?.booking_id
-      );
-      console.log(
-        "🔍 bookingResponse.data.customId:",
-        bookingResponse.data?.customId
-      );
-      console.log("🔍 bookingResponse.booking_id:", bookingResponse.booking_id);
-      console.log("🔍 bookingResponse.bookingId:", bookingResponse.bookingId);
+      console.log("🔍 bookingResponse.data._id:", bookingResponse.data?._id);
       console.log("🔍 === END BOOKING RESPONSE DEBUG ===");
 
       if (bookingResponse.success && bookingResponse.data) {
-        // ✅ EXTRACT bookingId dengan multiple fallback untuk handle berbagai format response
+        // ✅ EXTRACT bookingId dengan fallback untuk handle berbagai format response
         const bookingId =
-          bookingResponse.data.bookingId || // Format normal
-          bookingResponse.data.booking_id || // Format dari payment response
-          bookingResponse.data.customId || // Format dari database
-          bookingResponse.booking_id || // Direct dari response root
-          bookingResponse.bookingId || // Alternative dari response root
+          bookingResponse.data.bookingId || // Format normal dari response
           bookingResponse.data._id || // MongoDB ObjectId sebagai fallback
           `BOOK-${Date.now().toString().slice(-8)}`; // Generate jika tidak ada
 
@@ -483,7 +472,6 @@ export default function BookingForm() {
         const bookingInfo = {
           ...bookingResponse.data,
           bookingId: bookingId, // ✅ Pastikan bookingId di-set dengan benar
-          customId: bookingId, // ✅ Set juga customId untuk compatibility
           metodePembayaran: formData.metodePembayaran,
           totalAmount,
           packageDetail: {
@@ -753,6 +741,7 @@ export default function BookingForm() {
                         <Input
                           id="nama"
                           name="nama"
+                          type="text"
                           placeholder="Masukkan nama lengkap Anda"
                           value={formData.nama}
                           onChange={handleInputChange}
@@ -760,13 +749,22 @@ export default function BookingForm() {
                             formErrors.nama ? "border-red-500" : ""
                           }`}
                           disabled={isSubmitting}
+                          autoComplete="name"
+                          required
+                          aria-describedby={
+                            formErrors.nama ? "nama-error" : undefined
+                          }
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                           <Users className="h-4 w-4" />
                         </div>
                       </div>
                       {formErrors.nama && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p
+                          id="nama-error"
+                          className="text-red-500 text-sm mt-1"
+                          role="alert"
+                        >
                           {formErrors.nama}
                         </p>
                       )}
@@ -788,13 +786,22 @@ export default function BookingForm() {
                             formErrors.email ? "border-red-500" : ""
                           }`}
                           disabled={isSubmitting}
+                          autoComplete="email"
+                          required
+                          aria-describedby={
+                            formErrors.email ? "email-error" : undefined
+                          }
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                           <Mail className="h-4 w-4" />
                         </div>
                       </div>
                       {formErrors.email && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p
+                          id="email-error"
+                          className="text-red-500 text-sm mt-1"
+                          role="alert"
+                        >
                           {formErrors.email}
                         </p>
                       )}
@@ -810,6 +817,7 @@ export default function BookingForm() {
                         <Input
                           id="telepon"
                           name="telepon"
+                          type="tel"
                           placeholder="08xxxxxxxxxx"
                           value={formData.telepon}
                           onChange={handleInputChange}
@@ -817,13 +825,22 @@ export default function BookingForm() {
                             formErrors.telepon ? "border-red-500" : ""
                           }`}
                           disabled={isSubmitting}
+                          autoComplete="tel"
+                          required
+                          aria-describedby={
+                            formErrors.telepon ? "telepon-error" : undefined
+                          }
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                           <Phone className="h-4 w-4" />
                         </div>
                       </div>
                       {formErrors.telepon && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p
+                          id="telepon-error"
+                          className="text-red-500 text-sm mt-1"
+                          role="alert"
+                        >
                           {formErrors.telepon}
                         </p>
                       )}
@@ -837,11 +854,13 @@ export default function BookingForm() {
                         <Input
                           id="instansi"
                           name="instansi"
+                          type="text"
                           placeholder="Nama instansi/perusahaan (jika ada)"
                           value={formData.instansi}
                           onChange={handleInputChange}
                           className="pl-10"
                           disabled={isSubmitting}
+                          autoComplete="organization"
                         />
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                           <Landmark className="h-4 w-4" />
@@ -866,13 +885,22 @@ export default function BookingForm() {
                         }`}
                         rows={3}
                         disabled={isSubmitting}
+                        autoComplete="street-address"
+                        required
+                        aria-describedby={
+                          formErrors.alamat ? "alamat-error" : undefined
+                        }
                       />
                       <div className="absolute left-3 top-3 text-muted-foreground">
                         <MapPin className="h-4 w-4" />
                       </div>
                     </div>
                     {formErrors.alamat && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p
+                        id="alamat-error"
+                        className="text-red-500 text-sm mt-1"
+                        role="alert"
+                      >
                         {formErrors.alamat}
                       </p>
                     )}
@@ -890,6 +918,7 @@ export default function BookingForm() {
                       onChange={handleInputChange}
                       rows={3}
                       disabled={isSubmitting}
+                      autoComplete="off"
                     />
                   </div>
 
@@ -897,7 +926,11 @@ export default function BookingForm() {
                     <Label className="text-base font-medium mb-2 block">
                       Jumlah Peserta
                     </Label>
-                    <div className="flex items-center">
+                    <div
+                      className="flex items-center"
+                      role="group"
+                      aria-label="Pilih jumlah peserta"
+                    >
                       <Button
                         type="button"
                         variant="outline"
@@ -905,10 +938,14 @@ export default function BookingForm() {
                         className="rounded-full h-10 w-10"
                         onClick={decreaseJumlahPeserta}
                         disabled={jumlahPeserta <= 1 || isSubmitting}
+                        aria-label="Kurangi jumlah peserta"
                       >
                         <MinusCircle className="h-5 w-5" />
                       </Button>
-                      <div className="mx-6 text-lg font-medium w-10 text-center">
+                      <div
+                        className="mx-6 text-lg font-medium w-10 text-center"
+                        aria-live="polite"
+                      >
                         {jumlahPeserta}
                       </div>
                       <Button
@@ -919,16 +956,24 @@ export default function BookingForm() {
                         onClick={increaseJumlahPeserta}
                         disabled={
                           paketWisata && paketWisata.armada
-                            ? jumlahPeserta >= paketWisata.armada.kapasitas
+                            ? jumlahPeserta >=
+                              (Array.isArray(paketWisata.armada.kapasitas)
+                                ? parseInt(paketWisata.armada.kapasitas[0])
+                                : paketWisata.armada.kapasitas)
                             : false || isSubmitting
                         }
+                        aria-label="Tambah jumlah peserta"
                       >
                         <PlusCircle className="h-5 w-5" />
                       </Button>
                     </div>
                     {paketWisata && paketWisata.armada && (
                       <p className="text-sm text-muted-foreground mt-2">
-                        Kapasitas maksimal: {paketWisata.armada.kapasitas} orang
+                        Kapasitas maksimal:{" "}
+                        {Array.isArray(paketWisata.armada.kapasitas)
+                          ? paketWisata.armada.kapasitas[0]
+                          : paketWisata.armada.kapasitas}{" "}
+                        orang
                       </p>
                     )}
                   </div>
@@ -944,6 +989,7 @@ export default function BookingForm() {
                       }
                       className="flex flex-col space-y-3"
                       disabled={isSubmitting}
+                      aria-label="Pilih metode pembayaran"
                     >
                       <div className="flex items-center p-3 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
                         <RadioGroupItem
@@ -987,21 +1033,33 @@ export default function BookingForm() {
                   <div className="flex items-start space-x-2 pt-2">
                     <Checkbox
                       id="setuju"
+                      name="setuju"
                       checked={formData.setuju}
                       onCheckedChange={handleCheckboxChange}
                       className={formErrors.setuju ? "border-red-500" : ""}
                       disabled={isSubmitting}
+                      required
+                      aria-describedby={
+                        formErrors.setuju
+                          ? "setuju-error"
+                          : "setuju-description"
+                      }
                     />
                     <div className="grid gap-1.5 leading-none">
                       <Label
                         htmlFor="setuju"
                         className="text-sm font-normal leading-snug text-muted-foreground"
+                        id="setuju-description"
                       >
                         Saya menyetujui syarat dan ketentuan yang berlaku serta
                         kebijakan privasi
                       </Label>
                       {formErrors.setuju && (
-                        <p className="text-red-500 text-xs">
+                        <p
+                          id="setuju-error"
+                          className="text-red-500 text-xs"
+                          role="alert"
+                        >
                           {formErrors.setuju}
                         </p>
                       )}
@@ -1058,16 +1116,14 @@ export default function BookingForm() {
               <CardContent className="space-y-4 pt-6">
                 <div className="flex items-center gap-3">
                   <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
-                    <img
-                      src={
-                        paketWisata.foto?.[0] ||
-                        `https://source.unsplash.com/random/800x600/?travel,${paketWisata.destination.nama}`
-                      }
+                    <ImageWithFallback
+                      src={paketWisata.foto?.[0]}
                       alt={paketWisata.nama}
                       className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "";
-                      }}
+                      fallbackClassName="h-full w-full rounded-md"
+                      fallbackText="Travel Package"
+                      width={64}
+                      height={64}
                     />
                   </div>
                   <div>
@@ -1108,7 +1164,10 @@ export default function BookingForm() {
                       Kapasitas Max
                     </span>
                     <span className="font-medium">
-                      {paketWisata.armada.kapasitas} orang
+                      {Array.isArray(paketWisata.armada.kapasitas)
+                        ? paketWisata.armada.kapasitas[0]
+                        : paketWisata.armada.kapasitas}{" "}
+                      orang
                     </span>
                   </div>
                 </div>
@@ -1283,7 +1342,11 @@ export default function BookingForm() {
                     {paketWisata.armada.nama} - {paketWisata.armada.merek}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Kapasitas {paketWisata.armada.kapasitas} orang
+                    Kapasitas{" "}
+                    {Array.isArray(paketWisata.armada.kapasitas)
+                      ? paketWisata.armada.kapasitas[0]
+                      : paketWisata.armada.kapasitas}{" "}
+                    orang
                   </p>
                 </div>
 

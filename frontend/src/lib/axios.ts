@@ -38,25 +38,15 @@ const instance = axios.create({
   timeout: 30000, // Increased timeout for tunnel connections
 });
 
-// ✅ ENHANCED: Request interceptor with better debugging
+// Request interceptor
 instance.interceptors.request.use(
   (config) => {
-    console.log(
-      `\n🚀 [Main API Request] ${config.method?.toUpperCase()} ${config.url}`
-    );
-    console.log(`📍 Full URL: ${config.baseURL}${config.url}`);
-    console.log(`🌐 Frontend Origin: ${window.location.origin}`);
-    console.log(`🎯 Backend Target: ${config.baseURL}`);
-
     const token = localStorage.getItem("authToken");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
-      console.log(`🔑 Auth: Bearer ${token.substring(0, 20)}...`);
-    } else {
-      console.log(`🔑 Auth: None`);
     }
 
-    // ✅ Add ngrok headers if needed
+    // Add ngrok headers if needed
     if (config.baseURL?.includes("ngrok")) {
       config.headers["ngrok-skip-browser-warning"] = "true";
       console.log(`🚇 Ngrok headers added`);
@@ -78,26 +68,10 @@ instance.interceptors.request.use(
 // ✅ ENHANCED: Response interceptor with better error handling
 instance.interceptors.response.use(
   (response) => {
-    console.log(
-      `\n✅ [Main API Response] ${response.status} ${response.config.url}`
-    );
-    console.log(`📥 Response Data:`, response.data);
-
-    // Log response headers for debugging CORS
-    if (response.headers) {
-      console.log(`📋 Response Headers:`, {
-        "access-control-allow-origin":
-          response.headers["access-control-allow-origin"],
-        "access-control-allow-credentials":
-          response.headers["access-control-allow-credentials"],
-        "content-type": response.headers["content-type"],
-      });
-    }
-
     return response;
   },
   async (error) => {
-    console.error(`\n❌ [Main API Error] ${error.config?.url}:`);
+    console.error(`❌ [API Error] ${error.config?.url}:`);
 
     // Enhanced error logging
     const errorInfo = {

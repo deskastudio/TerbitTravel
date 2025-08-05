@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Calendar,
@@ -17,20 +17,26 @@ import {
   Utensils,
   Users,
   AlertCircle,
-  Tag
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useToast } from "@/hooks/use-toast"
-import { TourPackageService } from "@/services/tour-package.service"
-import { ITourPackage, TourPackageStatus } from "@/types/tour-package.types"
+  Tag,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { TourPackageService } from "@/services/tour-package.service";
+import { ITourPackage, TourPackageStatus } from "@/types/tour-package.types";
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -39,40 +45,55 @@ const formatCurrency = (amount: number): string => {
     currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
-}
+  }).format(amount);
+};
 
 // Format tanggal
 const formatDate = (dateString: string): string => {
-  const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "long", year: "numeric" }
-  return new Date(dateString).toLocaleDateString("id-ID", options)
-}
+  const options: Intl.DateTimeFormatOptions = {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  };
+  return new Date(dateString).toLocaleDateString("id-ID", options);
+};
 
 // Komponen untuk menampilkan status paket wisata
 const StatusBadge = ({ status }: { status: TourPackageStatus }) => {
   const statusConfig = {
     available: { label: "Tersedia", color: "bg-green-500 hover:bg-green-600" },
-    booked: { label: "Sudah Dipesan", color: "bg-orange-500 hover:bg-orange-600" },
-    in_progress: { label: "Sedang Berlangsung", color: "bg-blue-500 hover:bg-blue-600" },
+    booked: {
+      label: "Sudah Dipesan",
+      color: "bg-orange-500 hover:bg-orange-600",
+    },
+    in_progress: {
+      label: "Sedang Berlangsung",
+      color: "bg-blue-500 hover:bg-blue-600",
+    },
     completed: { label: "Selesai", color: "bg-gray-500 hover:bg-gray-600" },
     cancelled: { label: "Dibatalkan", color: "bg-red-500 hover:bg-red-600" },
-  }
+  };
 
-  const config = statusConfig[status]
+  const config = statusConfig[status];
 
-  return <Badge className={config.color}>{config.label}</Badge>
-}
+  return <Badge className={config.color}>{config.label}</Badge>;
+};
 
 // Komponen untuk menampilkan rating hotel dengan bintang
 const HotelStars = ({ rating }: { rating: number }) => {
   return (
     <div className="flex">
       {[...Array(5)].map((_, i) => (
-        <Star key={i} className={`h-4 w-4 ${i < rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}`} />
+        <Star
+          key={i}
+          className={`h-4 w-4 ${
+            i < rating ? "fill-yellow-500 text-yellow-500" : "text-gray-300"
+          }`}
+        />
       ))}
     </div>
-  )
-}
+  );
+};
 
 // Komponen Skeleton untuk loading
 const DetailSkeleton = () => {
@@ -100,79 +121,93 @@ const DetailSkeleton = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default function PaketWisataDetail() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const { toast } = useToast()
-  const [paketWisata, setPaketWisata] = useState<ITourPackage | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [isFavorite, setIsFavorite] = useState(false)
-  const [selectedSchedule, setSelectedSchedule] = useState("")
-  const [galleryImages, setGalleryImages] = useState<string[]>([])
-  const [isImageLoading, setIsImageLoading] = useState(true)
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [paketWisata, setPaketWisata] = useState<ITourPackage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState("");
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [isImageLoading, setIsImageLoading] = useState(true);
   // State untuk menu makanan/lauk
-  const [menuMakanan, setMenuMakanan] = useState<string[]>([])
+  const [menuMakanan, setMenuMakanan] = useState<string[]>([]);
   // State untuk paket sejenis (akan diambil dari API)
-  const [similarPackages, setSimilarPackages] = useState<ITourPackage[]>([])
+  const [similarPackages, setSimilarPackages] = useState<ITourPackage[]>([]);
 
   // Tambahkan useEffect untuk memeriksa apakah paket ini sudah difavoritkan
   useEffect(() => {
     if (id) {
-      const savedFavorites = JSON.parse(localStorage.getItem('favoritePackages') || '[]');
+      const savedFavorites = JSON.parse(
+        localStorage.getItem("favoritePackages") || "[]"
+      );
       setIsFavorite(savedFavorites.includes(id));
     }
   }, [id]);
 
   // Fungsi untuk toggle favorit
   const toggleFavorite = useCallback(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem('favoritePackages') || '[]');
-    
+    const savedFavorites = JSON.parse(
+      localStorage.getItem("favoritePackages") || "[]"
+    );
+
     if (isFavorite) {
       // Hapus dari favorit
-      const updatedFavorites = savedFavorites.filter((favId: string) => favId !== id);
-      localStorage.setItem('favoritePackages', JSON.stringify(updatedFavorites));
+      const updatedFavorites = savedFavorites.filter(
+        (favId: string) => favId !== id
+      );
+      localStorage.setItem(
+        "favoritePackages",
+        JSON.stringify(updatedFavorites)
+      );
       toast({
         title: "Dihapus dari favorit",
-        description: "Paket wisata telah dihapus dari daftar favorit Anda"
+        description: "Paket wisata telah dihapus dari daftar favorit Anda",
       });
     } else {
       // Tambahkan ke favorit
       if (!savedFavorites.includes(id)) {
         savedFavorites.push(id);
-        localStorage.setItem('favoritePackages', JSON.stringify(savedFavorites));
+        localStorage.setItem(
+          "favoritePackages",
+          JSON.stringify(savedFavorites)
+        );
       }
       toast({
         title: "Ditambahkan ke favorit",
-        description: "Paket wisata telah ditambahkan ke daftar favorit Anda"
+        description: "Paket wisata telah ditambahkan ke daftar favorit Anda",
       });
     }
-    
+
     setIsFavorite(!isFavorite);
   }, [id, isFavorite, toast]);
 
   // Fungsi untuk sharing paket wisata
   const handleShare = useCallback(async () => {
     if (!paketWisata) return;
-    
+
     const url = window.location.href;
     const title = `Paket Wisata ${paketWisata.nama}`;
-    const text = `Lihat paket wisata ${paketWisata.nama} ke ${paketWisata.destination.nama} dengan harga mulai dari ${formatCurrency(paketWisata.harga)} per orang!`;
+    const text = `Lihat paket wisata ${paketWisata.nama} ke ${
+      paketWisata.destination.nama
+    } dengan harga mulai dari ${formatCurrency(paketWisata.harga)} per orang!`;
 
     if (navigator.share) {
       try {
         await navigator.share({
           title,
           text,
-          url
+          url,
         });
         toast({
           title: "Berhasil dibagikan!",
-          description: "Paket wisata telah dibagikan"
+          description: "Paket wisata telah dibagikan",
         });
       } catch (error) {
         console.error("Error sharing:", error);
@@ -187,19 +222,21 @@ export default function PaketWisataDetail() {
 
   // Fungsi untuk menyalin ke clipboard
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+    navigator.clipboard
+      .writeText(text)
       .then(() => {
         toast({
           title: "Disalin ke clipboard!",
-          description: "Link paket wisata telah disalin. Anda dapat membagikannya sekarang"
+          description:
+            "Link paket wisata telah disalin. Anda dapat membagikannya sekarang",
         });
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Error copying to clipboard:", err);
         toast({
           variant: "destructive",
           title: "Gagal menyalin",
-          description: "Tidak dapat menyalin link ke clipboard"
+          description: "Tidak dapat menyalin link ke clipboard",
         });
       });
   };
@@ -212,49 +249,62 @@ export default function PaketWisataDetail() {
         if (!id) {
           throw new Error("ID paket wisata tidak ditemukan");
         }
-        
+
         // Mengambil data paket wisata
         const data = await TourPackageService.getPackageById(id);
         console.log("Data paket wisata dari API:", data);
-        
+
         // Pastikan objek hotel memiliki array fasilitas, jika kosong gunakan array kosong
         if (data.hotel && !data.hotel.fasilitas) {
           data.hotel.fasilitas = [];
         }
-        
-        // Generate placeholder images jika foto tidak tersedia
-        const packageImages: string[] = data.foto && data.foto.length > 0 
-          ? data.foto 
-          : [
-              ``,
-              ``,
-              ``
-            ];
-        
+
+        // Generate placeholder images - mengambil foto dari destinasi jika tersedia
+        const packageImages: string[] =
+          data.destination &&
+          data.destination.foto &&
+          data.destination.foto.length > 0
+            ? data.destination.foto
+            : [
+                `https://source.unsplash.com/random/800x600/?travel,${
+                  data.destination?.nama || "destination"
+                }`,
+                `https://source.unsplash.com/random/800x600/?landscape,${
+                  data.destination?.nama || "landscape"
+                }`,
+                `https://source.unsplash.com/random/800x600/?hotel,${
+                  data.destination?.nama || "hotel"
+                }`,
+              ];
+
         // Set menu makanan dari field lauk di model consume
         const lauk: string[] = data.consume?.lauk || [];
-        
+
         setGalleryImages(packageImages);
         setMenuMakanan(lauk);
         setPaketWisata(data);
-        
+
         // Setelah mengambil detail paket, ambil paket sejenis berdasarkan kategori
         if (data.kategori && data.kategori._id) {
           try {
-            // Pastikan method getPackagesByCategory tersedia di TourPackageService
-            if (typeof TourPackageService.getPackagesByCategory === 'function') {
-              const similarPackagesData = await TourPackageService.getPackagesByCategory(data.kategori._id, 3, id);
-              console.log("Data paket sejenis dari API:", similarPackagesData);
-              setSimilarPackages(similarPackagesData || []);
-            }
+            const similarPackagesData =
+              await TourPackageService.getPackagesByCategory(
+                data.kategori._id,
+                3,
+                id
+              );
+            console.log("Data paket sejenis dari API:", similarPackagesData);
+            setSimilarPackages(similarPackagesData || []);
           } catch (err: unknown) {
-            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            const errorMessage =
+              err instanceof Error ? err.message : "Unknown error";
             console.error("Error fetching similar packages:", errorMessage);
             // Tidak perlu menampilkan error, karena ini fitur tambahan
           }
         }
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
         console.error("Error fetching package detail:", errorMessage);
         setError("Gagal mengambil data paket wisata");
       } finally {
@@ -268,12 +318,16 @@ export default function PaketWisataDetail() {
   // Fungsi navigasi galeri
   const nextImage = useCallback(() => {
     setIsImageLoading(true);
-    setCurrentImageIndex((prev) => (prev === (galleryImages.length - 1) ? 0 : prev + 1));
+    setCurrentImageIndex((prev) =>
+      prev === galleryImages.length - 1 ? 0 : prev + 1
+    );
   }, [galleryImages.length]);
 
   const prevImage = useCallback(() => {
     setIsImageLoading(true);
-    setCurrentImageIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? galleryImages.length - 1 : prev - 1
+    );
   }, [galleryImages.length]);
 
   // Fungsi untuk navigasi ke halaman booking
@@ -285,7 +339,9 @@ export default function PaketWisataDetail() {
   // Mendapatkan jadwal yang dipilih
   const getSelectedSchedule = useCallback(() => {
     if (!selectedSchedule || !paketWisata) return null;
-    return paketWisata.jadwal.find((j) => `${j.tanggalAwal}-${j.tanggalAkhir}` === selectedSchedule);
+    return paketWisata.jadwal.find(
+      (j) => `${j.tanggalAwal}-${j.tanggalAkhir}` === selectedSchedule
+    );
   }, [paketWisata, selectedSchedule]);
 
   // Handle image load complete
@@ -305,9 +361,15 @@ export default function PaketWisataDetail() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error || "Paket wisata tidak ditemukan"}</AlertDescription>
+          <AlertDescription>
+            {error || "Paket wisata tidak ditemukan"}
+          </AlertDescription>
         </Alert>
-        <Button variant="outline" className="mt-4" onClick={() => navigate("/paket-wisata")}>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => navigate("/paket-wisata")}
+        >
           Kembali ke Daftar Paket Wisata
         </Button>
       </div>
@@ -318,10 +380,10 @@ export default function PaketWisataDetail() {
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb dan Tombol Kembali */}
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="gap-1 p-0 hover:bg-transparent" 
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1 p-0 hover:bg-transparent"
           onClick={() => navigate("/paket-wisata")}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -360,7 +422,7 @@ export default function PaketWisataDetail() {
             onLoad={handleImageLoad}
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
               // Fallback image if error
-              (e.currentTarget).src = ``;
+              e.currentTarget.src = `https://source.unsplash.com/random/800x600/?travel,fallback`;
               setIsImageLoading(false);
             }}
           />
@@ -415,11 +477,15 @@ export default function PaketWisataDetail() {
             onClick={toggleFavorite}
             aria-label={isFavorite ? "Hapus dari favorit" : "Tambah ke favorit"}
           >
-            <Heart className={`h-5 w-5 ${isFavorite ? "fill-red-500 text-red-500" : ""}`} />
+            <Heart
+              className={`h-5 w-5 ${
+                isFavorite ? "fill-red-500 text-red-500" : ""
+              }`}
+            />
           </Button>
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             className="rounded-full bg-white/80 hover:bg-white"
             onClick={handleShare}
             aria-label="Bagikan paket wisata"
@@ -435,15 +501,24 @@ export default function PaketWisataDetail() {
         <div className="lg:col-span-2">
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="mb-6 grid w-full grid-cols-3 bg-muted/60 p-1 rounded-xl">
-              <TabsTrigger value="overview" className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger
+                value="overview"
+                className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
                 <Info className="h-4 w-4" />
                 <span>Ikhtisar</span>
               </TabsTrigger>
-              <TabsTrigger value="info" className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger
+                value="info"
+                className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
                 <AlertCircle className="h-4 w-4" />
                 <span>Info Penting</span>
               </TabsTrigger>
-              <TabsTrigger value="facilities" className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger
+                value="facilities"
+                className="flex gap-2 items-center rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
                 <CheckCircle2 className="h-4 w-4" />
                 <span>Fasilitas</span>
               </TabsTrigger>
@@ -456,117 +531,145 @@ export default function PaketWisataDetail() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                       <Info className="h-5 w-5 text-primary" />
                     </div>
-                    <h2 className="text-xl font-semibold">Tentang Paket Wisata</h2>
+                    <h2 className="text-xl font-semibold">
+                      Tentang Paket Wisata
+                    </h2>
                   </div>
-                  <div className="bg-muted/20 rounded-lg p-4 text-muted-foreground whitespace-pre-line">{paketWisata.deskripsi}</div>
+                  <div className="bg-muted/20 rounded-lg p-4 text-muted-foreground whitespace-pre-line">
+                    {paketWisata.deskripsi}
+                  </div>
                 </div>
 
                 <Separator />
 
                 {/* Informasi Akomodasi dan Transportasi */}
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="md:w-full">
-                  <div className="bg-muted/30 p-4 rounded-lg h-full border border-muted/50 hover:shadow-sm transition-shadow">
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Hotel className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold text-lg">{paketWisata.hotel.nama}</h3>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2 pl-7">
-                        <HotelStars rating={paketWisata.hotel.bintang} />
-                        <span className="text-sm text-muted-foreground">Hotel {paketWisata.hotel.bintang} Bintang</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2 pl-7">
-                        <MapPin className="h-3.5 w-3.5" />
-                        <span>{paketWisata.hotel.alamat}</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-primary/5 rounded-md p-3 mt-4">
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                        Fasilitas Hotel:
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2 mb-2">
-                        {paketWisata.hotel.fasilitas && paketWisata.hotel.fasilitas.length > 0 ? (
-                          paketWisata.hotel.fasilitas.map((facility, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm pl-6">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                              <span>{facility}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="col-span-2 text-sm text-muted-foreground pl-6">
-                            Informasi fasilitas tidak tersedia
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="md:w-full">
-                  <div className="bg-muted/30 p-4 rounded-lg h-full border border-muted/50 hover:shadow-sm transition-shadow">
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Bus className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold text-lg">{paketWisata.armada.nama}</h3>
-                      </div>
-                      <div className="mb-2 flex flex-wrap gap-2 pl-7">
-                        <Badge variant="outline" className="bg-primary/5">{paketWisata.armada.merek}</Badge>
-                      </div>
-                    </div>
-
-                    <div className="bg-primary/5 rounded-md p-3 mt-4">
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <Users className="h-4 w-4 text-primary" />
-                        Kapasitas Armada:
-                      </h4>
-                      <div className="flex items-center gap-2 text-sm mb-2 pl-6">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
-                        <span>Maksimal {paketWisata.armada.kapasitas} orang</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {menuMakanan.length > 0 && (
-                  <div className="md:col-span-2">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                        <Utensils className="h-5 w-5 text-primary" />
-                      </div>
-                      <h2 className="text-xl font-semibold">Menu Makanan</h2>
-                    </div>
-                    <div className="bg-muted/30 p-4 rounded-lg border border-muted/50 hover:shadow-sm transition-shadow">
-                      <p className="text-muted-foreground mb-4">
-                        Berikut adalah menu makanan yang disediakan dalam paket {paketWisata.consume.nama}:
-                      </p>
-                      
-                      <div className="bg-primary/5 rounded-md p-3">
-                        <h3 className="font-medium mb-3 flex items-center gap-2">
-                          <Tag className="h-4 w-4 text-primary" />
-                          Daftar Menu:
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
-                          {menuMakanan.map((menu, index) => (
-                            <div key={index} className="flex items-start gap-2 pl-2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
-                              <span className="text-sm">{menu}</span>
-                            </div>
-                          ))}
+                  <div className="md:w-full">
+                    <div className="bg-muted/30 p-4 rounded-lg h-full border border-muted/50 hover:shadow-sm transition-shadow">
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Hotel className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold text-lg">
+                            {paketWisata.hotel.nama}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2 pl-7">
+                          <HotelStars rating={paketWisata.hotel.bintang} />
+                          <span className="text-sm text-muted-foreground">
+                            Hotel {paketWisata.hotel.bintang} Bintang
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground mb-2 pl-7">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>{paketWisata.hotel.alamat}</span>
                         </div>
                       </div>
-                      
-                      <div className="mt-4 text-sm text-muted-foreground">
-                        <p className="flex items-center gap-2">
-                          <Info className="h-4 w-4 text-primary" />
-                          Menu dapat berubah sesuai dengan ketersediaan bahan makanan di lokasi
-                        </p>
+
+                      <div className="bg-primary/5 rounded-md p-3 mt-4">
+                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                          Fasilitas Hotel:
+                        </h4>
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          {paketWisata.hotel.fasilitas &&
+                          paketWisata.hotel.fasilitas.length > 0 ? (
+                            paketWisata.hotel.fasilitas.map(
+                              (facility, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 text-sm pl-6"
+                                >
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                                  <span>{facility}</span>
+                                </div>
+                              )
+                            )
+                          ) : (
+                            <div className="col-span-2 text-sm text-muted-foreground pl-6">
+                              Informasi fasilitas tidak tersedia
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+
+                  <div className="md:w-full">
+                    <div className="bg-muted/30 p-4 rounded-lg h-full border border-muted/50 hover:shadow-sm transition-shadow">
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Bus className="h-5 w-5 text-primary" />
+                          <h3 className="font-semibold text-lg">
+                            {paketWisata.armada.nama}
+                          </h3>
+                        </div>
+                        <div className="mb-2 flex flex-wrap gap-2 pl-7">
+                          <Badge variant="outline" className="bg-primary/5">
+                            {paketWisata.armada.merek}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="bg-primary/5 rounded-md p-3 mt-4">
+                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                          <Users className="h-4 w-4 text-primary" />
+                          Kapasitas Armada:
+                        </h4>
+                        <div className="flex items-center gap-2 text-sm mb-2 pl-6">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                          <span>
+                            Maksimal{" "}
+                            {paketWisata.armada.kapasitas?.[0] ||
+                              paketWisata.armada.kapasitas}{" "}
+                            orang
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {menuMakanan.length > 0 && (
+                    <div className="md:col-span-2">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                          <Utensils className="h-5 w-5 text-primary" />
+                        </div>
+                        <h2 className="text-xl font-semibold">Menu Makanan</h2>
+                      </div>
+                      <div className="bg-muted/30 p-4 rounded-lg border border-muted/50 hover:shadow-sm transition-shadow">
+                        <p className="text-muted-foreground mb-4">
+                          Berikut adalah menu makanan yang disediakan dalam
+                          paket {paketWisata.consume.nama}:
+                        </p>
+
+                        <div className="bg-primary/5 rounded-md p-3">
+                          <h3 className="font-medium mb-3 flex items-center gap-2">
+                            <Tag className="h-4 w-4 text-primary" />
+                            Daftar Menu:
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
+                            {menuMakanan.map((menu, index) => (
+                              <div
+                                key={index}
+                                className="flex items-start gap-2 pl-2"
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+                                <span className="text-sm">{menu}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 text-sm text-muted-foreground">
+                          <p className="flex items-center gap-2">
+                            <Info className="h-4 w-4 text-primary" />
+                            Menu dapat berubah sesuai dengan ketersediaan bahan
+                            makanan di lokasi
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </TabsContent>
@@ -578,7 +681,9 @@ export default function PaketWisataDetail() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                       <AlertCircle className="h-5 w-5 text-primary" />
                     </div>
-                    <h2 className="text-xl font-semibold">Syarat & Ketentuan</h2>
+                    <h2 className="text-xl font-semibold">
+                      Syarat & Ketentuan
+                    </h2>
                   </div>
                   <div className="bg-muted/20 rounded-lg p-4">
                     <ul className="space-y-2 text-muted-foreground">
@@ -586,13 +691,19 @@ export default function PaketWisataDetail() {
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                         </div>
-                        <span>Harga dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya</span>
+                        <span>
+                          Harga dapat berubah sewaktu-waktu tanpa pemberitahuan
+                          sebelumnya
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                         </div>
-                        <span>Minimal peserta {paketWisata.minimalPeserta || 2} orang</span>
+                        <span>
+                          Minimal peserta {paketWisata.minimalPeserta || 2}{" "}
+                          orang
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -604,19 +715,27 @@ export default function PaketWisataDetail() {
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                         </div>
-                        <span>Pembatalan 7 hari sebelum keberangkatan dikenakan biaya 50%</span>
+                        <span>
+                          Pembatalan 7 hari sebelum keberangkatan dikenakan
+                          biaya 50%
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                         </div>
-                        <span>Pembatalan 3 hari sebelum keberangkatan dikenakan biaya 100%</span>
+                        <span>
+                          Pembatalan 3 hari sebelum keberangkatan dikenakan
+                          biaya 100%
+                        </span>
                       </li>
                       <li className="flex items-start gap-3">
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
                         </div>
-                        <span>Itinerary dapat berubah menyesuaikan kondisi lapangan</span>
+                        <span>
+                          Itinerary dapat berubah menyesuaikan kondisi lapangan
+                        </span>
                       </li>
                     </ul>
                   </div>
@@ -625,19 +744,26 @@ export default function PaketWisataDetail() {
                 <Separator />
 
                 <div>
-                  <h2 className="mb-3 text-xl font-semibold">Informasi Tambahan</h2>
+                  <h2 className="mb-3 text-xl font-semibold">
+                    Informasi Tambahan
+                  </h2>
                   <div className="space-y-4 text-muted-foreground">
                     <p>
-                      Paket wisata ini mencakup perjalanan selama {paketWisata.durasi} ke {paketWisata.destination.nama}, 
+                      Paket wisata ini mencakup perjalanan selama{" "}
+                      {paketWisata.durasi} ke {paketWisata.destination.nama},
                       {paketWisata.destination.lokasi}.
                     </p>
                     <p>
-                      Anda akan menginap di {paketWisata.hotel.nama}, hotel berbintang {paketWisata.hotel.bintang} 
+                      Anda akan menginap di {paketWisata.hotel.nama}, hotel
+                      berbintang {paketWisata.hotel.bintang}
                       yang berlokasi di {paketWisata.hotel.alamat}.
                     </p>
                     <p>
-                      Transportasi menggunakan {paketWisata.armada.nama} dengan kapasitas maksimal 
-                      {paketWisata.armada.kapasitas} orang.
+                      Transportasi menggunakan {paketWisata.armada.nama} dengan
+                      kapasitas maksimal
+                      {paketWisata.armada.kapasitas?.[0] ||
+                        paketWisata.armada.kapasitas}{" "}
+                      orang.
                     </p>
                     {paketWisata.deskripsiTambahan && (
                       <p>{paketWisata.deskripsiTambahan}</p>
@@ -652,23 +778,37 @@ export default function PaketWisataDetail() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                       <Info className="h-5 w-5 text-primary" />
                     </div>
-                    <h2 className="text-xl font-semibold">Jadwal Keberangkatan</h2>
+                    <h2 className="text-xl font-semibold">
+                      Jadwal Keberangkatan
+                    </h2>
                   </div>
                   <div className="space-y-4">
                     {paketWisata.jadwal.length > 0 ? (
                       paketWisata.jadwal.map((jadwal, index) => (
-                        <div key={index} className="flex justify-between items-center p-4 border border-muted/60 rounded-md bg-muted/10 hover:shadow-sm transition-shadow">
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-4 border border-muted/60 rounded-md bg-muted/10 hover:shadow-sm transition-shadow"
+                        >
                           <div>
                             <div className="font-medium flex items-center gap-2">
                               <Calendar className="h-4 w-4 text-primary" />
-                              {formatDate(jadwal.tanggalAwal)} - {formatDate(jadwal.tanggalAkhir)}
+                              {formatDate(jadwal.tanggalAwal)} -{" "}
+                              {formatDate(jadwal.tanggalAkhir)}
                             </div>
                             <div className="text-sm text-muted-foreground mt-1 pl-6">
                               {jadwal.keterangan || paketWisata.durasi}
                             </div>
                           </div>
-                          <Badge className={`${jadwal.status === "tersedia" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}>
-                            {jadwal.status === "tersedia" ? "Tersedia" : "Penuh"}
+                          <Badge
+                            className={`${
+                              jadwal.status === "tersedia"
+                                ? "bg-green-500 hover:bg-green-600"
+                                : "bg-red-500 hover:bg-red-600"
+                            } text-white`}
+                          >
+                            {jadwal.status === "tersedia"
+                              ? "Tersedia"
+                              : "Penuh"}
                           </Badge>
                         </div>
                       ))
@@ -676,7 +816,9 @@ export default function PaketWisataDetail() {
                       <div className="text-center p-6 border border-dashed border-muted rounded-lg">
                         <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
                         <div className="text-muted-foreground">
-                          Tidak ada jadwal keberangkatan yang tersedia saat ini. Silakan hubungi customer service kami untuk informasi lebih lanjut.
+                          Tidak ada jadwal keberangkatan yang tersedia saat ini.
+                          Silakan hubungi customer service kami untuk informasi
+                          lebih lanjut.
                         </div>
                         <Button
                           variant="outline"
@@ -685,7 +827,12 @@ export default function PaketWisataDetail() {
                           onClick={() => {
                             const phone = "628123456789";
                             const text = `Halo, saya ingin informasi jadwal keberangkatan paket wisata ${paketWisata.nama}.`;
-                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                            window.open(
+                              `https://wa.me/${phone}?text=${encodeURIComponent(
+                                text
+                              )}`,
+                              "_blank"
+                            );
                           }}
                         >
                           Hubungi Kami
@@ -718,7 +865,9 @@ export default function PaketWisataDetail() {
                             <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                               <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                             </div>
-                            <span className="text-sm text-green-900">{item}</span>
+                            <span className="text-sm text-green-900">
+                              {item}
+                            </span>
                           </li>
                         ))}
                       </ul>
@@ -754,8 +903,12 @@ export default function PaketWisataDetail() {
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <div className="text-sm text-muted-foreground">Harga</div>
-                    <div className="text-2xl font-bold text-primary">{formatCurrency(paketWisata.harga)}</div>
-                    <div className="text-sm text-muted-foreground">per orang</div>
+                    <div className="text-2xl font-bold text-primary">
+                      {formatCurrency(paketWisata.harga)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      per orang
+                    </div>
                   </div>
                   <StatusBadge status={paketWisata.status} />
                 </div>
@@ -764,16 +917,22 @@ export default function PaketWisataDetail() {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tanggal" className="flex items-center gap-2">
+                    <Label
+                      htmlFor="tanggal"
+                      className="flex items-center gap-2"
+                    >
                       <Calendar className="h-4 w-4 text-primary" />
                       Pilih Jadwal Keberangkatan
                     </Label>
-                    <Select value={selectedSchedule} onValueChange={setSelectedSchedule}>
+                    <Select
+                      value={selectedSchedule}
+                      onValueChange={setSelectedSchedule}
+                    >
                       <SelectTrigger id="tanggal" className="bg-white">
                         <SelectValue placeholder="Pilih jadwal perjalanan" />
                       </SelectTrigger>
                       <SelectContent>
-                      {paketWisata.jadwal.map((jadwal) => (
+                        {paketWisata.jadwal.map((jadwal) => (
                           <SelectItem
                             key={`${jadwal.tanggalAwal}-${jadwal.tanggalAkhir}`}
                             value={`${jadwal.tanggalAwal}-${jadwal.tanggalAkhir}`}
@@ -781,11 +940,14 @@ export default function PaketWisataDetail() {
                           >
                             <div className="flex items-center justify-between w-full">
                               <span>
-                                {formatDate(jadwal.tanggalAwal)} - {formatDate(jadwal.tanggalAkhir)}
+                                {formatDate(jadwal.tanggalAwal)} -{" "}
+                                {formatDate(jadwal.tanggalAkhir)}
                               </span>
                               <span className="ml-2">
                                 {jadwal.status === "tersedia" ? (
-                                  <span className="text-green-500">Tersedia</span>
+                                  <span className="text-green-500">
+                                    Tersedia
+                                  </span>
                                 ) : (
                                   <span className="text-red-500">Penuh</span>
                                 )}
@@ -802,19 +964,30 @@ export default function PaketWisataDetail() {
                   <Button
                     className="w-full"
                     size="lg"
-                    disabled={!selectedSchedule || paketWisata.status !== "available"}
+                    disabled={
+                      !selectedSchedule || paketWisata.status !== "available"
+                    }
                     onClick={handleBooking}
                   >
                     Lanjut ke Pemesanan
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full"
                     onClick={() => {
                       // Buka WhatsApp
                       const phone = "628123456789";
-                      const text = `Halo, saya ingin bertanya tentang paket wisata *${paketWisata.nama}* ke ${paketWisata.destination.nama} dengan harga ${formatCurrency(paketWisata.harga)}.`;
-                      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                      const text = `Halo, saya ingin bertanya tentang paket wisata *${
+                        paketWisata.nama
+                      }* ke ${
+                        paketWisata.destination.nama
+                      } dengan harga ${formatCurrency(paketWisata.harga)}.`;
+                      window.open(
+                        `https://wa.me/${phone}?text=${encodeURIComponent(
+                          text
+                        )}`,
+                        "_blank"
+                      );
                     }}
                   >
                     Tanya via WhatsApp
@@ -824,7 +997,10 @@ export default function PaketWisataDetail() {
               <CardFooter className="bg-muted/50 p-4 text-sm text-muted-foreground">
                 <div className="flex items-start gap-2">
                   <Info className="mt-0.5 h-4 w-4 shrink-0" />
-                  <div>Pembayaran aman dan terenkripsi. Pembatalan gratis hingga 7 hari sebelum keberangkatan.</div>
+                  <div>
+                    Pembayaran aman dan terenkripsi. Pembatalan gratis hingga 7
+                    hari sebelum keberangkatan.
+                  </div>
                 </div>
               </CardFooter>
             </Card>
@@ -833,8 +1009,9 @@ export default function PaketWisataDetail() {
               <Alert variant="destructive">
                 <AlertTitle>Paket Tidak Tersedia</AlertTitle>
                 <AlertDescription>
-                  Paket wisata ini saat ini tidak tersedia untuk pemesanan. Silakan pilih paket wisata lain atau hubungi
-                  customer service kami untuk informasi lebih lanjut.
+                  Paket wisata ini saat ini tidak tersedia untuk pemesanan.
+                  Silakan pilih paket wisata lain atau hubungi customer service
+                  kami untuk informasi lebih lanjut.
                 </AlertDescription>
               </Alert>
             )}
@@ -849,7 +1026,9 @@ export default function PaketWisataDetail() {
                     </div>
                     <div>
                       <div className="text-sm font-medium">Durasi</div>
-                      <div className="text-sm text-muted-foreground">{paketWisata.durasi}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {paketWisata.durasi}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -858,7 +1037,9 @@ export default function PaketWisataDetail() {
                     </div>
                     <div>
                       <div className="text-sm font-medium">Akomodasi</div>
-                      <div className="text-sm text-muted-foreground">{paketWisata.hotel.nama}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {paketWisata.hotel.nama}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -867,7 +1048,9 @@ export default function PaketWisataDetail() {
                     </div>
                     <div>
                       <div className="text-sm font-medium">Transportasi</div>
-                      <div className="text-sm text-muted-foreground">{paketWisata.armada.nama}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {paketWisata.armada.nama}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -876,7 +1059,12 @@ export default function PaketWisataDetail() {
                     </div>
                     <div>
                       <div className="text-sm font-medium">Kapasitas</div>
-                      <div className="text-sm text-muted-foreground">Maksimal {paketWisata.armada.kapasitas} orang</div>
+                      <div className="text-sm text-muted-foreground">
+                        Maksimal{" "}
+                        {paketWisata.armada.kapasitas?.[0] ||
+                          paketWisata.armada.kapasitas}{" "}
+                        orang
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -886,25 +1074,41 @@ export default function PaketWisataDetail() {
             {similarPackages.length > 0 && (
               <Card>
                 <CardContent className="p-6">
-                  <h3 className="mb-4 text-lg font-semibold">Paket Wisata Serupa</h3>
+                  <h3 className="mb-4 text-lg font-semibold">
+                    Paket Wisata Serupa
+                  </h3>
                   <div className="space-y-4" id="similar-packages">
                     {similarPackages.map((pkg) => (
-                      <div 
-                        key={pkg._id} 
-                        className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors" 
+                      <div
+                        key={pkg._id}
+                        className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
                         onClick={() => navigate(`/paket-wisata/${pkg._id}`)}
                       >
                         <img
-                          src={pkg.foto && pkg.foto.length > 0 ? pkg.foto[0] : ``}
+                          src={
+                            pkg.destination &&
+                            pkg.destination.foto &&
+                            pkg.destination.foto.length > 0
+                              ? pkg.destination.foto[0]
+                              : `https://source.unsplash.com/random/800x600/?travel,${
+                                  pkg.destination?.nama || "travel"
+                                }`
+                          }
                           alt={pkg.nama}
                           className="h-14 w-14 rounded-md object-cover"
-                          onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-                            (e.currentTarget).src = ``;
+                          onError={(
+                            e: React.SyntheticEvent<HTMLImageElement, Event>
+                          ) => {
+                            e.currentTarget.src = `https://source.unsplash.com/random/800x600/?travel,fallback`;
                           }}
                         />
                         <div>
-                          <div className="font-medium line-clamp-2">{pkg.nama}</div>
-                          <div className="text-sm text-primary font-medium">{formatCurrency(pkg.harga)}</div>
+                          <div className="font-medium line-clamp-2">
+                            {pkg.nama}
+                          </div>
+                          <div className="text-sm text-primary font-medium">
+                            {formatCurrency(pkg.harga)}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -916,5 +1120,5 @@ export default function PaketWisataDetail() {
         </div>
       </div>
     </div>
-  )
+  );
 }

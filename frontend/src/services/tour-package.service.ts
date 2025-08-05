@@ -23,11 +23,16 @@ export class TourPackageService {
       try {
         return await apiCall();
       } catch (error) {
-        console.error(`API call failed (attempt ${attempt + 1}/${maxRetries}):`, error);
+        console.error(
+          `API call failed (attempt ${attempt + 1}/${maxRetries}):`,
+          error
+        );
         lastError = error;
         // Only delay if we're going to retry
         if (attempt < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, delayMs * (attempt + 1)));
+          await new Promise((resolve) =>
+            setTimeout(resolve, delayMs * (attempt + 1))
+          );
         }
       }
     }
@@ -41,29 +46,24 @@ export class TourPackageService {
     try {
       return await this.callWithRetry(async () => {
         const response = await axios.get("/package");
-        console.log("Response dari API:", response.data);
-        
-        // Handle jika data tidak valid
+
         if (!Array.isArray(response.data)) {
           console.error("Data dari API bukan array:", response.data);
           return [];
         }
-        
-        // Pastikan setiap objek memiliki properti yang diperlukan
-        return response.data.map(pkg => {
-          // Pastikan semua objek punya properti yang dibutuhkan
-          return {
-            ...pkg,
-            foto: pkg.foto || [],
-            include: pkg.include || [],
-            exclude: pkg.exclude || [],
-            jadwal: pkg.jadwal || []
-          };
-        });
+
+        // Setiap paket menggunakan foto dari destinasi
+        return response.data.map((pkg) => ({
+          ...pkg,
+          // Foto paket = foto destinasi
+          foto: pkg.destination?.foto || [],
+          include: pkg.include || [],
+          exclude: pkg.exclude || [],
+          jadwal: pkg.jadwal || [],
+        }));
       });
     } catch (error) {
       console.error("Error fetching packages:", error);
-      // Return empty array instead of throwing
       return [];
     }
   }
@@ -73,17 +73,17 @@ export class TourPackageService {
       return await this.callWithRetry(async () => {
         const response = await axios.post("/package", {
           ...data,
-          jadwal: data.jadwal.map(schedule => ({
+          jadwal: data.jadwal.map((schedule) => ({
             ...schedule,
             tanggalAwal: new Date(schedule.tanggalAwal).toISOString(),
-            tanggalAkhir: new Date(schedule.tanggalAkhir).toISOString()
-          }))
+            tanggalAkhir: new Date(schedule.tanggalAkhir).toISOString(),
+          })),
         });
         return response.data;
       });
     } catch (error) {
-      console.error('Request payload:', data);
-      console.error('Error response:', error.response?.data);
+      console.error("Request payload:", data);
+      console.error("Error response:", (error as any)?.response?.data);
       throw error;
     }
   }
@@ -92,20 +92,29 @@ export class TourPackageService {
     try {
       return await this.callWithRetry(async () => {
         const response = await axios.get(`/package/${id}`);
-        
-        // Add default values for important fields if missing
+
         const packageData = response.data;
         return {
           ...packageData,
-          foto: packageData.foto || [],
+          // Foto paket = foto destinasi
+          foto: packageData.destination?.foto || [],
           include: packageData.include || [],
           exclude: packageData.exclude || [],
           jadwal: packageData.jadwal || [],
-          destination: packageData.destination || { nama: 'Unnamed Destination', lokasi: 'Unknown Location' },
-          hotel: packageData.hotel || { nama: 'Default Hotel', bintang: 3 },
-          armada: packageData.armada || { nama: 'Default Transport', kapasitas: 15 },
-          consume: packageData.consume || { nama: 'Default Consumption' },
-          kategori: packageData.kategori || { _id: 'default', title: 'Default Category' }
+          destination: packageData.destination || {
+            nama: "Unnamed Destination",
+            lokasi: "Unknown Location",
+          },
+          hotel: packageData.hotel || { nama: "Default Hotel", bintang: 3 },
+          armada: packageData.armada || {
+            nama: "Default Transport",
+            kapasitas: 15,
+          },
+          consume: packageData.consume || { nama: "Default Consumption" },
+          kategori: packageData.kategori || {
+            _id: "default",
+            title: "Default Category",
+          },
         };
       });
     } catch (error) {
@@ -155,7 +164,9 @@ export class TourPackageService {
     }
   }
 
-  static async createCategory(title: string): Promise<{ message: string; data: IPackageCategory }> {
+  static async createCategory(
+    title: string
+  ): Promise<{ message: string; data: IPackageCategory }> {
     try {
       return await this.callWithRetry(async () => {
         const response = await axios.post("/package-category/add", { title });
@@ -184,9 +195,7 @@ export class TourPackageService {
     }
   }
 
-  static async deleteCategory(
-    id: string
-  ): Promise<{ message: string }> {
+  static async deleteCategory(id: string): Promise<{ message: string }> {
     try {
       return await this.callWithRetry(async () => {
         const response = await axios.delete(`/package-category/delete/${id}`);
@@ -249,6 +258,50 @@ export class TourPackageService {
     }
   }
 
+  // Get packages by category
+  static async getPackagesByCategory(
+    categoryId: string,
+    limit: number = 10,
+    excludeId?: string
+  ): Promise<ITourPackage[]> {
+    try {
+      return await this.callWithRetry(async () => {
+        const params = new URLSearchParams();
+        params.append("limit", limit.toString());
+        if (excludeId) {
+          params.append("excludeId", excludeId);
+        }
+
+        const response = await axios.get(
+          `/package/category/${categoryId}?${params.toString()}`
+        );
+
+        // Handle if data is not valid
+        if (!Array.isArray(response.data)) {
+          console.error("Data from API is not an array:", response.data);
+          return [];
+        }
+
+        // Ensure all objects have required properties
+        return response.data.map((pkg) => ({
+          ...pkg,
+          // Foto paket = foto destinasi
+          foto: pkg.destination?.foto || [],
+          include: pkg.include || [],
+          exclude: pkg.exclude || [],
+          jadwal: pkg.jadwal || [],
+        }));
+      });
+    } catch (error) {
+      console.error(
+        `Error fetching packages for category ${categoryId}:`,
+        error
+      );
+      // Return empty array instead of throwing
+      return [];
+    }
+  }
+
   // =======================================
   //  Fungsi tambahan untuk gambar dan aset
   // =======================================
@@ -264,7 +317,7 @@ export class TourPackageService {
       return [
         "https://source.unsplash.com/random/800x600/?travel",
         "https://source.unsplash.com/random/800x600/?landscape",
-        "https://source.unsplash.com/random/800x600/?hotel"
+        "https://source.unsplash.com/random/800x600/?hotel",
       ];
     }
   }
@@ -273,30 +326,34 @@ export class TourPackageService {
   static async getUserProfile(): Promise<any> {
     try {
       return await this.callWithRetry(async () => {
-        const response = await axios.get('/user/profile');
+        const response = await axios.get("/user/profile");
         return response.data;
       });
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
       return null;
     }
   }
 
   // Function to save favorite packages
-  static async saveFavoritePackage(packageId: string): Promise<{ success: boolean; message: string }> {
+  static async saveFavoritePackage(
+    packageId: string
+  ): Promise<{ success: boolean; message: string }> {
     try {
       return await this.callWithRetry(async () => {
-        const response = await axios.post('/user/favorites', { packageId });
+        const response = await axios.post("/user/favorites", { packageId });
         return response.data;
       });
     } catch (error) {
       console.error(`Error saving favorite package ${packageId}:`, error);
-      return { success: false, message: 'Failed to save favorite' };
+      return { success: false, message: "Failed to save favorite" };
     }
   }
 
   // Function to remove favorite packages
-  static async removeFavoritePackage(packageId: string): Promise<{ success: boolean; message: string }> {
+  static async removeFavoritePackage(
+    packageId: string
+  ): Promise<{ success: boolean; message: string }> {
     try {
       return await this.callWithRetry(async () => {
         const response = await axios.delete(`/user/favorites/${packageId}`);
@@ -304,7 +361,7 @@ export class TourPackageService {
       });
     } catch (error) {
       console.error(`Error removing favorite package ${packageId}:`, error);
-      return { success: false, message: 'Failed to remove favorite' };
+      return { success: false, message: "Failed to remove favorite" };
     }
   }
 }

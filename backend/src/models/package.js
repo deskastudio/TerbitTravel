@@ -63,7 +63,7 @@ const packageSchema = new mongoose.Schema({
   },
   kategori: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "PackageCategory", // Relasi ke kategori paket
+    ref: "PackageCategory",
     required: true,
   },
 });

@@ -1057,8 +1057,14 @@ export default function EVoucherPage() {
                             {paketWisata?.armada?.merek ||
                               bookingData.packageId?.armada?.merek}{" "}
                             - Kapasitas{" "}
-                            {paketWisata?.armada?.kapasitas ||
-                              bookingData.packageId?.armada?.kapasitas}{" "}
+                            {(() => {
+                              const kapasitas =
+                                paketWisata?.armada?.kapasitas ||
+                                bookingData.packageId?.armada?.kapasitas;
+                              return Array.isArray(kapasitas)
+                                ? kapasitas[0]
+                                : kapasitas;
+                            })()}{" "}
                             orang
                           </div>
                         </div>
@@ -1081,8 +1087,8 @@ export default function EVoucherPage() {
                 )}
 
                 {(paketWisata?.include || bookingData.packageId?.include) &&
-                  (paketWisata?.include?.length > 0 ||
-                    bookingData.packageId?.include?.length > 0) && (
+                  ((paketWisata?.include?.length ?? 0) > 0 ||
+                    (bookingData.packageId?.include?.length ?? 0) > 0) && (
                     <>
                       <Separator />
                       <div>

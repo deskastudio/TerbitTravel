@@ -114,7 +114,7 @@ const AdminLogin = () => {
     try {
       console.log("🧹 Clearing admin session...");
       await adminAuthService.forceClearSession();
-      
+
       // Force reload page to clear any cached data
       window.location.reload();
     } catch (error) {
@@ -260,15 +260,8 @@ const AdminLogin = () => {
             >
               ← Kembali ke Website Utama
             </Link>
-            
+
             {/* ✅ TAMBAHAN: Clear Session Button */}
-            <button
-              type="button"
-              onClick={handleClearSession}
-              className="text-xs text-gray-500 hover:text-gray-700 transition-colors underline"
-            >
-              Bersihkan Data Login (jika bermasalah)
-            </button>
           </div>
         </div>
 
@@ -279,15 +272,6 @@ const AdminLogin = () => {
             <br />
             Semua aktivitas akan dicatat untuk keamanan.
           </p>
-          
-          {/* ✅ TAMBAHAN: Default Credentials (untuk development) */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 p-3 bg-blue-800 bg-opacity-50 rounded-lg text-blue-100 text-xs">
-              <p className="font-semibold mb-1">🔑 Kredensial Default:</p>
-              <p>Email: admin@example.com</p>
-              <p>Password: SuperAdmin123!</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

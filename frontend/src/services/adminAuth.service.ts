@@ -27,12 +27,18 @@ class AdminAuthService {
 
       const data = response.data;
 
+      // Periksa apakah response berisi token dan user
+      if (!data.token || !data.user) {
+        console.error("❌ Invalid response structure:", data);
+        throw new Error("Response tidak valid dari server");
+      }
+
       // Simpan token dan set expiration
       localStorage.setItem("adminToken", data.token);
       localStorage.setItem("adminUser", JSON.stringify(data.user));
 
       // Set expiration time
-      const expirationTime = Date.now() + data.expiresIn * 1000;
+      const expirationTime = Date.now() + (data.expiresIn || 3600) * 1000;
       localStorage.setItem("adminTokenExpiration", expirationTime.toString());
 
       console.log("💾 Admin data saved to localStorage:", {
@@ -45,7 +51,14 @@ class AdminAuthService {
     } catch (error: any) {
       console.error("❌ Admin login error:", error);
 
-      // Enhanced error handling
+      // Check if it's a 401 response (wrong credentials)
+      if (error.response?.status === 401) {
+        const message =
+          error.response?.data?.message || "Email atau password salah";
+        throw new Error(message);
+      }
+
+      // Enhanced error handling for other errors
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       } else if (error.response?.data?.errors) {

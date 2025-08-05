@@ -76,7 +76,7 @@ const validateAndCreateOrder = async (req, res, role) => {
     // Ambil data package dengan populate armada
     const packageData = await Package.findById(packageId)
       .populate("armada", "nama kapasitas merek")
-      .populate("destination", "nama")
+      .populate("destination", "nama lokasi foto")
       .populate("hotel", "nama")
       .populate("kategori", "title");
 
@@ -313,7 +313,7 @@ export const getAllOrders = async (req, res) => {
         path: "packageId",
         select: "nama harga destination armada hotel",
         populate: [
-          { path: "destination", select: "nama" },
+          { path: "destination", select: "nama lokasi foto" },
           { path: "armada", select: "nama kapasitas merek" },
           { path: "hotel", select: "nama bintang" },
         ],
@@ -374,7 +374,7 @@ export const getOrderById = async (req, res) => {
         path: "packageId",
         select: "nama harga destination armada hotel durasi",
         populate: [
-          { path: "destination", select: "nama" },
+          { path: "destination", select: "nama lokasi foto" },
           { path: "armada", select: "nama kapasitas merek" },
           { path: "hotel", select: "nama bintang alamat" },
         ],
@@ -495,7 +495,7 @@ export const getUserBookings = async (req, res) => {
         path: "packageId",
         select: "nama harga destination armada",
         populate: [
-          { path: "destination", select: "nama" },
+          { path: "destination", select: "nama lokasi foto" },
           { path: "armada", select: "nama kapasitas" },
         ],
       })

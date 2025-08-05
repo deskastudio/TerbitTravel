@@ -6,6 +6,7 @@ import {
   addPackage,
   getAllPackages,
   getPackageById,
+  getPackagesByCategory,
   updatePackage,
   deletePackage,
 } from "../controllers/packageController.js";
@@ -94,12 +95,7 @@ const upload = multer(); // Middleware untuk menangani multipart form-data
  *       400:
  *         description: Invalid data
  */
-router.post(
-  "/",
-  upload.none(),
-  validatePackageData,
-  addPackage
-);
+router.post("/", upload.none(), validatePackageData, addPackage);
 
 /**
  * @swagger
@@ -147,6 +143,44 @@ router.get("/", getAllPackages);
  *         description: Package not found
  */
 router.get("/:packageId", getPackageById);
+
+/**
+ * @swagger
+ * /packages/category/{categoryId}:
+ *   get:
+ *     tags:
+ *       - Packages
+ *     summary: Get packages by category
+ *     description: Retrieve packages filtered by category ID.
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         required: true
+ *         description: The ID of the category to filter by
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         description: Maximum number of packages to return
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: excludeId
+ *         description: Package ID to exclude from results
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of packages in the category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Package'
+ */
+router.get("/category/:categoryId", getPackagesByCategory);
 
 /**
  * @swagger
@@ -238,12 +272,7 @@ router.get("/:packageId", getPackageById);
  *       404:
  *         description: Package not found
  */
-router.put(
-  "/:packageId",
-  upload.none(),
-  validatePackageData,
-  updatePackage
-);
+router.put("/:packageId", upload.none(), validatePackageData, updatePackage);
 
 /**
  * @swagger
