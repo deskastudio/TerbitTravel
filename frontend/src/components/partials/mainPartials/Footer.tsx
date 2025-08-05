@@ -7,9 +7,9 @@ interface QuickLink {
   href: string;
 }
 
-interface Industry {
+interface LegalPage {
   name: string;
-  action: () => void;
+  href: string; // Changed from action to href for navigation
 }
 
 interface SocialMedia {
@@ -29,18 +29,19 @@ const Footer = () => {
     },
   ];
 
-  const industries: Industry[] = [
+  // Updated to use actual page routes instead of modal
+  const legalPages: LegalPage[] = [
     { 
       name: "Kebijakan & Privasi", 
-      action: () => setIsModalOpen(true) 
+      href: "/privacy-policy" // Route to your privacy policy page
     },
     { 
       name: "Syarat & Ketentuan", 
-      action: () => setIsModalOpen(true) 
+      href: "/terms-conditions" // Route to your terms & conditions page
     },
     { 
       name: "FAQ", 
-      action: () => setIsModalOpen(true) 
+      href: "/faq" // Route to your FAQ page
     },
   ];
 
@@ -55,11 +56,6 @@ const Footer = () => {
       href: "https://www.facebook.com/profile.php?id=61559141878271", 
       src: "../Sosmed/facebookIcon.svg"
     },
-    // { 
-    //   name: "Tiktok", 
-    //   href: "https://tiktok.com", 
-    //   src: "../src/assets/Sosmed/tiktokIcon.svg" 
-    // },
     { 
       name: "YouTube", 
       href: "https://www.youtube.com/@TerbitTravelAndService", 
@@ -68,6 +64,8 @@ const Footer = () => {
   ];
 
   const handleSubscribe = () => {
+    // You can implement actual newsletter subscription here
+    // For now, keeping the modal as placeholder
     setIsModalOpen(true);
   };
 
@@ -121,20 +119,20 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Industries - Using buttons for modal triggers */}
+            {/* Legal Pages - Updated to use anchor tags for navigation */}
             <div>
               <p className="font-semibold text-gray-800 dark:text-white">
                 Panduan
               </p>
               <div className="flex flex-col items-start mt-5 space-y-2">
-                {industries.map((industry, index) => (
-                  <button
+                {legalPages.map((page, index) => (
+                  <a
                     key={index}
-                    onClick={industry.action}
+                    href={page.href}
                     className="text-left text-gray-600 transition-colors duration-300 dark:text-gray-300 dark:hover:text-blue-400 hover:underline hover:text-blue-500"
                   >
-                    {industry.name}
-                  </button>
+                    {page.name}
+                  </a>
                 ))}
               </div>
             </div>
@@ -154,6 +152,13 @@ const Footer = () => {
               <span className="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-amber-900 via-red-500 to-yellow-500">
                 Travedia Terbit Semesta
               </span>
+            </div>
+
+            {/* Copyright */}
+            <div className="text-center md:text-right">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                © 2024 Travedia Terbit Semesta. All rights reserved.
+              </p>
             </div>
             
             {/* Social Media Icons */}
@@ -175,11 +180,13 @@ const Footer = () => {
                 </a>
               ))}
             </div>
+
+            
           </div>
         </div>
       </footer>
 
-      {/* Maintenance Modal */}
+      {/* Maintenance Modal - Only for newsletter subscription now */}
       {isModalOpen && <MaintenanceModal handleClose={() => setIsModalOpen(false)} />}
     </>
   );

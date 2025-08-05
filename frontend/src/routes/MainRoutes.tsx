@@ -51,7 +51,7 @@ function MainRoutes() {
       <Route path="/destination/:id" element={<DestinationDetail />} />
 
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/terms-condition" element={<TermsConditionsPage />} />
+      <Route path="/terms-conditions" element={<TermsConditionsPage />} />
       <Route path="/faq" element={<Faq />} />
 
       {/* Auth Routes */}
