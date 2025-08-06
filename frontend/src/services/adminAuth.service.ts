@@ -18,36 +18,61 @@ class AdminAuthService {
         baseURL: adminAxiosInstance.defaults.baseURL,
       });
 
-      const response = await adminAxiosInstance.post<AdminLoginResponse>(
-        `${ADMIN_BASE_URL}/login`,
-        credentials
-      );
+      // Explicitly handle 401 errors from failed login attempts
+      try {
+        const response = await adminAxiosInstance.post<AdminLoginResponse>(
+          `${ADMIN_BASE_URL}/login`,
+          credentials
+        );
 
-      console.log("✅ Admin login response:", response.data);
+        console.log("✅ Admin login response:", response.data);
 
-      const data = response.data;
+        const data = response.data;
 
-      // Periksa apakah response berisi token dan user
-      if (!data.token || !data.user) {
-        console.error("❌ Invalid response structure:", data);
-        throw new Error("Response tidak valid dari server");
+        // Deteksi format response error (message but no token/user)
+        if (data.message && !data.token && !data.user) {
+          // Ini kemungkinan response error
+          if (
+            data.message.includes("salah") ||
+            data.message.includes("invalid")
+          ) {
+            throw new Error(data.message);
+          }
+        }
+
+        // Periksa apakah response berisi token dan user
+        if (!data.token || !data.user) {
+          console.error("❌ Invalid response structure:", data);
+          throw new Error("Response tidak valid dari server");
+        }
+
+        // Simpan token dan set expiration
+        localStorage.setItem("adminToken", data.token);
+        localStorage.setItem("adminUser", JSON.stringify(data.user));
+
+        // Set expiration time
+        const expirationTime = Date.now() + (data.expiresIn || 3600) * 1000;
+        localStorage.setItem("adminTokenExpiration", expirationTime.toString());
+
+        console.log("💾 Admin data saved to localStorage:", {
+          token: data.token.substring(0, 20) + "...",
+          user: data.user,
+          expiresAt: new Date(expirationTime).toISOString(),
+        });
+
+        return data;
+      } catch (apiError: any) {
+        console.log("❌ Login API error:", apiError);
+
+        // Handle specific error status codes
+        if (apiError.response?.status === 401) {
+          throw new Error(
+            apiError.response?.data?.message || "Email atau password salah"
+          );
+        }
+
+        throw apiError; // Re-throw to be caught by outer try-catch
       }
-
-      // Simpan token dan set expiration
-      localStorage.setItem("adminToken", data.token);
-      localStorage.setItem("adminUser", JSON.stringify(data.user));
-
-      // Set expiration time
-      const expirationTime = Date.now() + (data.expiresIn || 3600) * 1000;
-      localStorage.setItem("adminTokenExpiration", expirationTime.toString());
-
-      console.log("💾 Admin data saved to localStorage:", {
-        token: data.token.substring(0, 20) + "...",
-        user: data.user,
-        expiresAt: new Date(expirationTime).toISOString(),
-      });
-
-      return data;
     } catch (error: any) {
       console.error("❌ Admin login error:", error);
 

@@ -15,13 +15,19 @@ export const addDestination = async (req, res) => {
   );
 
   try {
-    const newDestination = new Destination({
+    const destinationData = {
       nama,
       lokasi,
       deskripsi,
       foto: fotoPaths,
-      category: req.body.category, // Menambahkan kategori
-    });
+    };
+
+    // Only add category if it's provided and not empty
+    if (req.body.category && req.body.category.trim() !== "") {
+      destinationData.category = req.body.category;
+    }
+
+    const newDestination = new Destination(destinationData);
     await newDestination.save();
     res.status(201).json({
       message: "Destination added successfully",
@@ -36,12 +42,21 @@ export const addDestination = async (req, res) => {
 };
 
 // Update existing destination
-// Update existing destination
 export const updateDestination = async (req, res) => {
   const { id } = req.params;
-  const { nama, lokasi, deskripsi } = req.body;
+  const { nama, lokasi, deskripsi, replaceImages, deleteImages } = req.body;
   // Foto baru (jika ada)
-  const fotoPaths = req.files?.map((file) => `uploads/destination/${file.filename}`) || [];
+  const fotoPaths =
+    req.files?.map((file) => `uploads/destination/${file.filename}`) || [];
+
+  console.log("🔧 UpdateDestination Debug Info:");
+  console.log("📁 Request body:", req.body);
+  console.log("🔄 replaceImages value:", replaceImages);
+  console.log("🔄 replaceImages type:", typeof replaceImages);
+  console.log("🗑️ deleteImages value:", deleteImages);
+  console.log("🗑️ deleteImages type:", typeof deleteImages);
+  console.log("📸 New foto paths:", fotoPaths);
+  console.log("📸 Files received:", req.files?.length || 0);
 
   try {
     const destination = await Destination.findById(id);
@@ -49,23 +64,107 @@ export const updateDestination = async (req, res) => {
       return res.status(404).json({ message: "Destination not found" });
     }
 
-    // --[ PERIKSA BATASAN MAKS 5 ]--
-    if (destination.foto.length + fotoPaths.length > 5) {
-      return res.status(400).json({
-        message: "Maksimal 5 gambar diperbolehkan untuk destinasi ini.",
-      });
+    console.log("📂 Current destination photos:", destination.foto);
+
+    // Handle individual photo deletion first
+    if (deleteImages && deleteImages.length > 0) {
+      console.log("🗑️ Processing individual photo deletions...");
+      const imagesToDelete = Array.isArray(deleteImages)
+        ? deleteImages
+        : [deleteImages];
+
+      for (const imageToDelete of imagesToDelete) {
+        const filePath = path.join(__dirname, "../../", imageToDelete);
+        console.log(`🗑️ Attempting to delete individual image: ${filePath}`);
+
+        try {
+          if (fs.existsSync(filePath)) {
+            await fs.promises.unlink(filePath);
+            console.log(
+              `✅ Successfully deleted individual image: ${imageToDelete}`
+            );
+          } else {
+            console.log(`⚠️ Individual image file not found: ${imageToDelete}`);
+          }
+        } catch (error) {
+          console.error(
+            `❌ Error deleting individual image ${imageToDelete}:`,
+            error
+          );
+        }
+
+        // Remove from destination.foto array
+        destination.foto = destination.foto.filter(
+          (foto) => foto !== imageToDelete
+        );
+      }
+      console.log("📂 Photos after individual deletions:", destination.foto);
     }
 
-    // --[ TAMBAHKAN FOTO BARU TANPA MENGHAPUS LAMA ]--
+    // Handle foto update logic
     if (fotoPaths.length > 0) {
-      destination.foto = [...destination.foto, ...fotoPaths];
+      console.log("📸 Processing new images upload...");
+      if (replaceImages === "true") {
+        console.log(
+          "🔄 REPLACE MODE: Deleting old images and setting new ones"
+        );
+        // Replace all existing images with new ones
+
+        // Delete old image files from filesystem
+        for (const oldFotoPath of destination.foto) {
+          const filePath = path.join(__dirname, "../../", oldFotoPath);
+          console.log(`🗑️ Attempting to delete: ${filePath}`);
+          try {
+            if (fs.existsSync(filePath)) {
+              await fs.promises.unlink(filePath);
+              console.log(`✅ Successfully deleted old image: ${filePath}`);
+            } else {
+              console.log(`⚠️ File not found: ${filePath}`);
+            }
+          } catch (error) {
+            console.error(`❌ Error deleting old image ${filePath}:`, error);
+          }
+        }
+
+        // Set new images only
+        destination.foto = fotoPaths;
+        console.log(
+          `✅ Replaced all images with ${fotoPaths.length} new images`
+        );
+      } else {
+        console.log("➕ ADD MODE: Appending new images to existing ones");
+        // Add new images to existing ones (original behavior)
+        if (destination.foto.length + fotoPaths.length > 5) {
+          return res.status(400).json({
+            message: "Maksimal 5 gambar diperbolehkan untuk destinasi ini.",
+          });
+        }
+
+        destination.foto = [...destination.foto, ...fotoPaths];
+        console.log(
+          `✅ Added ${fotoPaths.length} new images, total: ${destination.foto.length}`
+        );
+      }
+    } else {
+      console.log("📸 No new images uploaded");
+      console.log("🔄 replaceImages flag:", replaceImages);
+      console.log("📂 Keeping existing photos:", destination.foto);
     }
 
     // Update data lain
     destination.nama = nama || destination.nama;
     destination.lokasi = lokasi || destination.lokasi;
     destination.deskripsi = deskripsi || destination.deskripsi;
-    destination.category = req.body.category || destination.category;
+
+    // Only update category if provided
+    if (req.body.category !== undefined) {
+      if (req.body.category && req.body.category.trim() !== "") {
+        destination.category = req.body.category;
+      } else {
+        // If empty string is sent, remove category
+        destination.category = undefined;
+      }
+    }
 
     await destination.save();
     res.status(200).json({
@@ -79,7 +178,6 @@ export const updateDestination = async (req, res) => {
       .json({ message: "Failed to update destination", error: error.message });
   }
 };
-
 
 // Fetch all destinations with category populated
 export const getAllDestinations = async (req, res) => {

@@ -68,9 +68,14 @@ export const DestinationService = {
 
   getDestinationById: async (id: string): Promise<IDestination> => {
     try {
+      console.log("🔍 Fetching destination by ID:", id);
       const response = await axiosInstance.get<
         IDestination | DestinationResponse
       >(`${DESTINATION_BASE_URL}/${id}`);
+
+      console.log("📥 Raw destination response:", response.data);
+
+      let destination: IDestination;
 
       // Check if response has 'data' property (response wrapped in object)
       if (
@@ -79,11 +84,16 @@ export const DestinationService = {
         "data" in response.data
       ) {
         // This handles cases where API returns { data: IDestination }
-        return response.data.data;
+        destination = response.data.data;
+      } else {
+        // Direct response case where API returns IDestination directly
+        destination = response.data as IDestination;
       }
 
-      // Direct response case where API returns IDestination directly
-      return response.data as IDestination;
+      console.log("🎯 Processed destination:", destination);
+      console.log("📂 Category in destination:", destination.category);
+
+      return destination;
     } catch (error) {
       console.error(`Error fetching destination with id ${id}:`, error);
       throw error;
@@ -98,7 +108,11 @@ export const DestinationService = {
     formData.append("nama", data.nama);
     formData.append("lokasi", data.lokasi);
     formData.append("deskripsi", data.deskripsi);
-    formData.append("category", data.category);
+
+    // Only append category if it exists and is not empty
+    if (data.category && data.category.trim() !== "") {
+      formData.append("category", data.category);
+    }
 
     // Append each image to formData
     images.forEach((image) => {
@@ -120,7 +134,9 @@ export const DestinationService = {
   updateDestination: async (
     id: string,
     data: IDestinationInput,
-    files?: File[]
+    files?: File[],
+    replaceImages?: boolean,
+    deleteImages?: string[]
   ): Promise<DestinationResponse> => {
     const formData = new FormData();
 
@@ -128,7 +144,21 @@ export const DestinationService = {
     formData.append("nama", data.nama);
     formData.append("lokasi", data.lokasi);
     formData.append("deskripsi", data.deskripsi);
-    formData.append("category", data.category);
+
+    // Always append category (even if empty string) to allow removing category
+    formData.append("category", data.category || "");
+
+    // Append replaceImages flag
+    if (replaceImages !== undefined) {
+      formData.append("replaceImages", replaceImages.toString());
+    }
+
+    // Append deleteImages array if provided
+    if (deleteImages && deleteImages.length > 0) {
+      deleteImages.forEach((imagePath) => {
+        formData.append("deleteImages", imagePath);
+      });
+    }
 
     // Append new images if any
     if (files && files.length > 0) {

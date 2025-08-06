@@ -172,12 +172,22 @@ export const useDestination = () => {
   const updateDestination = async (
     id: string,
     data: IDestinationInput,
-    newImages?: File[]
+    newImages?: File[],
+    replaceImages?: boolean,
+    deleteImages?: string[]
   ) => {
     try {
       setIsUpdating(true);
       console.log(`Updating destination with ID ${id}:`, data);
-      await DestinationService.updateDestination(id, data, newImages);
+      console.log(`Replace images: ${replaceImages}`);
+      console.log(`Delete images: ${deleteImages}`);
+      await DestinationService.updateDestination(
+        id,
+        data,
+        newImages,
+        replaceImages,
+        deleteImages
+      );
       await fetchDestinations();
       toast({
         title: "Sukses!",
