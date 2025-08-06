@@ -10,7 +10,7 @@ const destinationSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "DestinationCategory",
-      required: true,
+      required: false, // Make category optional
     },
   },
   { timestamps: true }
