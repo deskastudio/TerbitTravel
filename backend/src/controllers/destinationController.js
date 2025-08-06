@@ -64,87 +64,89 @@ export const updateDestination = async (req, res) => {
       return res.status(404).json({ message: "Destination not found" });
     }
 
-    console.log("📂 Current destination photos:", destination.foto);
+    // --[ PERIKSA BATASAN MAKS 5 ]--
+    if (destination.foto.length + fotoPaths.length > 5) {
+      return res.status(400).json({
+        message: "Maksimal 5 gambar diperbolehkan untuk destinasi ini.",
+      });
+    }
 
-    // Handle individual photo deletion first
-    if (deleteImages && deleteImages.length > 0) {
-      console.log("🗑️ Processing individual photo deletions...");
-      const imagesToDelete = Array.isArray(deleteImages)
+    // Process deleteImages parameter - handle individual image deletion
+    let imagesToDelete = [];
+    if (deleteImages) {
+      // Handle case where deleteImages is a string (single image) or array
+      imagesToDelete = Array.isArray(deleteImages)
         ? deleteImages
         : [deleteImages];
 
-      for (const imageToDelete of imagesToDelete) {
-        const filePath = path.join(__dirname, "../../", imageToDelete);
-        console.log(`🗑️ Attempting to delete individual image: ${filePath}`);
+      console.log(
+        `🗑️ Processing ${imagesToDelete.length} images to delete:`,
+        imagesToDelete
+      );
 
-        try {
-          if (fs.existsSync(filePath)) {
-            await fs.promises.unlink(filePath);
-            console.log(
-              `✅ Successfully deleted individual image: ${imageToDelete}`
-            );
-          } else {
-            console.log(`⚠️ Individual image file not found: ${imageToDelete}`);
+      // Remove specified images from the destination.foto array
+      if (imagesToDelete.length > 0) {
+        // Delete each file from the filesystem
+        for (const imagePath of imagesToDelete) {
+          try {
+            const fullPath = path.join(__dirname, "../../", imagePath);
+            console.log(`🗑️ Attempting to delete: ${fullPath}`);
+
+            if (fs.existsSync(fullPath)) {
+              await fs.promises.unlink(fullPath);
+              console.log(`✅ Deleted file: ${fullPath}`);
+            } else {
+              console.log(`⚠️ File not found: ${fullPath}`);
+            }
+          } catch (err) {
+            console.error(`❌ Error deleting file ${imagePath}:`, err);
           }
-        } catch (error) {
-          console.error(
-            `❌ Error deleting individual image ${imageToDelete}:`,
-            error
-          );
         }
 
-        // Remove from destination.foto array
+        // Filter out the deleted images from the array
+        const originalCount = destination.foto.length;
         destination.foto = destination.foto.filter(
-          (foto) => foto !== imageToDelete
+          (img) => !imagesToDelete.includes(img)
+        );
+        console.log(
+          `🔄 Removed ${
+            originalCount - destination.foto.length
+          } images from destination`
         );
       }
-      console.log("📂 Photos after individual deletions:", destination.foto);
     }
 
-    // Handle foto update logic
-    if (fotoPaths.length > 0) {
-      console.log("📸 Processing new images upload...");
-      if (replaceImages === "true") {
-        console.log(
-          "🔄 REPLACE MODE: Deleting old images and setting new ones"
-        );
-        // Replace all existing images with new ones
+    // Handle image replacement/addition
+    if (replaceImages === "true" || replaceImages === true) {
+      console.log("🔄 Replacing all images with new uploads");
 
-        // Delete old image files from filesystem
-        for (const oldFotoPath of destination.foto) {
-          const filePath = path.join(__dirname, "../../", oldFotoPath);
-          console.log(`🗑️ Attempting to delete: ${filePath}`);
+      // Delete all existing images from filesystem
+      if (destination.foto.length > 0) {
+        console.log(
+          `🗑️ Deleting ${destination.foto.length} existing images due to replacement`
+        );
+        for (const fotoPath of destination.foto) {
           try {
-            if (fs.existsSync(filePath)) {
-              await fs.promises.unlink(filePath);
-              console.log(`✅ Successfully deleted old image: ${filePath}`);
-            } else {
-              console.log(`⚠️ File not found: ${filePath}`);
+            const fullPath = path.join(__dirname, "../../", fotoPath);
+            if (fs.existsSync(fullPath)) {
+              await fs.promises.unlink(fullPath);
+              console.log(`✅ Deleted replaced file: ${fullPath}`);
             }
-          } catch (error) {
-            console.error(`❌ Error deleting old image ${filePath}:`, error);
+          } catch (err) {
+            console.error(`❌ Error deleting file ${fotoPath}:`, err);
           }
         }
-
-        // Set new images only
-        destination.foto = fotoPaths;
-        console.log(
-          `✅ Replaced all images with ${fotoPaths.length} new images`
-        );
-      } else {
-        console.log("➕ ADD MODE: Appending new images to existing ones");
-        // Add new images to existing ones (original behavior)
-        if (destination.foto.length + fotoPaths.length > 5) {
-          return res.status(400).json({
-            message: "Maksimal 5 gambar diperbolehkan untuk destinasi ini.",
-          });
-        }
-
-        destination.foto = [...destination.foto, ...fotoPaths];
-        console.log(
-          `✅ Added ${fotoPaths.length} new images, total: ${destination.foto.length}`
-        );
       }
+
+      // Replace with new images
+      destination.foto = fotoPaths;
+      console.log(`✅ Replaced with ${fotoPaths.length} new images`);
+    } else if (fotoPaths.length > 0) {
+      // Add new images to existing ones
+      destination.foto = [...destination.foto, ...fotoPaths];
+      console.log(
+        `✅ Added ${fotoPaths.length} new images, total: ${destination.foto.length}`
+      );
     } else {
       console.log("📸 No new images uploaded");
       console.log("🔄 replaceImages flag:", replaceImages);
