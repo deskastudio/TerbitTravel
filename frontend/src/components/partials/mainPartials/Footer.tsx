@@ -49,17 +49,17 @@ const Footer = () => {
     { 
       name: "Instagram", 
       href: "https://www.instagram.com/terbit.travel/", 
-      src: "../Sosmed/instagramIcon.svg" 
+      src: "/Sosmed/instagramIcon.svg" 
     },
     { 
       name: "Facebook", 
       href: "https://www.facebook.com/profile.php?id=61559141878271", 
-      src: "../Sosmed/facebookIcon.svg"
+      src: "/Sosmed/facebookIcon.svg"
     },
     { 
       name: "YouTube", 
       href: "https://www.youtube.com/@TerbitTravelAndService", 
-      src: "../Sosmed/youtubeIcon.svg" 
+      src: "/Sosmed/youtubeIcon.svg" 
     },
   ];
 
@@ -77,7 +77,7 @@ const Footer = () => {
         <div className="absolute bottom-0 right-20 w-32 h-32 bg-pink-400 opacity-30 blur-xl rounded-full"></div>
         <div className="absolute top-1/3 left-1/2 w-16 h-16 bg-blue-400 opacity-30 blur-xl rounded-full transform -translate-x-1/2"></div>
 
-        <div className="container px-6 py-12 mx-auto relative z-10">
+        <div className="container px-6 py-12 mx-auto relative z-40">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-y-10 lg:grid-cols-4">
             {/* Subscription Section */}
             <div className="sm:col-span-2">
@@ -176,6 +176,10 @@ const Footer = () => {
                     src={social.src} 
                     alt={social.name} 
                     className="w-6 h-6"
+                    onError={(e) => {
+                      console.error(`Failed to load ${social.name} icon:`, social.src);
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </a>
               ))}

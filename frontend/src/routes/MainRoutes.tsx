@@ -6,6 +6,7 @@ import ProtectedRoute from "./ProtectedRoutes";
 import Homepage from "../pages/mainPages/homepage/Index";
 import Profile from "../pages/mainPages/profile/Index";
 import Article from "@/pages/mainPages/article/Index";
+import ArticleDetailPage from "@/pages/mainPages/article/DetailPage";
 import TourPackage from "@/pages/mainPages/tourPackage/Index";
 import Destination from "@/pages/mainPages/destination/Index";
 import TourPackageDetails from "@/pages/mainPages/tourPackage/DetailPackage";
@@ -27,7 +28,6 @@ import VerifyOtp from "@/pages/verify-otp/Index";
 
 // Detail Pages
 import DestinationDetail from "@/components/partials/mainPartials/destination/detailDestination";
-import ArticleDetail from "@/components/partials/mainPartials/article/detailArticle";
 import EVoucherPage from "@/components/partials/mainPartials/booking/e-voucher";
 
 function MainRoutes() {
@@ -40,8 +40,8 @@ function MainRoutes() {
 
       {/* Article Routes */}
       <Route path="/article" element={<Article />} />
-      <Route path="/article/:slug" element={<ArticleDetail />} />
-      <Route path="/article/id/:id" element={<ArticleDetail />} />
+      <Route path="/article/:slug" element={<ArticleDetailPage />} />
+      <Route path="/article/id/:id" element={<ArticleDetailPage />} />
 
       <Route path="/tour-package" element={<TourPackage />} />
       <Route path="/paket-wisata/:id" element={<TourPackageDetails />} />
