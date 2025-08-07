@@ -93,8 +93,10 @@ export default function ArticleDetail() {
   // Handle share functionality
   const handleShare = async () => {
     const shareData = {
-      title: article?.judul || 'Artikel Menarik',
-      text: `Baca artikel: ${article?.judul || 'Artikel Menarik'} di Travedia Terbit Semesta`,
+      title: article?.judul || "Artikel Menarik",
+      text: `Baca artikel: ${
+        article?.judul || "Artikel Menarik"
+      } di Travedia Terbit Semesta`,
       url: window.location.href,
     };
 
@@ -102,22 +104,24 @@ export default function ArticleDetail() {
       // Check if Web Share API is supported
       if (navigator.share) {
         await navigator.share(shareData);
-        console.log('Article shared successfully');
+        console.log("Article shared successfully");
       } else {
         // Fallback: copy to clipboard
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link artikel telah disalin ke clipboard!');
-        console.log('Link copied to clipboard');
+        alert("Link artikel telah disalin ke clipboard!");
+        console.log("Link copied to clipboard");
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      console.error("Error sharing:", error);
       // Fallback: copy to clipboard
       try {
         await navigator.clipboard.writeText(window.location.href);
-        alert('Link artikel telah disalin ke clipboard!');
+        alert("Link artikel telah disalin ke clipboard!");
       } catch (clipboardError) {
-        console.error('Failed to copy to clipboard:', clipboardError);
-        alert('Tidak dapat membagikan artikel. Silakan salin URL secara manual.');
+        console.error("Failed to copy to clipboard:", clipboardError);
+        alert(
+          "Tidak dapat membagikan artikel. Silakan salin URL secara manual."
+        );
       }
     }
   };
@@ -126,8 +130,8 @@ export default function ArticleDetail() {
   const handleBookmark = () => {
     // You can implement actual bookmark functionality here
     // For now, we'll show a simple alert
-    alert('Artikel telah disimpan ke bookmark!');
-    console.log('Article bookmarked:', article?.judul);
+    alert("Artikel telah disimpan ke bookmark!");
+    console.log("Article bookmarked:", article?.judul);
   };
 
   useEffect(() => {
@@ -372,8 +376,8 @@ export default function ArticleDetail() {
 
         {/* Action buttons */}
         <div className="flex flex-wrap justify-end gap-4 py-4 border-t border-b mb-10">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={handleBookmark}
             className="hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
@@ -426,8 +430,8 @@ export default function ArticleDetail() {
 
         {/* Share Button Floating */}
         <div className="fixed bottom-8 right-8 z-50">
-          <Button 
-            size="icon" 
+          <Button
+            size="icon"
             className="rounded-full h-12 w-12 shadow-lg hover:shadow-xl transition-shadow duration-300"
             onClick={handleShare}
             title="Bagikan artikel"

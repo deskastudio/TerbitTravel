@@ -23,43 +23,43 @@ const Footer = () => {
 
   const quickLinks: QuickLink[] = [
     { name: "081211565453", href: "tel:081211565453" },
-    { 
-      name: "travediaterbitsemesta@gmail.com", 
-      href: "mailto:travediaterbitsemesta@gmail.com" 
+    {
+      name: "travediaterbitsemesta@gmail.com",
+      href: "mailto:travediaterbitsemesta@gmail.com",
     },
   ];
 
   // Updated to use actual page routes instead of modal
   const legalPages: LegalPage[] = [
-    { 
-      name: "Kebijakan & Privasi", 
-      href: "/privacy-policy" // Route to your privacy policy page
+    {
+      name: "Kebijakan & Privasi",
+      href: "/privacy-policy", // Route to your privacy policy page
     },
-    { 
-      name: "Syarat & Ketentuan", 
-      href: "/terms-conditions" // Route to your terms & conditions page
+    {
+      name: "Syarat & Ketentuan",
+      href: "/terms-conditions", // Route to your terms & conditions page
     },
-    { 
-      name: "FAQ", 
-      href: "/faq" // Route to your FAQ page
+    {
+      name: "FAQ",
+      href: "/faq", // Route to your FAQ page
     },
   ];
 
   const socialMedia: SocialMedia[] = [
-    { 
-      name: "Instagram", 
-      href: "https://www.instagram.com/terbit.travel/", 
-      src: "/Sosmed/instagramIcon.svg" 
+    {
+      name: "Instagram",
+      href: "https://www.instagram.com/terbit.travel/",
+      src: "/Sosmed/instagramIcon.svg",
     },
-    { 
-      name: "Facebook", 
-      href: "https://www.facebook.com/profile.php?id=61559141878271", 
-      src: "/Sosmed/facebookIcon.svg"
+    {
+      name: "Facebook",
+      href: "https://www.facebook.com/profile.php?id=61559141878271",
+      src: "/Sosmed/facebookIcon.svg",
     },
-    { 
-      name: "YouTube", 
-      href: "https://www.youtube.com/@TerbitTravelAndService", 
-      src: "/Sosmed/youtubeIcon.svg" 
+    {
+      name: "YouTube",
+      href: "https://www.youtube.com/@TerbitTravelAndService",
+      src: "/Sosmed/youtubeIcon.svg",
     },
   ];
 
@@ -91,7 +91,7 @@ const Footer = () => {
                   className="px-4 py-2 text-gray-700 bg-white border rounded-md dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 dark:focus:border-blue-300 focus:outline-none focus:ring focus:ring-opacity-40 focus:ring-blue-300"
                   placeholder="Alamat Email"
                 />
-                <Button 
+                <Button
                   variant="default"
                   className="md:ml-4 bg-amber-700 hover:bg-amber-800 transition-colors duration-300"
                   onClick={handleSubscribe}
@@ -160,7 +160,7 @@ const Footer = () => {
                 © 2024 Travedia Terbit Semesta. All rights reserved.
               </p>
             </div>
-            
+
             {/* Social Media Icons */}
             <div className="flex items-center justify-center space-x-4 md:space-x-6">
               {socialMedia.map((social, index) => (
@@ -172,26 +172,29 @@ const Footer = () => {
                   className="transition-transform duration-300 hover:scale-110"
                   aria-label={social.name}
                 >
-                  <img 
-                    src={social.src} 
-                    alt={social.name} 
+                  <img
+                    src={social.src}
+                    alt={social.name}
                     className="w-6 h-6"
                     onError={(e) => {
-                      console.error(`Failed to load ${social.name} icon:`, social.src);
-                      e.currentTarget.style.display = 'none';
+                      console.error(
+                        `Failed to load ${social.name} icon:`,
+                        social.src
+                      );
+                      e.currentTarget.style.display = "none";
                     }}
                   />
                 </a>
               ))}
             </div>
-
-            
           </div>
         </div>
       </footer>
 
       {/* Maintenance Modal - Only for newsletter subscription now */}
-      {isModalOpen && <MaintenanceModal handleClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <MaintenanceModal handleClose={() => setIsModalOpen(false)} />
+      )}
     </>
   );
 };
