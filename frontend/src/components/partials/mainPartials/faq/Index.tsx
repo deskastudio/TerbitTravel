@@ -874,21 +874,13 @@ const FAQPage: React.FC = () => {
         <Card className="mt-12 bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xl">
           <CardContent className="p-8">
             <h3 className="text-2xl font-bold mb-6 text-center">Masih Ada Pertanyaan?</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="bg-white/20 p-3 rounded-full w-fit mx-auto mb-3">
-                  <MessageCircle className="w-6 h-6" />
-                </div>
-                <h4 className="font-semibold mb-2">Live Chat</h4>
-                <p className="text-amber-100">Chat langsung di website</p>
-                <p className="text-amber-200 text-sm">08:00 - 22:00 WIB</p>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="text-center">
                 <div className="bg-white/20 p-3 rounded-full w-fit mx-auto mb-3">
                   <Phone className="w-6 h-6" />
                 </div>
                 <h4 className="font-semibold mb-2">WhatsApp 24/7</h4>
-                <p className="text-amber-100">+62 812-3456-7890</p>
+                <p className="text-amber-100">+62 859-4724-2348</p>
                 <p className="text-amber-200 text-sm">Response cepat & akurat</p>
               </div>
               <div className="text-center">
@@ -896,8 +888,8 @@ const FAQPage: React.FC = () => {
                   <Mail className="w-6 h-6" />
                 </div>
                 <h4 className="font-semibold mb-2">Email Support</h4>
-                <p className="text-amber-100">support@travedia.co.id</p>
-                <p className="text-amber-200 text-sm">Response: 2-4 jam</p>
+                <p className="text-amber-100">travediaterbitsemesta@gmail.com</p>
+                <p className="text-amber-200 text-sm">Response: 24 jam</p>
               </div>
             </div>
           </CardContent>

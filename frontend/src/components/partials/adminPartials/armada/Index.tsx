@@ -65,7 +65,6 @@ const ArmadaTable = () => {
     isDeleting
   } = useArmada();
 
-  // Memoized values for filters and stats
   const {
     uniqueKapasitas,
     uniqueMerek,
@@ -79,19 +78,25 @@ const ArmadaTable = () => {
         uniqueKapasitas: [],
         uniqueMerek: [],
         minPrice: 0,
-        maxPrice: 1000000000,
+        maxPrice: 5000000,
         averagePrice: 0,
         totalKapasitas: 0
       };
     }
-
+  
+    const validArmadas = armadas.filter(a => 
+      typeof a.kapasitas === 'number' && 
+      typeof a.harga === 'number' && 
+      typeof a.merek === 'string'
+    );
+  
     return {
-      uniqueKapasitas: Array.from(new Set(armadas.map(a => a.kapasitas))).sort((a, b) => a - b),
-      uniqueMerek: Array.from(new Set(armadas.map(a => a.merek))).sort(),
-      minPrice: Math.min(...armadas.map(a => a.harga)),
-      maxPrice: Math.max(...armadas.map(a => a.harga)),
-      averagePrice: armadas.reduce((acc, a) => acc + a.harga, 0) / armadas.length,
-      totalKapasitas: armadas.reduce((acc, a) => acc + a.kapasitas, 0)
+      uniqueKapasitas: Array.from(new Set(validArmadas.map(a => a.kapasitas))).sort((a, b) => a - b),
+      uniqueMerek: Array.from(new Set(validArmadas.map(a => a.merek))).sort(),
+      minPrice: validArmadas.length > 0 ? Math.min(...validArmadas.map(a => a.harga)) : 0,
+      maxPrice: validArmadas.length > 0 ? Math.max(...validArmadas.map(a => a.harga)) : 5000000,
+      averagePrice: validArmadas.length > 0 ? validArmadas.reduce((acc, a) => acc + a.harga, 0) / validArmadas.length : 0,
+      totalKapasitas: validArmadas.reduce((acc, a) => acc + a.kapasitas, 0) // ✅ Ini yang diperbaiki - hanya total angka
     };
   }, [armadas]);
 
@@ -196,7 +201,7 @@ const ArmadaTable = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Armada Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Armada Manajemen</h1>
           <p className="text-gray-600 mt-1">Kelola semua kendaraan dan armada transportasi</p>
         </div>
         <Button 
@@ -224,18 +229,18 @@ const ArmadaTable = () => {
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="h-5 w-5 text-green-600" />
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-green-100 rounded-lg">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{totalKapasitas}</div>
+                  <div className="text-sm text-gray-600">Total Kapasitas</div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-gray-900">{totalKapasitas}</div>
-                <div className="text-sm text-gray-600">Total Kapasitas</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">

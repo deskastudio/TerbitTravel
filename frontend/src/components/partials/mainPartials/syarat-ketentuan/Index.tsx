@@ -555,24 +555,16 @@ const TermsAndConditionsPage: React.FC = () => {
                         <Mail className="w-6 h-6" />
                       </div>
                       <h4 className="font-semibold mb-2">Email Support</h4>
-                      <p className="text-blue-100">support@travedia.co.id</p>
-                      <p className="text-blue-200 text-sm">Response: 2-4 jam</p>
+                      <p className="text-blue-100">travediaterbitsemesta@gmail.com</p>
+                      <p className="text-blue-200 text-sm">Response: 24 jam</p>
                     </div>
                     <div className="text-center">
                       <div className="bg-white/20 p-3 rounded-full w-fit mx-auto mb-3">
                         <MessageCircle className="w-6 h-6" />
                       </div>
                       <h4 className="font-semibold mb-2">WhatsApp</h4>
-                      <p className="text-blue-100">+62 812-3456-7890</p>
+                      <p className="text-blue-100">+62 859-4724-2348</p>
                       <p className="text-blue-200 text-sm">24/7 Available</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="bg-white/20 p-3 rounded-full w-fit mx-auto mb-3">
-                        <Phone className="w-6 h-6" />
-                      </div>
-                      <h4 className="font-semibold mb-2">Live Chat</h4>
-                      <p className="text-blue-100">Website Support</p>
-                      <p className="text-blue-200 text-sm">08:00 - 22:00 WIB</p>
                     </div>
                   </div>
                 </CardContent>

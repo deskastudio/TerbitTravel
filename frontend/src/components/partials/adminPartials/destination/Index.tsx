@@ -231,7 +231,7 @@ const DestinationPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Destination Management
+            Destinasi Manajemen
           </h1>
           <p className="text-gray-600 mt-1">
             Kelola semua destinasi wisata yang tersedia

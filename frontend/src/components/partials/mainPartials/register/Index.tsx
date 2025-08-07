@@ -159,7 +159,7 @@ const RegisterPage = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          <h1 className="text-4xl font-bold text-center mb-8">Sign Up</h1>
+          <h1 className="text-4xl font-bold text-center mb-8">Daftar</h1>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -169,10 +169,10 @@ const RegisterPage = () => {
                 name="nama"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Nama</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Enter your name"
+                        placeholder="Masukkan nama Anda"
                         {...field}
                         className="rounded-xl"
                       />
@@ -191,7 +191,7 @@ const RegisterPage = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Enter your email"
+                        placeholder="Masukkan email Anda"
                         type="email"
                         {...field}
                         className="rounded-xl"
@@ -208,10 +208,10 @@ const RegisterPage = () => {
                 name="alamat"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address</FormLabel>
+                    <FormLabel>Alamat</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Enter your address"
+                        placeholder="Masukkan alamat Anda"
                         {...field}
                         className="rounded-xl"
                       />
@@ -227,10 +227,10 @@ const RegisterPage = () => {
                 name="noTelp"
                 render={({ field }) =>
                   <FormItem>
-                <FormLabel>Phone Number</FormLabel>
+                <FormLabel>Nomor Telepon</FormLabel>
                 <FormControl>
                   <Input 
-                    placeholder="Enter your phone number"
+                    placeholder="Masukkan nomor telepon Anda"
                     {...field}
                     className="rounded-xl"
                   />
@@ -246,10 +246,10 @@ const RegisterPage = () => {
               name="instansi"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Institution (Optional)</FormLabel>
+                  <FormLabel>Institusi (Optional)</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Enter your institution"
+                      placeholder="Masukkan institusi Anda"
                       {...field}
                       className="rounded-xl"
                     />
@@ -265,12 +265,12 @@ const RegisterPage = () => {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Kata Sandi</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
+                        placeholder="Masukkan kata sandi Anda"
                         {...field}
                         className="rounded-xl"
                       />
@@ -300,12 +300,12 @@ const RegisterPage = () => {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
+                  <FormLabel>Konfirmasi Kata Sandi</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password"
+                        placeholder="Konfirmasi kata sandi Anda"
                         {...field}
                         className="rounded-xl"
                       />
@@ -338,10 +338,10 @@ const RegisterPage = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Please wait...
+                  Silakan tunggu...
                 </>
               ) : (
-                "Sign Up"
+                "Daftar"
               )}
             </Button>
           </form>
@@ -354,7 +354,7 @@ const RegisterPage = () => {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white px-2 text-muted-foreground">
-              Or continue with
+              Atau Lanjutkan dengan 
             </span>
           </div>
         </div>
@@ -365,7 +365,7 @@ const RegisterPage = () => {
           onError={() => {
             toast({
               title: "Error",
-              description: "Google sign up failed",
+              description: "Registrasi dengan Google gagal",
               variant: "destructive",
             });
           }}
@@ -374,12 +374,12 @@ const RegisterPage = () => {
 
         {/* Login Redirect Link */}
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          Sudah punya akun?{" "}
           <Link
             to="/login"
             className="text-primary hover:underline"
           >
-            Log in
+            Masuk
           </Link>
         </p>
       </div>

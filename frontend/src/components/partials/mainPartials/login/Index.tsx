@@ -104,7 +104,7 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          <h1 className="text-4xl font-bold text-center mb-8">Log In</h1>
+          <h1 className="text-4xl font-bold text-center mb-8">Masuk</h1>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -116,7 +116,7 @@ const LoginPage = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Masukkan email"
+                        placeholder="Masukkan email Anda"
                         type="email"
                         {...field}
                         className="rounded-xl"
@@ -132,12 +132,12 @@ const LoginPage = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Kata Sandi</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
                           type={showPassword ? "text" : "password"}
-                          placeholder="Masukkan password"
+                          placeholder="Masukkan kata sandi Anda"
                           {...field}
                           className="rounded-xl"
                         />
@@ -169,7 +169,7 @@ const LoginPage = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Mohon tunggu...
+                    Silakan tunggu...
                   </>
                 ) : (
                   "Masuk"
@@ -184,7 +184,7 @@ const LoginPage = () => {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white px-2 text-muted-foreground">
-                Atau lanjutkan dengan
+                Atau Lanjutkan dengan
               </span>
             </div>
           </div>
@@ -194,7 +194,7 @@ const LoginPage = () => {
             onError={() => {
               toast({
                 title: "Error",
-                description: "Login Google gagal",
+                description: "Login dengan Google gagal",
                 variant: "destructive",
               });
             }}
@@ -203,7 +203,7 @@ const LoginPage = () => {
 
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              Belum punya akun?{" "}
+                Belum punya akun?{" "}
               <Link
                 to="/register"
                 className="text-primary hover:underline"
@@ -211,12 +211,12 @@ const LoginPage = () => {
                 Daftar
               </Link>
             </p>
-            <Link
+            {/* <Link
               to="/forgot-password"
               className="text-sm text-primary hover:underline"
             >
-              Lupa password?
-            </Link>
+              Lupa Kata Sandi?
+            </Link> */}
           </div>
         </div>
       </div>

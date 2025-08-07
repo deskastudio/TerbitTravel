@@ -11,7 +11,6 @@ import {
   Eye, 
   Share2, 
   UserCheck, 
-  Cookie, 
   Clock,
   AlertTriangle,
   CheckCircle,
@@ -24,7 +23,6 @@ import {
   Mail,
   XCircle,
   RefreshCw,
-  FileText,
   Globe,
   CreditCard,
   Smartphone,
@@ -112,65 +110,51 @@ const PrivacyPolicyPage: React.FC = () => {
 </head>
 <body>
     <h1>KEBIJAKAN PRIVASI</h1>
-    <h2>Travedia Terbit Semesta</h2>
+    <h2>Travedia Terbit Semesta - Platform Reservasi Wisata</h2>
     
     <div class="highlight">
         <strong>Berlaku Efektif:</strong> 1 Januari 2024<br>
-        <strong>Update Terakhir:</strong> 1 Januari 2024<br>
-        <strong>Versi:</strong> 1.0<br>
-        <strong>Compliance:</strong> UU ITE No. 19/2016, GDPR Ready
+        <strong>Update Terakhir:</strong> 6 Agustus 2025<br>
+        <strong>Versi:</strong> 2.0<br>
+        <strong>Compliance:</strong> UU ITE No. 19/2016, Perpres 82/2012
     </div>
 
     <div class="section">
         <h2>1. INFORMASI YANG DIKUMPULKAN</h2>
         
-        <h3>A. Data Pribadi</h3>
+        <h3>A. Data Pendaftaran Akun</h3>
         <ul>
             <li>Nama lengkap sesuai identitas</li>
-            <li>Alamat email aktif</li>
-            <li>Nomor telepon/WhatsApp</li>
-            <li>Alamat tempat tinggal</li>
-            <li>Tanggal lahir</li>
+            <li>Alamat email untuk login dan komunikasi</li>
+            <li>Password terenkripsi</li>
+            <li>Nomor telepon/WhatsApp untuk konfirmasi</li>
+            <li>Data profil Google (jika mendaftar via Google OAuth)</li>
         </ul>
 
-        <h3>B. Data Identitas</h3>
+        <h3>B. Data Pemesanan Paket Wisata</h3>
         <ul>
-            <li>Nomor KTP/NIK untuk verifikasi booking domestik</li>
-            <li>Nomor Paspor untuk perjalanan internasional</li>
-            <li>Foto identitas (jika diperlukan)</li>
+            <li>Detail peserta perjalanan (nama, umur, kontak darurat)</li>
+            <li>Pilihan tanggal dan paket wisata</li>
+            <li>Permintaan khusus dan catatan tambahan</li>
+            <li>Data pembayaran melalui Midtrans (terenkripsi)</li>
+            <li>Riwayat booking dan status perjalanan</li>
         </ul>
 
-        <h3>C. Data Pembayaran</h3>
+        <h3>C. Data Interaksi Platform</h3>
         <ul>
-            <li>Informasi kartu kredit/debit (terenkripsi)</li>
-            <li>Riwayat transaksi dan booking</li>
-            <li>Metode pembayaran yang dipilih</li>
-            <li>Invoice dan receipt digital</li>
+            <li>Destinasi yang dicari dan dilihat</li>
+            <li>Paket wisata yang di-bookmark (love)</li>
+            <li>Artikel yang dibaca dan disimpan</li>
+            <li>History pencarian dan filter preferensi</li>
+            <li>Rating dan review yang diberikan</li>
         </ul>
 
-        <h3>D. Data Teknis</h3>
+        <h3>D. Data Teknis Dasar</h3>
         <ul>
-            <li>IP Address dan lokasi geografis</li>
-            <li>Browser type dan versi</li>
-            <li>Device information (mobile/desktop)</li>
-            <li>Cookies dan tracking data</li>
-            <li>Log aktivitas website</li>
-        </ul>
-
-        <h3>E. Data Aktivitas</h3>
-        <ul>
-            <li>Halaman yang dikunjungi dan durasi</li>
-            <li>Paket wisata yang dilihat dan dicari</li>
-            <li>History pencarian dan filter</li>
-            <li>Interaksi dengan konten dan fitur</li>
-        </ul>
-
-        <h3>F. Data Preferensi</h3>
-        <ul>
-            <li>Wishlist paket favorit</li>
-            <li>Review dan rating yang diberikan</li>
-            <li>Preferensi destinasi dan kategori</li>
-            <li>Newsletter subscription preferences</li>
+            <li>Alamat IP dan informasi browser</li>
+            <li>Timestamp aktivitas login dan booking</li>
+            <li>Device type (mobile/desktop)</li>
+            <li>Log error untuk troubleshooting</li>
         </ul>
     </div>
 
@@ -179,84 +163,72 @@ const PrivacyPolicyPage: React.FC = () => {
         
         <table class="data-table">
             <tr>
-                <th>Metode Pengumpulan</th>
-                <th>Jenis Data</th>
-                <th>Tujuan</th>
+                <th>Sumber Data</th>
+                <th>Jenis Informasi</th>
+                <th>Tujuan Pengumpulan</th>
             </tr>
             <tr>
-                <td>Registrasi Akun</td>
-                <td>Data Pribadi, Email, Password</td>
-                <td>Membuat akun pengguna</td>
+                <td>Form Registrasi</td>
+                <td>Data pribadi, email, password</td>
+                <td>Membuat akun pengguna platform</td>
             </tr>
             <tr>
                 <td>Google OAuth</td>
-                <td>Google Profile Data</td>
-                <td>Quick registration</td>
+                <td>Profil Google (nama, email, foto)</td>
+                <td>Registrasi dan login cepat</td>
             </tr>
             <tr>
-                <td>Proses Booking</td>
-                <td>Data Identitas, Pembayaran</td>
-                <td>Konfirmasi dan processing</td>
+                <td>Form Booking</td>
+                <td>Data peserta, tanggal, pembayaran</td>
+                <td>Proses reservasi paket wisata</td>
             </tr>
             <tr>
-                <td>Website Analytics</td>
-                <td>Data Teknis, Cookies</td>
-                <td>Improve user experience</td>
+                <td>Aktivitas Platform</td>
+                <td>Pencarian, bookmark, artikel</td>
+                <td>Personalisasi dan rekomendasi</td>
             </tr>
             <tr>
-                <td>Customer Service</td>
-                <td>Communication logs</td>
-                <td>Support dan troubleshooting</td>
-            </tr>
-            <tr>
-                <td>Survey & Feedback</td>
-                <td>Opinion dan satisfaction data</td>
-                <td>Service improvement</td>
+                <td>Midtrans Gateway</td>
+                <td>Data transaksi pembayaran</td>
+                <td>Pemrosesan pembayaran aman</td>
             </tr>
         </table>
     </div>
 
     <div class="section">
-        <h2>3. TUJUAN PENGGUNAAN DATA</h2>
+        <h2>3. PENGGUNAAN DATA</h2>
         
-        <h3>A. Layanan Utama</h3>
+        <h3>A. Layanan Utama Platform</h3>
         <ul>
-            <li>Proses booking dan konfirmasi perjalanan</li>
+            <li>Pemrosesan booking dan konfirmasi paket wisata</li>
+            <li>Pengiriman e-voucher dan detail perjalanan</li>
+            <li>Customer support dan bantuan teknis</li>
             <li>Manajemen akun dan profil pengguna</li>
-            <li>Customer support dan troubleshooting</li>
-            <li>Payment processing dan invoice</li>
+            <li>Notifikasi status pemesanan dan pembayaran</li>
         </ul>
 
-        <h3>B. Komunikasi</h3>
+        <h3>B. Peningkatan Pengalaman Pengguna</h3>
         <ul>
-            <li>Email konfirmasi booking dan e-voucher</li>
-            <li>Update status perjalanan</li>
-            <li>Newsletter dan travel tips</li>
-            <li>Notifikasi penting dan emergency</li>
+            <li>Personalisasi rekomendasi destinasi dan paket</li>
+            <li>Menyimpan preferensi pencarian dan filter</li>
+            <li>Menampilkan wishlist dan artikel tersimpan</li>
+            <li>Analytics untuk pengembangan fitur platform</li>
         </ul>
 
-        <h3>C. Peningkatan Layanan</h3>
+        <h3>C. Komunikasi dan Marketing</h3>
         <ul>
-            <li>Analytics dan performance monitoring</li>
-            <li>Personalisasi rekomendasi paket</li>
-            <li>A/B testing fitur baru</li>
-            <li>Customer behavior analysis</li>
+            <li>Newsletter berisi paket wisata terbaru</li>
+            <li>Promosi dan penawaran khusus (dengan consent)</li>
+            <li>Update informasi travel dan destinasi</li>
+            <li>Survey kepuasan untuk peningkatan layanan</li>
         </ul>
 
-        <h3>D. Keamanan</h3>
+        <h3>D. Keamanan dan Legal</h3>
         <ul>
-            <li>Fraud detection dan prevention</li>
-            <li>Account security monitoring</li>
-            <li>Risk assessment</li>
-            <li>Compliance dengan regulasi</li>
-        </ul>
-
-        <h3>E. Marketing (dengan consent)</h3>
-        <ul>
-            <li>Promosi paket wisata terbaru</li>
-            <li>Penawaran khusus dan diskon</li>
-            <li>Remarketing campaigns</li>
-            <li>Social media advertising</li>
+            <li>Deteksi dan pencegahan aktivitas mencurigakan</li>
+            <li>Compliance dengan regulasi perjalanan</li>
+            <li>Audit trail untuk tracking pemesanan</li>
+            <li>Perlindungan terhadap fraud transaksi</li>
         </ul>
     </div>
 
@@ -264,16 +236,21 @@ const PrivacyPolicyPage: React.FC = () => {
         <h2>4. PEMBAGIAN DATA DENGAN PIHAK KETIGA</h2>
         
         <div class="warning">
-            <strong>Prinsip Penting:</strong> Kami TIDAK PERNAH menjual data pribadi Anda kepada pihak ketiga untuk tujuan komersial.
+            <strong>Prinsip Utama:</strong> Travedia TIDAK MENJUAL data pribadi Anda untuk tujuan komersial apapun.
         </div>
 
-        <h3>Pihak yang Dapat Mengakses Data:</h3>
+        <h3>Partner yang Dapat Mengakses Data:</h3>
         <ul>
-            <li><strong>Midtrans (Payment Gateway):</strong> Data pembayaran untuk processing transaksi</li>
-            <li><strong>Travel Partners:</strong> Hotel, tour operator, transport provider - hanya data yang diperlukan untuk layanan</li>
-            <li><strong>Service Providers:</strong> Email service, SMS gateway, cloud storage dengan kontrak NDA</li>
-            <li><strong>Otoritas Hukum:</strong> Jika diwajibkan oleh hukum, pengadilan, atau regulasi pemerintah</li>
+            <li><strong>Midtrans Payment Gateway:</strong> Data pembayaran untuk processing transaksi booking</li>
+            <li><strong>Travel Partners (Hotel, Tour Operator):</strong> Data peserta untuk konfirmasi layanan yang dipesan</li>
+            <li><strong>Google OAuth Service:</strong> Untuk verifikasi login dan profil dasar</li>
+            <li><strong>Email Service Provider:</strong> Untuk pengiriman e-voucher dan komunikasi</li>
+            <li><strong>Otoritas Pemerintah:</strong> Jika diwajibkan oleh hukum atau regulasi travel</li>
         </ul>
+
+        <div class="info-box">
+            <strong>Kontrol Ketat:</strong> Semua partner wajib menandatangani Data Processing Agreement (DPA) dan hanya dapat mengakses data minimal yang diperlukan untuk layanan.
+        </div>
     </div>
 
     <div class="section">
@@ -281,19 +258,19 @@ const PrivacyPolicyPage: React.FC = () => {
         
         <h3>Teknologi Keamanan:</h3>
         <ul>
-            <li><strong>Enkripsi SSL/TLS:</strong> Semua transmisi data menggunakan protokol enkripsi standar industri</li>
-            <li><strong>Password Hashing:</strong> Password disimpan menggunakan algoritma bcrypt dengan salt</li>
-            <li><strong>Access Control:</strong> Role-based permissions dan principle of least privilege</li>
-            <li><strong>Security Audit:</strong> Regular vulnerability assessment dan penetration testing</li>
-            <li><strong>Backup Encryption:</strong> Semua backup data dienkripsi dan disimpan secara terpisah</li>
+            <li><strong>Enkripsi HTTPS/SSL:</strong> Semua komunikasi data menggunakan protokol aman</li>
+            <li><strong>Password Hashing:</strong> Password pengguna di-hash dengan algoritma bcrypt</li>
+            <li><strong>Secure Database:</strong> Database dilindungi firewall dan access control</li>
+            <li><strong>Midtrans Security:</strong> Pembayaran menggunakan standar PCI DSS Level 1</li>
+            <li><strong>Regular Backup:</strong> Backup data terenkripsi dan tersimpan aman</li>
         </ul>
 
-        <h3>Prosedur Keamanan:</h3>
+        <h3>Prosedur Keamanan Internal:</h3>
         <ul>
-            <li>Multi-factor authentication untuk admin access</li>
-            <li>Regular security training untuk tim internal</li>
-            <li>Incident response plan untuk security breaches</li>
-            <li>Data anonymization untuk analytics purposes</li>
+            <li>Admin access dengan two-factor authentication</li>
+            <li>Regular security audit dan vulnerability check</li>
+            <li>Employee training tentang data protection</li>
+            <li>Incident response plan untuk security breach</li>
         </ul>
     </div>
 
@@ -303,76 +280,57 @@ const PrivacyPolicyPage: React.FC = () => {
         <div class="rights-list">
             <h3>Hak yang Anda Miliki:</h3>
             <ul>
-                <li><strong>Hak Akses:</strong> Melihat dan mengunduh semua data pribadi yang tersimpan</li>
-                <li><strong>Hak Koreksi:</strong> Mengubah atau memperbarui data yang tidak akurat</li>
-                <li><strong>Hak Penghapusan:</strong> Request penghapusan akun dan semua data terkait</li>
-                <li><strong>Hak Portabilitas:</strong> Export data dalam format CSV atau JSON</li>
-                <li><strong>Hak Penarikan Consent:</strong> Berhenti menerima marketing communications</li>
-                <li><strong>Hak Pembatasan:</strong> Membatasi penggunaan data untuk tujuan tertentu</li>
-                <li><strong>Hak Objection:</strong> Menolak processing data untuk direct marketing</li>
+                <li><strong>Hak Akses:</strong> Melihat dan download semua data pribadi Anda</li>
+                <li><strong>Hak Koreksi:</strong> Memperbarui informasi yang tidak akurat di profil</li>
+                <li><strong>Hak Penghapusan:</strong> Menghapus akun dan semua data terkait</li>
+                <li><strong>Hak Portabilitas:</strong> Export data dalam format yang dapat dibaca</li>
+                <li><strong>Hak Pembatasan:</strong> Membatasi pemrosesan untuk tujuan tertentu</li>
+                <li><strong>Hak Penarikan Consent:</strong> Berhenti menerima marketing email</li>
             </ul>
         </div>
 
         <h3>Cara Menggunakan Hak Anda:</h3>
         <ul>
-            <li>Login ke akun dan akses "Privacy Settings"</li>
-            <li>Hubungi privacy@travedia.co.id dengan subject "Data Rights Request"</li>
-            <li>Kami akan merespon dalam 30 hari sesuai regulasi</li>
+            <li>Login ke akun dan akses "Pengaturan Privasi"</li>
+            <li>Email ke privacy@travedia.co.id dengan subject "Data Rights Request"</li>
+            <li>Hubungi customer service di +62-XXX-XXXX-XXXX</li>
+            <li>Kami akan respond maksimal dalam 7 hari kerja</li>
         </ul>
     </div>
 
     <div class="section">
-        <h2>7. KEBIJAKAN COOKIE</h2>
-        
-        <h3>Jenis Cookies yang Digunakan:</h3>
-        <ul>
-            <li><strong>Essential Cookies:</strong> Session management, keamanan, fungsi dasar website</li>
-            <li><strong>Analytics Cookies:</strong> Google Analytics untuk analisis traffic dan behavior</li>
-            <li><strong>Marketing Cookies:</strong> Tracking untuk personalized ads (dengan consent)</li>
-            <li><strong>Third-party Cookies:</strong> Social media integration, payment processing</li>
-        </ul>
-
-        <h3>Pengelolaan Cookies:</h3>
-        <ul>
-            <li>Anda dapat mengatur preferensi cookies di browser settings</li>
-            <li>Menonaktifkan cookies mungkin mempengaruhi fungsionalitas website</li>
-            <li>Cookie consent dapat diubah melalui Cookie Preferences di footer</li>
-        </ul>
-    </div>
-
-    <div class="section">
-        <h2>8. RETENSI DATA</h2>
+        <h2>7. RETENSI DATA</h2>
         
         <table class="data-table">
             <tr>
                 <th>Jenis Data</th>
-                <th>Periode Retensi</th>
-                <th>Alasan</th>
+                <th>Periode Penyimpanan</th>
+                <th>Alasan Retensi</th>
             </tr>
             <tr>
-                <td>Data Akun Aktif</td>
+                <td>Data Akun Pengguna</td>
                 <td>Selama akun aktif</td>
-                <td>Layanan berkelanjutan</td>
+                <td>Memberikan layanan berkelanjutan</td>
             </tr>
             <tr>
-                <td>Data Booking</td>
-                <td>7 tahun</td>
-                <td>Audit dan legal compliance</td>
+                <td>Data Booking & E-Voucher</td>
+                <td>5 tahun</td>
+                <td>Keperluan audit dan legalitas</td>
             </tr>
             <tr>
-                <td>Data Marketing</td>
+                <td>Data Marketing & Newsletter</td>
                 <td>Hingga unsubscribe</td>
-                <td>Consent-based marketing</td>
+                <td>Komunikasi promosi dengan consent</td>
             </tr>
             <tr>
-                <td>Technical Logs</td>
+                <td>Log Teknis & Security</td>
                 <td>1 tahun</td>
-                <td>Security dan troubleshooting</td>
+                <td>Monitoring keamanan sistem</td>
             </tr>
             <tr>
-                <td>Financial Records</td>
-                <td>10 tahun</td>
-                <td>Tax dan accounting requirements</td>
+                <td>Data Transaksi Keuangan</td>
+                <td>7 tahun</td>
+                <td>Compliance perpajakan dan audit</td>
             </tr>
         </table>
     </div>
@@ -380,20 +338,20 @@ const PrivacyPolicyPage: React.FC = () => {
     <div class="contact-info">
         <h2>KONTAK DATA PROTECTION OFFICER</h2>
         <p><strong>Email:</strong> privacy@travedia.co.id</p>
-        <p><strong>Phone:</strong> +62 812-3456-7890</p>
-        <p><strong>Address:</strong> Jl. Raya Travedia No. 123, Jakarta 12345</p>
-        <p><strong>Response Time:</strong> Maksimal 72 jam untuk inquiry privacy</p>
+        <p><strong>Phone:</strong> +62-XXX-XXXX-XXXX</p>
+        <p><strong>Address:</strong> Jakarta, Indonesia</p>
+        <p><strong>Response Time:</strong> Maksimal 7 hari kerja</p>
+        <p><strong>Jam Operasional:</strong> Senin - Jumat, 09:00 - 17:00 WIB</p>
     </div>
 
     <div class="footer">
-        <p>Kebijakan Privasi ini adalah bagian integral dari Terms & Conditions Travedia Terbit Semesta.</p>
-        <p>Kami berkomitmen untuk melindungi privasi dan data pribadi Anda sesuai dengan standar internasional.</p>
-        <p><strong>© 2024 Travedia Terbit Semesta. Privacy Protected by Design.</strong></p>
+        <p>Kebijakan Privasi ini merupakan bagian dari Syarat dan Ketentuan Travedia Terbit Semesta.</p>
+        <p>Dengan menggunakan platform kami, Anda menyetujui pengumpulan dan penggunaan data sesuai kebijakan ini.</p>
+        <p><strong>© 2024 Travedia Terbit Semesta. Melindungi Privasi Anda.</strong></p>
     </div>
 </body>
 </html>`;
-
-      const blob = new Blob([pdfContent], { type: 'text/html' });
+const blob = new Blob([pdfContent], { type: 'text/html' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -422,14 +380,13 @@ const PrivacyPolicyPage: React.FC = () => {
     const searchLower = searchTerm.toLowerCase();
     
     const sections = [
-      { id: 'data-collection', title: 'Informasi yang Dikumpulkan', content: 'data pribadi identitas pembayaran teknis aktivitas preferensi nama email telepon alamat' },
-      { id: 'data-usage', title: 'Cara Pengumpulan Data', content: 'registrasi booking google oauth analytics customer service survey' },
-      { id: 'data-purpose', title: 'Tujuan Penggunaan Data', content: 'layanan komunikasi peningkatan keamanan marketing konfirmasi newsletter' },
-      { id: 'data-sharing', title: 'Pembagian Data', content: 'pihak ketiga midtrans travel partners service providers otoritas hukum' },
-      { id: 'data-protection', title: 'Perlindungan Data', content: 'enkripsi ssl password hashing access control security audit backup' },
-      { id: 'user-rights', title: 'Hak Pengguna', content: 'akses koreksi penghapusan portabilitas consent pembatasan objection' },
-      { id: 'cookies', title: 'Kebijakan Cookie', content: 'essential analytics marketing third-party cookies browser settings consent' },
-      { id: 'retention', title: 'Retensi Data', content: 'periode penyimpanan akun booking marketing technical logs financial' },
+      { id: 'data-collection', title: 'Informasi yang Dikumpulkan', content: 'data pendaftaran akun booking interaksi teknis nama email password paket wisata' },
+      { id: 'data-usage', title: 'Cara Pengumpulan Data', content: 'registrasi google oauth form booking midtrans aktivitas platform' },
+      { id: 'data-purpose', title: 'Penggunaan Data', content: 'layanan platform booking voucher customer support personalisasi marketing komunikasi keamanan' },
+      { id: 'data-sharing', title: 'Pembagian Data', content: 'midtrans travel partners google oauth email service otoritas pemerintah' },
+      { id: 'data-protection', title: 'Perlindungan Data', content: 'enkripsi https ssl password hashing secure database pci dss backup' },
+      { id: 'user-rights', title: 'Hak Pengguna', content: 'akses koreksi penghapusan portabilitas pembatasan consent' },
+      { id: 'retention', title: 'Retensi Data', content: 'periode penyimpanan akun booking marketing log transaksi' },
     ];
     
     sections.forEach(section => {
@@ -443,7 +400,7 @@ const PrivacyPolicyPage: React.FC = () => {
   }, [searchTerm]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 max-w-5xl py-8">
         {/* Hero Header */}
         <div className="text-center mb-12 relative">
@@ -458,18 +415,18 @@ const PrivacyPolicyPage: React.FC = () => {
               Kebijakan Privasi
             </h1>
             <p className="text-gray-600 max-w-3xl mx-auto text-lg leading-relaxed">
-              Kami berkomitmen melindungi privasi dan keamanan data pribadi Anda. 
+              Platform reservasi wisata Travedia Terbit Semesta berkomitmen melindungi privasi dan keamanan data pribadi Anda. 
               Pelajari bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi Anda.
             </p>
             
-            <div className="flex items-center justify-center gap-4 mt-6">
+            <div className="flex items-center justify-center gap-4 mt-6 flex-wrap">
               <Badge variant="outline" className="text-sm px-3 py-1 border-emerald-300">
                 <Clock className="w-4 h-4 mr-1" />
-                Berlaku efektif: 1 Januari 2024
+                Update: 6 Agustus 2025
               </Badge>
               <Badge variant="outline" className="text-sm px-3 py-1 border-emerald-300">
                 <ShieldCheck className="w-4 h-4 mr-1" />
-                GDPR Ready
+                UU ITE Compliant
               </Badge>
               <Button 
                 variant="outline" 
@@ -479,7 +436,7 @@ const PrivacyPolicyPage: React.FC = () => {
                 disabled={isDownloading}
               >
                 <Download className="w-4 h-4" />
-                {isDownloading ? 'Downloading...' : 'Download PDF'}
+                {isDownloading ? 'Downloading...' : 'Download HTML'}
               </Button>
             </div>
           </div>
@@ -566,83 +523,60 @@ const PrivacyPolicyPage: React.FC = () => {
                 sectionId="data-collection"
                 searchTerm={searchTerm}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Users className="w-5 h-5 text-blue-600" />
-                      <h4 className="font-semibold text-blue-800">Data Pribadi</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Users className="w-6 h-6 text-blue-600" />
+                      <h4 className="font-semibold text-blue-800">Data Pendaftaran Akun</h4>
                     </div>
-                    <ul className="text-blue-700 text-sm space-y-1">
-                      <li>• Nama lengkap</li>
-                      <li>• Email aktif</li>
-                      <li>• Nomor telepon</li>
-                      <li>• Alamat</li>
-                      <li>• Tanggal lahir</li>
+                    <ul className="text-blue-700 space-y-2">
+                      <li>• Nama lengkap sesuai identitas</li>
+                      <li>• Alamat email untuk login</li>
+                      <li>• Password terenkripsi</li>
+                      <li>• Nomor telepon/WhatsApp</li>
+                      <li>• Data Google (jika OAuth)</li>
                     </ul>
                   </div>
                   
-                  <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FileText className="w-5 h-5 text-purple-600" />
-                      <h4 className="font-semibold text-purple-800">Data Identitas</h4>
+                  <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <CreditCard className="w-6 h-6 text-green-600" />
+                      <h4 className="font-semibold text-green-800">Data Pemesanan</h4>
                     </div>
-                    <ul className="text-purple-700 text-sm space-y-1">
-                      <li>• KTP/NIK</li>
-                      <li>• Nomor Paspor</li>
-                      <li>• Foto identitas</li>
-                      <li>• Verifikasi booking</li>
+                    <ul className="text-green-700 space-y-2">
+                      <li>• Detail peserta perjalanan</li>
+                      <li>• Tanggal dan paket pilihan</li>
+                      <li>• Data pembayaran Midtrans</li>
+                      <li>• Riwayat booking</li>
+                      <li>• E-voucher dan invoice</li>
                     </ul>
                   </div>
 
-                  <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <CreditCard className="w-5 h-5 text-green-600" />
-                      <h4 className="font-semibold text-green-800">Data Pembayaran</h4>
+                  <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Heart className="w-6 h-6 text-purple-600" />
+                      <h4 className="font-semibold text-purple-800">Data Interaksi</h4>
                     </div>
-                    <ul className="text-green-700 text-sm space-y-1">
-                      <li>• Info kartu (encrypted)</li>
-                      <li>• Riwayat transaksi</li>
-                      <li>• Metode pembayaran</li>
-                      <li>• Invoice digital</li>
+                    <ul className="text-purple-700 space-y-2">
+                      <li>• Destinasi yang dicari</li>
+                      <li>• Paket yang di-bookmark</li>
+                      <li>• Artikel yang disimpan</li>
+                      <li>• History pencarian</li>
+                      <li>• Rating dan review</li>
                     </ul>
                   </div>
 
-                  <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Smartphone className="w-5 h-5 text-orange-600" />
+                  <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Smartphone className="w-6 h-6 text-orange-600" />
                       <h4 className="font-semibold text-orange-800">Data Teknis</h4>
                     </div>
-                    <ul className="text-orange-700 text-sm space-y-1">
-                      <li>• IP Address</li>
-                      <li>• Browser type</li>
-                      <li>• Device info</li>
-                      <li>• Cookies</li>
-                    </ul>
-                  </div>
-
-                  <div className="p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg border border-pink-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <BarChart3 className="w-5 h-5 text-pink-600" />
-                      <h4 className="font-semibold text-pink-800">Data Aktivitas</h4>
-                    </div>
-                    <ul className="text-pink-700 text-sm space-y-1">
-                      <li>• Halaman dikunjungi</li>
-                      <li>• Paket dilihat</li>
-                      <li>• History pencarian</li>
-                      <li>• Interaksi konten</li>
-                    </ul>
-                  </div>
-
-                  <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg border border-indigo-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Heart className="w-5 h-5 text-indigo-600" />
-                      <h4 className="font-semibold text-indigo-800">Data Preferensi</h4>
-                    </div>
-                    <ul className="text-indigo-700 text-sm space-y-1">
-                      <li>• Wishlist favorit</li>
-                      <li>• Review & rating</li>
-                      <li>• Preferensi destinasi</li>
-                      <li>• Newsletter settings</li>
+                    <ul className="text-orange-700 space-y-2">
+                      <li>• Alamat IP dan browser</li>
+                      <li>• Timestamp aktivitas</li>
+                      <li>• Device type</li>
+                      <li>• Log error sistem</li>
+                      <li>• Session data</li>
                     </ul>
                   </div>
                 </div>
@@ -657,19 +591,18 @@ const PrivacyPolicyPage: React.FC = () => {
               >
                 <div className="space-y-4">
                   {[
-                    { icon: <UserCheck className="w-5 h-5 text-blue-500" />, method: "Registrasi Akun", data: "Data Pribadi, Email, Password", purpose: "Membuat akun pengguna", color: "blue" },
-                    { icon: <Globe className="w-5 h-5 text-green-500" />, method: "Google OAuth", data: "Google Profile Data", purpose: "Quick registration", color: "green" },
-                    { icon: <CreditCard className="w-5 h-5 text-purple-500" />, method: "Proses Booking", data: "Data Identitas, Pembayaran", purpose: "Konfirmasi dan processing", color: "purple" },
-                    { icon: <BarChart3 className="w-5 h-5 text-orange-500" />, method: "Website Analytics", data: "Data Teknis, Cookies", purpose: "Improve user experience", color: "orange" },
-                    { icon: <MessageCircle className="w-5 h-5 text-pink-500" />, method: "Customer Service", data: "Communication logs", purpose: "Support dan troubleshooting", color: "pink" },
-                    { icon: <Star className="w-5 h-5 text-indigo-500" />, method: "Survey & Feedback", data: "Opinion dan satisfaction data", purpose: "Service improvement", color: "indigo" },
+                    { icon: <UserCheck className="w-5 h-5 text-blue-500" />, source: "Form Registrasi", data: "Data pribadi, email, password", purpose: "Membuat akun pengguna platform", color: "blue" },
+                    { icon: <Globe className="w-5 h-5 text-green-500" />, source: "Google OAuth", data: "Profil Google (nama, email, foto)", purpose: "Registrasi dan login cepat", color: "green" },
+                    { icon: <CreditCard className="w-5 h-5 text-purple-500" />, source: "Form Booking", data: "Data peserta, tanggal, pembayaran", purpose: "Proses reservasi paket wisata", color: "purple" },
+                    { icon: <BarChart3 className="w-5 h-5 text-orange-500" />, source: "Aktivitas Platform", data: "Pencarian, bookmark, artikel", purpose: "Personalisasi dan rekomendasi", color: "orange" },
+                    { icon: <Shield className="w-5 h-5 text-pink-500" />, source: "Midtrans Gateway", data: "Data transaksi pembayaran", purpose: "Pemrosesan pembayaran aman", color: "pink" },
                   ].map((item, index) => (
                     <div key={index} className={`flex items-start gap-4 p-4 bg-${item.color}-50 rounded-lg border border-${item.color}-200 hover:shadow-md transition-all`}>
                       <div className={`p-2 bg-${item.color}-100 rounded-lg flex-shrink-0`}>
                         {item.icon}
                       </div>
                       <div className="flex-1">
-                        <h4 className={`font-semibold text-${item.color}-800 mb-1`}>{item.method}</h4>
+                        <h4 className={`font-semibold text-${item.color}-800 mb-1`}>{item.source}</h4>
                         <p className={`text-${item.color}-700 text-sm mb-1`}><strong>Data:</strong> {item.data}</p>
                         <p className={`text-${item.color}-600 text-sm`}><strong>Tujuan:</strong> {item.purpose}</p>
                       </div>
@@ -678,93 +611,86 @@ const PrivacyPolicyPage: React.FC = () => {
                 </div>
               </PrivacySection>
 
-              {/* Tujuan Penggunaan Data */}
+              {/* Penggunaan Data */}
               <PrivacySection 
                 icon={<Zap className="w-5 h-5" />}
-                title="Tujuan Penggunaan Data"
+                title="Penggunaan Data"
                 sectionId="data-purpose"
                 searchTerm={searchTerm}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
-                      <h4 className="font-semibold mb-3 text-blue-800 flex items-center gap-2">
+                    <div className="p-6 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border border-blue-200">
+                      <h4 className="font-semibold mb-4 text-blue-800 flex items-center gap-2">
                         <CheckCircle className="w-5 h-5" />
-                        Layanan Utama
+                        Layanan Utama Platform
                       </h4>
-                      <ul className="text-blue-700 text-sm space-y-2">
-                        <li>• Proses booking dan konfirmasi perjalanan</li>
-                        <li>• Manajemen akun dan profil pengguna</li>
-                        <li>• Customer support dan troubleshooting</li>
-                        <li>• Payment processing dan invoice</li>
+                      <ul className="text-blue-700 space-y-2">
+                        <li>• Pemrosesan booking paket wisata</li>
+                        <li>• Pengiriman e-voucher digital</li>
+                        <li>• Customer support dan bantuan</li>
+                        <li>• Manajemen akun pengguna</li>
+                        <li>• Notifikasi status booking</li>
                       </ul>
                     </div>
 
-                    <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg border border-green-200">
-                      <h4 className="font-semibold mb-3 text-green-800 flex items-center gap-2">
-                        <Mail className="w-5 h-5" />
-                        Komunikasi
+                    <div className="p-6 bg-gradient-to-r from-green-50 to-green-100 rounded-xl border border-green-200">
+                      <h4 className="font-semibold mb-4 text-green-800 flex items-center gap-2">
+                        <Star className="w-5 h-5" />
+                        Personalisasi
                       </h4>
-                      <ul className="text-green-700 text-sm space-y-2">
-                        <li>• Email konfirmasi booking dan e-voucher</li>
-                        <li>• Update status perjalanan</li>
-                        <li>• Newsletter dan travel tips</li>
-                        <li>• Notifikasi penting dan emergency</li>
-                      </ul>
-                    </div>
-
-                    <div className="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg border border-purple-200">
-                      <h4 className="font-semibold mb-3 text-purple-800 flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5" />
-                        Peningkatan Layanan
-                      </h4>
-                      <ul className="text-purple-700 text-sm space-y-2">
-                        <li>• Analytics dan performance monitoring</li>
-                        <li>• Personalisasi rekomendasi paket</li>
-                        <li>• A/B testing fitur baru</li>
-                        <li>• Customer behavior analysis</li>
+                      <ul className="text-green-700 space-y-2">
+                        <li>• Rekomendasi destinasi sesuai minat</li>
+                        <li>• Wishlist paket favorit</li>
+                        <li>• History pencarian tersimpan</li>
+                        <li>• Artikel yang disimpan</li>
+                        <li>• Filter preferensi</li>
                       </ul>
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg border border-orange-200">
-                      <h4 className="font-semibold mb-3 text-orange-800 flex items-center gap-2">
+                    <div className="p-6 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                      <h4 className="font-semibold mb-4 text-purple-800 flex items-center gap-2">
+                        <Mail className="w-5 h-5" />
+                        Komunikasi
+                      </h4>
+                      <ul className="text-purple-700 space-y-2">
+                        <li>• Newsletter paket terbaru</li>
+                        <li>• Promosi dan diskon khusus</li>
+                        <li>• Update travel information</li>
+                        <li>• Konfirmasi booking</li>
+                        <li>• Survey kepuasan</li>
+                      </ul>
+                    </div>
+
+                    <div className="p-6 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                      <h4 className="font-semibold mb-4 text-orange-800 flex items-center gap-2">
                         <Shield className="w-5 h-5" />
-                        Keamanan
+                        Keamanan & Legal
                       </h4>
-                      <ul className="text-orange-700 text-sm space-y-2">
-                        <li>• Fraud detection dan prevention</li>
-                        <li>• Account security monitoring</li>
-                        <li>• Risk assessment</li>
-                        <li>• Compliance dengan regulasi</li>
+                      <ul className="text-orange-700 space-y-2">
+                        <li>• Deteksi fraud transaksi</li>
+                        <li>• Compliance regulasi travel</li>
+                        <li>• Audit trail booking</li>
+                        <li>• Monitoring keamanan</li>
+                        <li>• Legal documentation</li>
                       </ul>
-                    </div>
-
-                    <div className="p-4 bg-gradient-to-r from-pink-50 to-pink-100 rounded-lg border border-pink-200">
-                      <h4 className="font-semibold mb-3 text-pink-800 flex items-center gap-2">
-                        <Star className="w-5 h-5" />
-                        Marketing (dengan consent)
-                      </h4>
-                      <ul className="text-pink-700 text-sm space-y-2">
-                        <li>• Promosi paket wisata terbaru</li>
-                        <li>• Penawaran khusus dan diskon</li>
-                        <li>• Remarketing campaigns</li>
-                        <li>• Social media advertising</li>
-                      </ul>
-                    </div>
-
-                    <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                      <h4 className="font-medium mb-2 text-yellow-800 flex items-center gap-2">
-                        <AlertTriangle className="w-5 h-5" />
-                        Consent Required
-                      </h4>
-                      <p className="text-yellow-700 text-sm">Aktivitas marketing memerlukan persetujuan eksplisit dan dapat ditarik kapan saja melalui pengaturan akun.</p>
                     </div>
                   </div>
                 </div>
-              </PrivacySection>
 
+                <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl mt-6">
+                  <h4 className="font-medium mb-3 text-yellow-800 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    Consent Marketing
+                  </h4>
+                  <p className="text-yellow-700">
+                    Aktivitas marketing dan promosi hanya dilakukan dengan persetujuan eksplisit Anda dan dapat ditarik kapan saja 
+                    melalui pengaturan akun atau unsubscribe di email.
+                  </p>
+                </div>
+              </PrivacySection>
               {/* Pembagian Data */}
               <PrivacySection 
                 icon={<Share2 className="w-5 h-5" />}
@@ -776,27 +702,64 @@ const PrivacyPolicyPage: React.FC = () => {
                   <div className="bg-gradient-to-r from-red-50 to-red-100 p-6 rounded-xl border border-red-200">
                     <h4 className="font-bold mb-3 text-red-800 flex items-center gap-2">
                       <Shield className="w-5 h-5" />
-                      Prinsip Penting
+                      Prinsip Utama
                     </h4>
-                    <p className="text-red-700 font-medium">
-                      Kami TIDAK PERNAH menjual data pribadi Anda kepada pihak ketiga untuk tujuan komersial.
+                    <p className="text-red-700 font-medium text-lg">
+                      Travedia TIDAK MENJUAL data pribadi Anda untuk tujuan komersial apapun.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
-                      { icon: <CreditCard className="w-6 h-6" />, title: "Midtrans", desc: "Payment Gateway", data: "Data pembayaran untuk processing transaksi", color: "blue" },
-                      { icon: <MapPin className="w-6 h-6" />, title: "Travel Partners", desc: "Hotel, Tour Operator", data: "Data yang diperlukan untuk layanan saja", color: "green" },
-                      { icon: <Settings className="w-6 h-6" />, title: "Service Providers", desc: "Email, SMS, Cloud", data: "Dengan kontrak NDA yang ketat", color: "purple" },
-                      { icon: <Scale className="w-6 h-6" />, title: "Otoritas Hukum", desc: "Jika Diwajibkan", data: "Sesuai dengan hukum dan regulasi", color: "orange" },
+                      { 
+                        icon: <CreditCard className="w-6 h-6 text-blue-600" />, 
+                        title: "Midtrans", 
+                        desc: "Payment Gateway", 
+                        data: "Data pembayaran untuk processing transaksi booking",
+                        access: "Hanya saat transaksi"
+                      },
+                      { 
+                        icon: <MapPin className="w-6 h-6 text-green-600" />, 
+                        title: "Travel Partners", 
+                        desc: "Hotel, Tour Operator", 
+                        data: "Data peserta untuk konfirmasi layanan yang dipesan",
+                        access: "Minimal yang diperlukan"
+                      },
+                      { 
+                        icon: <Globe className="w-6 h-6 text-purple-600" />, 
+                        title: "Google OAuth", 
+                        desc: "Authentication Service", 
+                        data: "Verifikasi login dan profil dasar",
+                        access: "Saat login dengan Google"
+                      },
+                      { 
+                        icon: <Mail className="w-6 h-6 text-orange-600" />, 
+                        title: "Email Service", 
+                        desc: "Communication Provider", 
+                        data: "Email untuk e-voucher dan komunikasi",
+                        access: "Dengan kontrak NDA"
+                      },
                     ].map((partner, index) => (
-                      <div key={index} className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-                        <div className={`text-gray-600 mb-3`}>{partner.icon}</div>
+                      <div key={index} className="p-4 bg-white rounded-xl border border-gray-200 hover:shadow-lg transition-shadow">
+                        <div className="mb-4">{partner.icon}</div>
                         <h4 className="font-semibold text-gray-800 mb-1">{partner.title}</h4>
                         <p className="text-gray-600 text-sm mb-2">{partner.desc}</p>
-                        <p className="text-gray-500 text-xs">{partner.data}</p>
+                        <p className="text-gray-500 text-xs mb-2">{partner.data}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {partner.access}
+                        </Badge>
                       </div>
                     ))}
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                    <h4 className="font-medium mb-2 text-blue-800 flex items-center gap-2">
+                      <Scale className="w-5 h-5" />
+                      Otoritas Pemerintah
+                    </h4>
+                    <p className="text-blue-700 text-sm">
+                      Data dapat dibagikan kepada otoritas pemerintah jika diwajibkan oleh hukum, regulasi travel, atau kepentingan keamanan nasional.
+                    </p>
                   </div>
                 </div>
               </PrivacySection>
@@ -816,32 +779,38 @@ const PrivacyPolicyPage: React.FC = () => {
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { tech: "Enkripsi SSL/TLS", desc: "Semua transmisi data menggunakan protokol enkripsi standar industri" },
-                        { tech: "Password Hashing", desc: "Password disimpan menggunakan algoritma bcrypt dengan salt" },
-                        { tech: "Access Control", desc: "Role-based permissions dan principle of least privilege" },
-                        { tech: "Security Audit", desc: "Regular vulnerability assessment dan penetration testing" },
-                        { tech: "Backup Encryption", desc: "Semua backup data dienkripsi dan disimpan secara terpisah" },
-                        { tech: "Multi-Factor Auth", desc: "MFA untuk admin access dan akun sensitive" },
+                        { tech: "HTTPS/SSL Encryption", desc: "Semua komunikasi data menggunakan protokol aman SSL/TLS" },
+                        { tech: "Password Hashing", desc: "Password pengguna di-hash dengan algoritma bcrypt yang aman" },
+                        { tech: "Secure Database", desc: "Database dilindungi dengan firewall dan access control ketat" },
+                        { tech: "Midtrans PCI DSS", desc: "Pembayaran menggunakan standar keamanan PCI DSS Level 1" },
+                        { tech: "Encrypted Backup", desc: "Backup data terenkripsi dan disimpan di lokasi aman" },
+                        { tech: "Two-Factor Auth", desc: "Admin access menggunakan autentikasi dua faktor" },
                       ].map((item, index) => (
-                        <div key={index} className="p-3 bg-white rounded-lg border border-emerald-200">
-                          <h5 className="font-medium text-emerald-800 text-sm mb-1">{item.tech}</h5>
+                        <div key={index} className="p-4 bg-white rounded-lg border border-emerald-200">
+                          <h5 className="font-medium text-emerald-800 text-sm mb-2">{item.tech}</h5>
                           <p className="text-emerald-700 text-xs">{item.desc}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                    <h4 className="font-medium mb-3 text-blue-800 flex items-center gap-2">
+                  <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+                    <h4 className="font-medium mb-4 text-blue-800 flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5" />
-                      Prosedur Keamanan
+                      Prosedur Keamanan Internal
                     </h4>
-                    <ul className="text-blue-700 text-sm space-y-1">
-                      <li>• Regular security training untuk tim internal</li>
-                      <li>• Incident response plan untuk security breaches</li>
-                      <li>• Data anonymization untuk analytics purposes</li>
-                      <li>• Compliance monitoring dan audit berkala</li>
-                    </ul>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ul className="text-blue-700 text-sm space-y-2">
+                        <li>• Regular security audit sistem</li>
+                        <li>• Vulnerability assessment berkala</li>
+                        <li>• Employee data protection training</li>
+                      </ul>
+                      <ul className="text-blue-700 text-sm space-y-2">
+                        <li>• Incident response plan lengkap</li>
+                        <li>• Access monitoring dan logging</li>
+                        <li>• Compliance review rutin</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </PrivacySection>
@@ -861,12 +830,12 @@ const PrivacyPolicyPage: React.FC = () => {
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        { right: "Hak Akses", desc: "Melihat dan mengunduh semua data pribadi yang tersimpan", icon: <Eye className="w-4 h-4" /> },
-                        { right: "Hak Koreksi", desc: "Mengubah atau memperbarui data yang tidak akurat", icon: <Settings className="w-4 h-4" /> },
-                        { right: "Hak Penghapusan", desc: "Request penghapusan akun dan semua data terkait", icon: <XCircle className="w-4 h-4" /> },
-                        { right: "Hak Portabilitas", desc: "Export data dalam format CSV atau JSON", icon: <Download className="w-4 h-4" /> },
-                        { right: "Hak Penarikan Consent", desc: "Berhenti menerima marketing communications", icon: <RefreshCw className="w-4 h-4" /> },
-                        { right: "Hak Pembatasan", desc: "Membatasi penggunaan data untuk tujuan tertentu", icon: <Lock className="w-4 h-4" /> },
+                        { right: "Hak Akses", desc: "Melihat dan download semua data pribadi yang tersimpan", icon: <Eye className="w-4 h-4" /> },
+                        { right: "Hak Koreksi", desc: "Memperbarui informasi yang tidak akurat di profil", icon: <Settings className="w-4 h-4" /> },
+                        { right: "Hak Penghapusan", desc: "Menghapus akun dan semua data terkait", icon: <XCircle className="w-4 h-4" /> },
+                        { right: "Hak Portabilitas", desc: "Export data dalam format yang dapat dibaca", icon: <Download className="w-4 h-4" /> },
+                        { right: "Hak Pembatasan", desc: "Membatasi pemrosesan untuk tujuan tertentu", icon: <Lock className="w-4 h-4" /> },
+                        { right: "Penarikan Consent", desc: "Berhenti menerima marketing email", icon: <RefreshCw className="w-4 h-4" /> },
                       ].map((item, index) => (
                         <div key={index} className="flex items-start gap-3 p-4 bg-white rounded-lg border border-indigo-200">
                           <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
@@ -881,57 +850,21 @@ const PrivacyPolicyPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <h4 className="font-medium mb-3 text-green-800 flex items-center gap-2">
+                  <div className="bg-green-50 border border-green-200 p-6 rounded-lg">
+                    <h4 className="font-medium mb-4 text-green-800 flex items-center gap-2">
                       <CheckCircle className="w-5 h-5" />
                       Cara Menggunakan Hak Anda
                     </h4>
-                    <ul className="text-green-700 text-sm space-y-2">
-                      <li>• Login ke akun dan akses "Privacy Settings"</li>
-                      <li>• Hubungi privacy@travedia.co.id dengan subject "Data Rights Request"</li>
-                      <li>• Kami akan merespon dalam 30 hari sesuai regulasi</li>
-                      <li>• Verifikasi identitas diperlukan untuk permintaan sensitive</li>
-                    </ul>
-                  </div>
-                </div>
-              </PrivacySection>
-
-              {/* Kebijakan Cookie */}
-              <PrivacySection 
-                icon={<Cookie className="w-5 h-5" />}
-                title="Kebijakan Cookie"
-                sectionId="cookies"
-                searchTerm={searchTerm}
-              >
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {[
-                      { type: "Essential Cookies", desc: "Session management, keamanan, fungsi dasar website", icon: <Settings className="w-5 h-5" />, color: "blue", required: true },
-                      { type: "Analytics Cookies", desc: "Google Analytics untuk analisis traffic dan behavior", icon: <BarChart3 className="w-5 h-5" />, color: "green", required: false },
-                      { type: "Marketing Cookies", desc: "Tracking untuk personalized ads (dengan consent)", icon: <Star className="w-5 h-5" />, color: "purple", required: false },
-                      { type: "Third-party Cookies", desc: "Social media integration, payment processing", icon: <Globe className="w-5 h-5" />, color: "orange", required: false },
-                    ].map((cookie, index) => (
-                      <div key={index} className={`p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-all`}>
-                        <div className={`text-gray-600 mb-3`}>{cookie.icon}</div>
-                        <h4 className="font-semibold text-gray-800 text-sm mb-2">{cookie.type}</h4>
-                        <p className="text-gray-600 text-xs mb-2">{cookie.desc}</p>
-                        <Badge variant={cookie.required ? "default" : "outline"} className="text-xs">
-                          {cookie.required ? "Required" : "Optional"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                    <h4 className="font-medium mb-2 text-yellow-800 flex items-center gap-2">
-                      <Settings className="w-5 h-5" />
-                      Pengelolaan Cookies
-                    </h4>
-                    <ul className="text-yellow-700 text-sm space-y-1">
-                      <li>• Anda dapat mengatur preferensi cookies di browser settings</li>
-                      <li>• Menonaktifkan cookies mungkin mempengaruhi fungsionalitas website</li>
-                      <li>• Cookie consent dapat diubah melalui Cookie Preferences di footer</li>
-                    </ul>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <ul className="text-green-700 text-sm space-y-2">
+                        <li>• Login ke akun → "Pengaturan Privasi"</li>
+                        <li>• Email: privacy@travedia.co.id</li>
+                      </ul>
+                      <ul className="text-green-700 text-sm space-y-2">
+                        <li>• Customer Service: +62-XXX-XXX</li>
+                        <li>• Response time: 7 hari kerja</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </PrivacySection>
@@ -948,28 +881,28 @@ const PrivacyPolicyPage: React.FC = () => {
                     <table className="w-full border-collapse border border-gray-200 rounded-lg overflow-hidden">
                       <thead>
                         <tr className="bg-gray-50">
-                          <th className="border border-gray-200 p-3 text-left font-semibold text-gray-800">Jenis Data</th>
-                          <th className="border border-gray-200 p-3 text-left font-semibold text-gray-800">Periode Retensi</th>
-                          <th className="border border-gray-200 p-3 text-left font-semibold text-gray-800">Alasan</th>
+                          <th className="border border-gray-200 p-4 text-left font-semibold text-gray-800">Jenis Data</th>
+                          <th className="border border-gray-200 p-4 text-left font-semibold text-gray-800">Periode</th>
+                          <th className="border border-gray-200 p-4 text-left font-semibold text-gray-800">Alasan Retensi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {[
-                          { data: "Data Akun Aktif", period: "Selama akun aktif", reason: "Layanan berkelanjutan", color: "blue" },
-                          { data: "Data Booking", period: "7 tahun", reason: "Audit dan legal compliance", color: "green" },
-                          { data: "Data Marketing", period: "Hingga unsubscribe", reason: "Consent-based marketing", color: "purple" },
-                          { data: "Technical Logs", period: "1 tahun", reason: "Security dan troubleshooting", color: "orange" },
-                          { data: "Financial Records", period: "10 tahun", reason: "Tax dan accounting requirements", color: "red" },
+                          { data: "Data Akun Pengguna", period: "Selama akun aktif", reason: "Layanan berkelanjutan platform", color: "blue" },
+                          { data: "Data Booking & E-Voucher", period: "5 tahun", reason: "Audit dan keperluan legalitas", color: "green" },
+                          { data: "Data Marketing", period: "Hingga unsubscribe", reason: "Komunikasi promosi dengan consent", color: "purple" },
+                          { data: "Log Teknis & Security", period: "1 tahun", reason: "Monitoring keamanan sistem", color: "orange" },
+                          { data: "Data Transaksi Keuangan", period: "7 tahun", reason: "Compliance perpajakan", color: "red" },
                         ].map((item, index) => (
                           <tr key={index} className="hover:bg-gray-50">
-                            <td className="border border-gray-200 p-3">
-                              <div className="flex items-center gap-2">
-                                <div className={`w-3 h-3 rounded-full bg-gray-400`}></div>
+                            <td className="border border-gray-200 p-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
                                 <span className="font-medium text-gray-800">{item.data}</span>
                               </div>
                             </td>
-                            <td className="border border-gray-200 p-3 text-gray-700">{item.period}</td>
-                            <td className="border border-gray-200 p-3 text-gray-600 text-sm">{item.reason}</td>
+                            <td className="border border-gray-200 p-4 text-gray-700 font-medium">{item.period}</td>
+                            <td className="border border-gray-200 p-4 text-gray-600 text-sm">{item.reason}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -982,7 +915,8 @@ const PrivacyPolicyPage: React.FC = () => {
                       Penghapusan Otomatis
                     </h4>
                     <p className="text-blue-700 text-sm">
-                      Data akan dihapus secara otomatis setelah periode retensi berakhir, kecuali ada kewajiban hukum untuk menyimpan lebih lama.
+                      Data akan dihapus secara otomatis setelah periode retensi berakhir, kecuali ada kewajiban hukum 
+                      untuk menyimpan lebih lama sesuai regulasi perpajakan dan audit.
                     </p>
                   </div>
                 </div>
@@ -992,30 +926,30 @@ const PrivacyPolicyPage: React.FC = () => {
               <Card className="mb-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xl">
                 <CardContent className="p-8">
                   <h3 className="text-2xl font-bold mb-6 text-center">Data Protection Officer</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="text-center">
                       <div className="bg-white/20 p-3 rounded-full w-fit mx-auto mb-3">
                         <Mail className="w-6 h-6" />
                       </div>
                       <h4 className="font-semibold mb-2">Email Privacy</h4>
-                      <p className="text-emerald-100">privacy@travedia.co.id</p>
-                      <p className="text-emerald-200 text-sm">Response: Max 72 jam</p>
+                      <p className="text-emerald-100">travediaterbitsemesta@gmail.com</p>
+                      <p className="text-emerald-200 text-sm">Max 7 hari kerja</p>
                     </div>
                     <div className="text-center">
                       <div className="bg-white/20 p-3 rounded-full w-fit mx-auto mb-3">
                         <Phone className="w-6 h-6" />
                       </div>
-                      <h4 className="font-semibold mb-2">Phone Support</h4>
-                      <p className="text-emerald-100">+62 812-3456-7890</p>
-                      <p className="text-emerald-200 text-sm">Jam kerja only</p>
+                      <h4 className="font-semibold mb-2">Customer Service</h4>
+                      <p className="text-emerald-100">+62 859-4724-2348</p>
+                      <p className="text-emerald-200 text-sm">Senin-Jumat 09:00-17:00</p>
                     </div>
                     <div className="text-center">
                       <div className="bg-white/20 p-3 rounded-full w-fit mx-auto mb-3">
                         <MapPin className="w-6 h-6" />
                       </div>
-                      <h4 className="font-semibold mb-2">Office Address</h4>
-                      <p className="text-emerald-100">Jakarta, Indonesia</p>
-                      <p className="text-emerald-200 text-sm">Business hours</p>
+                      <h4 className="font-semibold mb-2">Office</h4>
+                      <p className="text-emerald-100">Pagedangan, Tangerang, Indonesia</p>
+                      <p className="text-emerald-200 text-sm">Jam kerja</p>
                     </div>
                   </div>
                 </CardContent>
@@ -1026,33 +960,35 @@ const PrivacyPolicyPage: React.FC = () => {
           <TabsContent value="summary">
             <Card className="p-8">
               <h3 className="text-2xl font-bold mb-6 text-center">Ringkasan Kebijakan Privasi</h3>
+              <p className="text-center text-gray-600 mb-8">Travedia Terbit Semesta - Platform Reservasi Wisata</p>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
                   { 
                     icon: <Database className="w-6 h-6 text-emerald-600" />, 
                     title: "Data yang Dikumpulkan", 
-                    points: ["Data pribadi dan identitas", "Informasi pembayaran terenkripsi", "Data teknis dan aktivitas", "Preferensi dan wishlist"] 
+                    points: ["Data akun dan registrasi", "Informasi booking paket wisata", "Aktivitas platform (search, bookmark)", "Data teknis dasar untuk keamanan"] 
                   },
                   { 
                     icon: <Shield className="w-6 h-6 text-blue-600" />, 
-                    title: "Perlindungan Data", 
-                    points: ["Enkripsi SSL/TLS", "Password hashing bcrypt", "Access control ketat", "Security audit berkala"] 
+                    title: "Keamanan Data", 
+                    points: ["Enkripsi HTTPS/SSL", "Password hashing bcrypt", "Midtrans PCI DSS Level 1", "Backup terenkripsi"] 
                   },
                   { 
                     icon: <UserCheck className="w-6 h-6 text-purple-600" />, 
                     title: "Hak Anda", 
-                    points: ["Akses dan download data", "Koreksi informasi", "Hapus akun dan data", "Tarik consent marketing"] 
+                    points: ["Akses dan download data", "Edit profil dan koreksi", "Hapus akun komplet", "Unsubscribe marketing"] 
                   },
                   { 
                     icon: <Share2 className="w-6 h-6 text-orange-600" />, 
-                    title: "Pembagian Data", 
-                    points: ["Tidak dijual ke pihak lain", "Hanya untuk service providers", "Travel partners terpercaya", "Compliance dengan hukum"] 
+                    title: "Partner Data", 
+                    points: ["Midtrans untuk pembayaran", "Travel partners untuk layanan", "Google OAuth untuk login", "TIDAK dijual untuk komersial"] 
                   },
                 ].map((section, index) => (
-                  <div key={index} className="p-6 border rounded-lg hover:shadow-lg transition-shadow">
+                  <div key={index} className="p-6 border rounded-xl hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-3 mb-4">
                       {section.icon}
-                      <h4 className="font-semibold">{section.title}</h4>
+                      <h4 className="font-semibold text-lg">{section.title}</h4>
                     </div>
                     <ul className="space-y-2">
                       {section.points.map((point, idx) => (
@@ -1065,6 +1001,18 @@ const PrivacyPolicyPage: React.FC = () => {
                   </div>
                 ))}
               </div>
+
+              <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-xl mt-8">
+                <h4 className="font-semibold mb-3 text-emerald-800 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Komitmen Kami
+                </h4>
+                <p className="text-emerald-700">
+                  Travedia berkomitmen melindungi privasi Anda dengan standar keamanan tinggi, transparansi penuh dalam 
+                  penggunaan data, dan memberikan kontrol penuh atas informasi pribadi Anda. Kami tidak menjual data 
+                  untuk tujuan komersial dan selalu mengutamakan kepercayaan Anda.
+                </p>
+              </div>
             </Card>
           </TabsContent>
 
@@ -1072,44 +1020,54 @@ const PrivacyPolicyPage: React.FC = () => {
             <div className="space-y-4">
               {[
                 { 
-                  q: "Bagaimana cara mengunduh semua data pribadi saya?", 
-                  a: "Masuk ke akun Anda, pilih 'Privacy Settings', lalu klik 'Download My Data'. Kami akan mengirim file lengkap dalam format CSV/JSON ke email Anda dalam 24 jam.",
+                  q: "Bagaimana cara mengunduh data pribadi saya?", 
+                  a: "Login ke akun Anda, masuk ke 'Pengaturan Privasi', lalu klik 'Download Data Saya'. File akan dikirim ke email dalam 24 jam dalam format yang mudah dibaca.",
                   icon: <Download className="w-5 h-5 text-blue-500" />
                 },
                 { 
-                  q: "Apakah data pembayaran saya aman?", 
-                  a: "Ya, semua data pembayaran dienkripsi menggunakan standar PCI DSS melalui Midtrans. Kami tidak menyimpan nomor kartu kredit lengkap di server kami.",
+                  q: "Apakah data pembayaran melalui Midtrans aman?", 
+                  a: "Sangat aman. Midtrans menggunakan standar keamanan PCI DSS Level 1, dan kami tidak menyimpan informasi kartu kredit di server Travedia. Semua transaksi terenkripsi end-to-end.",
                   icon: <CreditCard className="w-5 h-5 text-green-500" />
                 },
                 { 
-                  q: "Bisakah saya menghapus akun dan semua data saya?", 
-                  a: "Tentu saja. Anda dapat menghapus akun melalui 'Account Settings' atau menghubungi privacy@travedia.co.id. Semua data akan dihapus dalam 30 hari, kecuali yang diwajibkan hukum untuk disimpan.",
+                  q: "Bisakah saya menghapus akun dan semua data?", 
+                  a: "Ya, Anda dapat menghapus akun melalui 'Pengaturan Akun' atau email ke privacy@travedia.co.id. Semua data akan dihapus dalam 30 hari, kecuali data booking yang disimpan 5 tahun untuk audit.",
                   icon: <XCircle className="w-5 h-5 text-red-500" />
                 },
                 { 
-                  q: "Bagaimana cara berhenti menerima email marketing?", 
-                  a: "Klik 'Unsubscribe' di email marketing kami, atau ubah preferensi di 'Notification Settings' di akun Anda. Perubahan akan berlaku dalam 24 jam.",
+                  q: "Bagaimana berhenti menerima email promosi?", 
+                  a: "Klik 'Unsubscribe' di email promosi, atau ubah pengaturan di 'Notifikasi' di akun Anda. Anda tetap akan menerima email penting seperti konfirmasi booking dan e-voucher.",
                   icon: <Mail className="w-5 h-5 text-purple-500" />
                 },
                 { 
-                  q: "Apakah data saya dibagikan untuk iklan?", 
-                  a: "Kami TIDAK menjual data pribadi untuk iklan. Data hanya dibagikan dengan travel partners untuk layanan yang Anda pesan, dan dengan consent untuk analytics anonymous.",
+                  q: "Apakah data saya dibagikan ke pihak lain?", 
+                  a: "Kami TIDAK menjual data pribadi. Data hanya dibagikan dengan Midtrans untuk pembayaran, travel partners untuk layanan yang Anda pesan, dan Google untuk login OAuth. Semua dengan kontrak ketat.",
                   icon: <Share2 className="w-5 h-5 text-orange-500" />
                 },
                 { 
-                  q: "Berapa lama data saya disimpan?", 
-                  a: "Data akun aktif disimpan selama akun aktif. Data booking disimpan 7 tahun untuk compliance. Data marketing dihapus saat unsubscribe. Detail lengkap di tabel retensi data.",
+                  q: "Berapa lama data booking saya disimpan?", 
+                  a: "Data booking dan e-voucher disimpan 5 tahun untuk keperluan audit dan legalitas. Data akun aktif disimpan selama akun masih digunakan. Data marketing dihapus saat unsubscribe.",
                   icon: <Clock className="w-5 h-5 text-blue-500" />
                 },
                 { 
-                  q: "Bagaimana jika terjadi kebocoran data?", 
-                  a: "Kami memiliki incident response plan. Jika terjadi breach, kami akan memberitahu dalam 72 jam dan mengambil langkah mitigasi sesuai protokol keamanan.",
+                  q: "Apa yang terjadi jika ada kebocoran data?", 
+                  a: "Kami memiliki incident response plan lengkap. Jika terjadi security breach, kami akan memberitahu dalam 72 jam dan mengambil langkah mitigasi sesuai protokol keamanan yang telah ditetapkan.",
                   icon: <AlertTriangle className="w-5 h-5 text-red-500" />
                 },
                 { 
-                  q: "Apakah website menggunakan cookies?", 
-                  a: "Ya, kami menggunakan cookies untuk fungsionalitas essential, analytics, dan marketing (dengan consent). Anda dapat mengatur preferensi cookies di browser atau melalui Cookie Settings kami.",
-                  icon: <Cookie className="w-5 h-5 text-yellow-500" />
+                  q: "Bagaimana dengan data saat login via Google?", 
+                  a: "Saat login via Google OAuth, kami hanya mengakses nama, email, dan foto profil Anda. Google tidak membagikan password Anda, dan Anda dapat mencabut akses kapan saja dari pengaturan Google.",
+                  icon: <Globe className="w-5 h-5 text-yellow-500" />
+                },
+                { 
+                  q: "Apakah saya bisa mengubah data booking setelah pembayaran?", 
+                  a: "Perubahan data booking terbatas setelah pembayaran. Anda dapat mengubah detail kecil melalui customer service, tetapi perubahan besar mungkin dikenakan biaya sesuai kebijakan travel partner.",
+                  icon: <Settings className="w-5 h-5 text-indigo-500" />
+                },
+                { 
+                  q: "Bagaimana Travedia melindungi data anak-anak?", 
+                  a: "Kami tidak secara khusus menargetkan anak di bawah 17 tahun. Jika orang tua booking untuk anak, data anak hanya digunakan untuk keperluan travel dan dilindungi dengan standar keamanan yang sama.",
+                  icon: <Users className="w-5 h-5 text-green-500" />
                 }
               ].map((faq, index) => (
                 <Card key={index} className="p-6 hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500">
@@ -1124,28 +1082,92 @@ const PrivacyPolicyPage: React.FC = () => {
                   </div>
                 </Card>
               ))}
+
+              {/* Additional FAQ Section */}
+              <Card className="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
+                <h4 className="font-semibold mb-4 text-emerald-800 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5" />
+                  Butuh Bantuan Lebih Lanjut?
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="bg-emerald-100 p-3 rounded-lg w-fit mx-auto mb-2">
+                      <Mail className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <p className="text-emerald-700 text-sm font-medium">Email Privacy Officer</p>
+                    <p className="text-emerald-600 text-xs">privacy@travedia.co.id</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="bg-emerald-100 p-3 rounded-lg w-fit mx-auto mb-2">
+                      <Phone className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <p className="text-emerald-700 text-sm font-medium">Customer Service</p>
+                    <p className="text-emerald-600 text-xs">+62-XXX-XXXX-XXXX</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="bg-emerald-100 p-3 rounded-lg w-fit mx-auto mb-2">
+                      <Settings className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <p className="text-emerald-700 text-sm font-medium">Pengaturan Akun</p>
+                    <p className="text-emerald-600 text-xs">Login → Profil → Privacy</p>
+                  </div>
+                </div>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Privacy Timeline */}
+        <Card className="mb-8 border-emerald-200">
+          <CardHeader className="bg-emerald-50">
+            <CardTitle className="flex items-center gap-2 text-emerald-800">
+              <Clock className="w-5 h-5" />
+              Timeline Kebijakan Privasi
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {[
+                { date: "1 Januari 2024", event: "Kebijakan Privasi v1.0 berlaku efektif", status: "completed" },
+                { date: "6 Agustus 2025", event: "Update v2.0 - Penyesuaian dengan fitur platform terbaru", status: "completed" },
+                { date: "Ongoing", event: "Review berkala setiap 6 bulan", status: "ongoing" },
+                { date: "Future", event: "Update akan diberitahukan 30 hari sebelumnya", status: "future" }
+              ].map((item, index) => (
+                <div key={index} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50">
+                  <div className={`w-3 h-3 rounded-full ${
+                    item.status === 'completed' ? 'bg-green-500' :
+                    item.status === 'ongoing' ? 'bg-blue-500' : 'bg-gray-300'
+                  }`}></div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-800">{item.event}</p>
+                    <p className="text-sm text-gray-500">{item.date}</p>
+                  </div>
+                  {item.status === 'completed' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                  {item.status === 'ongoing' && <Clock className="w-4 h-4 text-blue-500" />}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Footer */}
         <div className="text-center text-sm text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-xl mt-8 border">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Shield className="w-5 h-5 text-emerald-600" />
-            <span className="font-semibold text-emerald-600">Privacy Protected by Design</span>
+            <span className="font-semibold text-emerald-600">Travedia Privacy Protected</span>
           </div>
           <p className="mb-2">
-            Kebijakan Privasi ini adalah bagian integral dari Terms & Conditions Travedia Terbit Semesta.
-            Kami berkomitmen untuk melindungi privasi dan data pribadi Anda sesuai dengan standar internasional.
+            Kebijakan Privasi ini merupakan bagian dari Syarat dan Ketentuan Travedia Terbit Semesta.
+            Dengan menggunakan platform reservasi wisata kami, Anda menyetujui pengumpulan dan penggunaan data sesuai kebijakan ini.
           </p>
           <p className="mb-4">
-            © 2024 Travedia Terbit Semesta. Privacy Protected by Design.
+            © 2024 Travedia Terbit Semesta. Melindungi Privasi Perjalanan Anda.
           </p>
-          <div className="flex justify-center gap-4 text-xs">
-            <span className="text-emerald-600 cursor-pointer hover:underline">Terms of Service</span>
-            <span className="text-emerald-600 cursor-pointer hover:underline">Cookie Settings</span>
-            <span className="text-emerald-600 cursor-pointer hover:underline">Contact DPO</span>
-            <span className="text-emerald-600 cursor-pointer hover:underline">Data Rights</span>
+          <div className="flex justify-center gap-4 text-xs flex-wrap">
+            <span className="text-emerald-600 cursor-pointer hover:underline">Syarat & Ketentuan</span>
+            <span className="text-emerald-600 cursor-pointer hover:underline">FAQ</span>
+            <span className="text-emerald-600 cursor-pointer hover:underline">Kontak DPO</span>
+            <span className="text-emerald-600 cursor-pointer hover:underline">Pengaturan Privasi</span>
           </div>
         </div>
       </div>
