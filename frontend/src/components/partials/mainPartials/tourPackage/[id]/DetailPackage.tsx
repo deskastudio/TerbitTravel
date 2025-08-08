@@ -37,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { TourPackageService } from "@/services/tour-package.service";
 import { ITourPackage, TourPackageStatus } from "@/types/tour-package.types";
+import { getImageUrl } from "@/utils/image-helper";
 
 // Format currency
 const formatCurrency = (amount: number): string => {
@@ -260,11 +261,14 @@ export default function PaketWisataDetail() {
         }
 
         // Generate placeholder images - mengambil foto dari destinasi jika tersedia
+        // Use getImageUrl to ensure proper formatting of image URLs
         const packageImages: string[] =
           data.destination &&
           data.destination.foto &&
           data.destination.foto.length > 0
-            ? data.destination.foto
+            ? data.destination.foto.map((foto) =>
+                foto.startsWith("http") ? foto : getImageUrl(foto)
+              )
             : [
                 `https://source.unsplash.com/random/800x600/?travel,${
                   data.destination?.nama || "destination"
@@ -416,7 +420,12 @@ export default function PaketWisataDetail() {
             </div>
           )}
           <img
-            src={galleryImages[currentImageIndex]}
+            src={
+              galleryImages[currentImageIndex] &&
+              galleryImages[currentImageIndex].startsWith("http")
+                ? galleryImages[currentImageIndex]
+                : getImageUrl(galleryImages[currentImageIndex])
+            }
             alt={`${paketWisata.nama} - Foto ${currentImageIndex + 1}`}
             className="h-full w-full object-cover"
             onLoad={handleImageLoad}
