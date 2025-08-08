@@ -68,8 +68,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 // Enhanced destination type (API data + UI specific fields)
 interface EnhancedDestination extends IDestination {
-  price?: number;
-  discount?: number;
+  // Harga dihapus dari interface karena destinasi tidak memiliki harga
   rating?: number;
   image?: string;
   duration?: string;
@@ -93,10 +92,7 @@ const DestinationCard = ({
   destination: EnhancedDestination;
 }) => {
   const navigate = useNavigate();
-  const discountedPrice = destination.discount
-    ? (destination.price || 0) -
-      ((destination.price || 0) * destination.discount) / 100
-    : destination.price || 0;
+  // Harga dihapus karena destinasi seharusnya tidak memiliki harga
 
   const handleViewDetail = () => {
     console.log("Navigating to destination detail:", destination._id);
@@ -163,28 +159,13 @@ const DestinationCard = ({
         </div>
         {destination.category && (
           <Badge variant="outline" className="mt-1">
-            {destination.category.title}
+            {typeof destination.category === "string"
+              ? destination.category
+              : destination.category.title}
           </Badge>
         )}
       </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <div>
-          {destination.discount ? (
-            <div>
-              <span className="text-sm line-through text-muted-foreground">
-                {formatCurrency(destination.price || 0)}
-              </span>
-              <div className="text-lg font-bold text-primary">
-                {formatCurrency(discountedPrice)}
-              </div>
-            </div>
-          ) : (
-            <div className="text-lg font-bold text-primary">
-              {formatCurrency(destination.price || 2500000)}
-            </div>
-          )}
-          <div className="text-xs text-muted-foreground">per orang</div>
-        </div>
+      <CardFooter className="p-4 pt-0 flex justify-end items-center">
         <Button
           size="sm"
           onClick={(e) => {
@@ -258,7 +239,7 @@ export default function DestinationPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState("recommended");
   const [locationFilter, setLocationFilter] = useState("");
-  const [priceRangeFilter, setPriceRangeFilter] = useState("");
+  // Filter harga dihapus karena destinasi tidak memiliki harga
   const [durationFilter, setDurationFilter] = useState("");
   const [enhancedDestinations, setEnhancedDestinations] = useState<
     EnhancedDestination[]
@@ -274,19 +255,14 @@ export default function DestinationPage() {
   // Enhance destinations with additional UI data
   useEffect(() => {
     if (destinations.length > 0) {
-      // Add UI display properties to each destination
+      // Add UI display properties to each destination - harga dihapus
       const enhanced = destinations.map((dest) => {
-        const price = Math.floor(Math.random() * 3000000) + 1500000;
-        const hasDiscount = Math.random() > 0.7;
         // Mengubah dari string ke number dengan parseFloat
         const ratingValue = parseFloat((Math.random() * 0.9 + 4.0).toFixed(1));
 
         return {
           ...dest,
-          price,
-          discount: hasDiscount
-            ? Math.floor(Math.random() * 15) + 5
-            : undefined,
+          // Harga dan diskon dihapus karena destinasi tidak memiliki harga
           rating: ratingValue, // Sekarang rating adalah number, bukan string
           duration: `${Math.floor(Math.random() * 4) + 2} hari ${
             Math.floor(Math.random() * 3) + 1
@@ -316,7 +292,15 @@ export default function DestinationPage() {
     let matchesCategory = true;
     if (selectedCategory !== "semua") {
       // Match by API category ID
-      matchesCategory = destination.category?._id === selectedCategory;
+      if (destination.category) {
+        if (typeof destination.category === "string") {
+          matchesCategory = destination.category === selectedCategory;
+        } else {
+          matchesCategory = destination.category._id === selectedCategory;
+        }
+      } else {
+        matchesCategory = false;
+      }
     }
 
     // Location filter
@@ -324,17 +308,9 @@ export default function DestinationPage() {
       locationFilter === "" ||
       destination.lokasi.toLowerCase().includes(locationFilter.toLowerCase());
 
-    // Price range filter
+    // Price range filter dihapus karena destinasi tidak memiliki harga
+    // Semua opsi filter harga akan selalu mengembalikan true
     let matchesPriceRange = true;
-    if (priceRangeFilter === "under-2m") {
-      matchesPriceRange = (destination.price || 0) < 2000000;
-    } else if (priceRangeFilter === "2m-4m") {
-      matchesPriceRange =
-        (destination.price || 0) >= 2000000 &&
-        (destination.price || 0) <= 4000000;
-    } else if (priceRangeFilter === "above-4m") {
-      matchesPriceRange = (destination.price || 0) > 4000000;
-    }
 
     // Duration filter
     let matchesDuration = true;
@@ -362,13 +338,9 @@ export default function DestinationPage() {
     );
   });
 
-  // Sort destinations
+  // Sort destinations - pengurutan berdasarkan harga dihapus
   const sortedDestinations = [...filteredDestinations].sort((a, b) => {
-    if (sortBy === "price-low") {
-      return (a.price || 0) - (b.price || 0);
-    } else if (sortBy === "price-high") {
-      return (b.price || 0) - (a.price || 0);
-    } else if (sortBy === "rating") {
+    if (sortBy === "rating") {
       return (
         parseFloat(b.rating?.toString() || "0") -
         parseFloat(a.rating?.toString() || "0")
@@ -411,7 +383,7 @@ export default function DestinationPage() {
   // Reset filters
   const resetFilters = () => {
     setLocationFilter("");
-    setPriceRangeFilter("");
+    // setPriceRangeFilter dihapus karena destinasi tidak memiliki harga
     setDurationFilter("");
   };
 
@@ -427,7 +399,7 @@ export default function DestinationPage() {
     debouncedSearchQuery,
     selectedCategory,
     locationFilter,
-    priceRangeFilter,
+    // priceRangeFilter dihapus karena destinasi tidak memiliki harga
     durationFilter,
     sortBy,
   ]);
@@ -484,12 +456,7 @@ export default function DestinationPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="recommended">Rekomendasi</SelectItem>
-                <SelectItem value="price-low">
-                  Harga: Rendah ke Tinggi
-                </SelectItem>
-                <SelectItem value="price-high">
-                  Harga: Tinggi ke Rendah
-                </SelectItem>
+                {/* Opsi pengurutan harga dihapus karena destinasi tidak memiliki harga */}
                 <SelectItem value="rating">Rating Tertinggi</SelectItem>
               </SelectContent>
             </Select>
@@ -530,31 +497,7 @@ export default function DestinationPage() {
                     </Select>
                   </div>
 
-                  <Separator />
-
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Rentang Harga</h3>
-                    <Select
-                      value={priceRangeFilter}
-                      onValueChange={setPriceRangeFilter}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih rentang harga" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">Semua Harga</SelectItem>
-                        <SelectItem value="under-2m">
-                          Di bawah Rp2.000.000
-                        </SelectItem>
-                        <SelectItem value="2m-4m">
-                          Rp2.000.000 - Rp4.000.000
-                        </SelectItem>
-                        <SelectItem value="above-4m">
-                          Di atas Rp4.000.000
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Filter harga dihapus karena destinasi tidak memiliki harga */}
 
                   <Separator />
 

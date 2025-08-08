@@ -336,7 +336,9 @@ export default function DestinationDetail() {
           {enhancedDestination.category && (
             <div className="flex items-center">
               <Badge variant="secondary">
-                {enhancedDestination.category.title}
+                {typeof enhancedDestination.category === "string"
+                  ? enhancedDestination.category
+                  : enhancedDestination.category.title}
               </Badge>
             </div>
           )}
@@ -562,17 +564,14 @@ export default function DestinationDetail() {
                         {enhancedDestination.jamOperasional}
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium">Harga Tiket</div>
-                      <div className="text-muted-foreground">
-                        {enhancedDestination.hargaTiket}
-                      </div>
-                    </div>
+                    {/* Harga tiket dihapus karena informasi harga hanya relevan untuk paket wisata */}
                     <div className="space-y-2">
                       <div className="text-sm font-medium">Kategori</div>
                       <div className="text-muted-foreground">
                         {enhancedDestination.category
-                          ? enhancedDestination.category.title
+                          ? typeof enhancedDestination.category === "string"
+                            ? enhancedDestination.category
+                            : enhancedDestination.category.title
                           : "Umum"}
                       </div>
                     </div>
@@ -747,7 +746,11 @@ export default function DestinationDetail() {
                     <div className="text-sm font-medium">Kategori</div>
                     <div className="mt-2">
                       <Badge variant="secondary">
-                        {enhancedDestination.category?.title || "Umum"}
+                        {enhancedDestination.category
+                          ? typeof enhancedDestination.category === "string"
+                            ? enhancedDestination.category
+                            : enhancedDestination.category.title
+                          : "Umum"}
                       </Badge>
                     </div>
                   </div>
