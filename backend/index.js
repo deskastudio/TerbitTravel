@@ -42,6 +42,10 @@ const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  // ✅ MIDTRANS DOMAINS
+  "https://app.sandbox.midtrans.com",
+  "https://app.midtrans.com",
+  "https://simulator.sandbox.midtrans.com",
   // ✅ PERBAIKAN: URL ngrok yang benar dari error log
   "https://7957-180-254-75-63.ngrok-free.app",
 ];
@@ -77,89 +81,94 @@ if (corsDebug) {
   );
 }
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (corsDebug) {
-        console.log(`🔍 CORS Check - Request Origin: "${origin}"`);
-      }
+// 🔥 FIXED: Set up CORS options
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (corsDebug) {
+      console.log(`🔍 CORS Check - Request Origin: "${origin}"`);
+    }
 
-      // ✅ Allow no origin (Postman, mobile apps, server-to-server)
-      if (!origin) {
-        if (corsDebug)
-          console.log("✅ CORS allowed: No origin (server-to-server request)");
-        return callback(null, true);
-      }
+    // ✅ Allow no origin (Postman, mobile apps, server-to-server)
+    if (!origin) {
+      if (corsDebug)
+        console.log("✅ CORS allowed: No origin (server-to-server request)");
+      return callback(null, true);
+    }
 
-      // ✅ IMPROVEMENT: Enable all origins during debug mode
-      if (corsDebug && process.env.NODE_ENV !== "production") {
-        console.log(`🔧 CORS Debug Mode: Allowing all origins`);
-        return callback(null, true);
-      }
+    // 🔥 FIXED: Always allow all origins in development mode for better compatibility
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`🔧 Development Mode: Allowing all origins: ${origin}`);
+      return callback(null, true);
+    }
 
-      // ✅ Check exact match in allowed origins
-      if (allowedOrigins.includes(origin)) {
-        console.log(`✅ CORS allowed: Exact match - ${origin}`);
-        return callback(null, true);
-      }
+    // ✅ Check exact match in allowed origins
+    if (allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS allowed: Exact match - ${origin}`);
+      return callback(null, true);
+    }
 
-      // ✅ PERBAIKAN: Allow ALL ngrok and localtunnel domains in development
-      if (
-        process.env.NODE_ENV !== "production" &&
-        (origin.includes(".ngrok.io") ||
-          origin.includes(".ngrok-free.app") ||
-          origin.includes(".ngrok.app") ||
-          origin.includes("ngrok") ||
-          origin.includes(".loca.lt"))
-      ) {
-        console.log(
-          `✅ CORS allowed: Tunnel domain (ngrok/localtunnel) - ${origin}`
-        );
-        return callback(null, true);
-      }
+    // ✅ PERBAIKAN: Allow ALL ngrok and localtunnel domains in development
+    if (
+      process.env.NODE_ENV !== "production" &&
+      (origin.includes(".ngrok.io") ||
+        origin.includes(".ngrok-free.app") ||
+        origin.includes(".ngrok.app") ||
+        origin.includes("ngrok") ||
+        origin.includes(".loca.lt"))
+    ) {
+      console.log(
+        `✅ CORS allowed: Tunnel domain (ngrok/localtunnel) - ${origin}`
+      );
+      return callback(null, true);
+    }
 
-      // ✅ Allow localhost variations in development
-      if (
-        process.env.NODE_ENV !== "production" &&
-        (origin.startsWith("http://localhost:") ||
-          origin.startsWith("http://127.0.0.1:") ||
-          origin.startsWith("https://localhost:") ||
-          origin.startsWith("https://127.0.0.1:"))
-      ) {
-        console.log(`✅ CORS allowed: Localhost - ${origin}`);
-        return callback(null, true);
-      }
+    // ✅ Allow localhost variations in development
+    if (
+      process.env.NODE_ENV !== "production" &&
+      (origin.startsWith("http://localhost:") ||
+        origin.startsWith("http://127.0.0.1:") ||
+        origin.startsWith("https://localhost:") ||
+        origin.startsWith("https://127.0.0.1:"))
+    ) {
+      console.log(`✅ CORS allowed: Localhost - ${origin}`);
+      return callback(null, true);
+    }
 
-      // ❌ Reject other origins
-      console.log(`❌ CORS rejected: ${origin}`);
-      console.log(`📝 Allowed origins: ${allowedOrigins.join(", ")}`);
-      const corsError = new Error(`CORS Error: Origin ${origin} not allowed`);
-      corsError.status = 403;
-      callback(corsError);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-      "Access-Control-Request-Method",
-      "Access-Control-Request-Headers",
-      "ngrok-skip-browser-warning", // ✅ TAMBAHAN untuk ngrok
-    ],
-    exposedHeaders: [
-      "set-cookie",
-      "access-control-allow-origin",
-      "access-control-allow-credentials",
-      "access-control-allow-methods",
-      "access-control-allow-headers",
-    ],
-    preflightContinue: false,
-    optionsSuccessStatus: 200,
-  })
-);
+    // ❌ Reject other origins
+    console.log(`❌ CORS rejected: ${origin}`);
+    console.log(`📝 Allowed origins: ${allowedOrigins.join(", ")}`);
+    const corsError = new Error(`CORS Error: Origin ${origin} not allowed`);
+    corsError.status = 403;
+    callback(corsError);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+    "ngrok-skip-browser-warning", // ✅ TAMBAHAN untuk ngrok
+  ],
+  exposedHeaders: [
+    "set-cookie",
+    "access-control-allow-origin",
+    "access-control-allow-credentials",
+    "access-control-allow-methods",
+    "access-control-allow-headers",
+  ],
+  preflightContinue: false,
+  optionsSuccessStatus: 200,
+};
+
+// 🔥 FIXED: Apply CORS middleware
+app.use(cors(corsOptions));
+
+// 🔥 FIXED: Add explicit OPTIONS handler for preflight requests
+app.options("*", cors(corsOptions));
 
 // ✅ PERBAIKAN: Middleware tambahan untuk tunnel headers (ngrok/localtunnel)
 app.use((req, res, next) => {
@@ -243,6 +252,30 @@ app.use("/admin", (req, res, next) => {
   next();
 });
 
+// 🔧 FIX: Middleware untuk menangani Midtrans-related requests
+app.use((req, res, next) => {
+  // Add specific headers for payment-related requests
+  if (req.path.includes("/payment") || req.path.includes("/orders")) {
+    res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,PUT,POST,DELETE,OPTIONS,PATCH"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+    res.header("Access-Control-Allow-Credentials", "true");
+
+    // Handle preflight requests
+    if (req.method === "OPTIONS") {
+      console.log("🔧 Handling OPTIONS preflight for payment/orders");
+      return res.sendStatus(200);
+    }
+  }
+  next();
+});
+
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({
@@ -283,7 +316,8 @@ app.use("/gallery-category", galleryCategoryRoutes);
 app.use("/package-category", packageCategoryRoutes);
 app.use("/destination-category", destinationCategoryRoutes);
 app.use("/team", teamRoutes);
-app.use("/orders", orderRoutes);
+// 🔥 COMMENT OUT ORDER ROUTES - Using custom booking handlers instead
+// app.use("/orders", orderRoutes);
 app.use("/api/otp", otpRoutes);
 app.use("/blog-category", blogCategoryRoutes);
 
@@ -291,34 +325,78 @@ app.use("/blog-category", blogCategoryRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/Payments", paymentRoutes);
 
-// BOOKING ALIAS
+// BOOKING ROUTES - Using BookingModel (not Order)
 app.use("/api/bookings", orderRoutes);
 app.use("/api/Bookings", orderRoutes);
 
-// ✅ TAMBAHAN: Direct booking endpoints untuk frontend
+// 🔧 ADD: Additional booking endpoints for frontend compatibility
+app.use("/api/orders", orderRoutes);
+app.use("/orders", orderRoutes); // This should work with custom handlers below
+
+// ✅ CUSTOM BOOKING ENDPOINTS - Using BookingModel for payment integration
+// NOTE: These handlers use BookingModel (not Order model) because:
+// 1. BookingModel has customId field (BOOK-xxxxxxx) needed by frontend
+// 2. BookingModel supports payment integration (paymentStatus, transactionStatus)
+// 3. BookingModel supports guest booking (customerInfo without userId)
+// 4. Order model is for simple orders, Booking model is for complex travel bookings
 app.get("/orders/:bookingId", async (req, res) => {
   try {
     const { bookingId } = req.params;
-    console.log(`📋 Fetching booking: ${bookingId}`);
+    console.log(`📋 DEBUG: Fetching booking: ${bookingId}`);
 
-    // Find booking
+    // ADD DEBUG: Show recent bookings in database
+    const allBookings = await BookingModel.find({})
+      .limit(10)
+      .sort({ createdAt: -1 });
+    console.log(
+      `🔍 Recent bookings in DB:`,
+      allBookings.map((b) => ({
+        customId: b.customId,
+        _id: b._id.toString(),
+        status: b.status,
+        createdAt: b.createdAt,
+      }))
+    );
+
+    // Find booking by customId first
     let booking = await BookingModel.findOne({ customId: bookingId }).populate(
       "packageId"
+    );
+    console.log(
+      `🔍 Found booking by customId "${bookingId}":`,
+      booking ? "YES" : "NO"
     );
 
     if (!booking) {
       // Coba cari dengan MongoDB ObjectId
       if (bookingId.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log(`🔍 Trying to find by ObjectId: ${bookingId}`);
         booking = await BookingModel.findById(bookingId).populate("packageId");
+        console.log(
+          `🔍 Found booking by ObjectId "${bookingId}":`,
+          booking ? "YES" : "NO"
+        );
       }
     }
 
     if (!booking) {
+      console.error(`❌ Booking ${bookingId} not found in database`);
       return res.status(404).json({
         success: false,
         message: "Booking not found",
+        debug: {
+          searchedId: bookingId,
+          availableBookings: allBookings.map((b) => b.customId),
+        },
       });
     }
+
+    console.log(`✅ Found booking:`, {
+      customId: booking.customId,
+      _id: booking._id,
+      status: booking.status,
+      paymentStatus: booking.paymentStatus,
+    });
 
     res.json({
       success: true,
@@ -372,6 +450,161 @@ app.get("/api/debug/bookings", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error fetching bookings",
+      error: error.message,
+    });
+  }
+});
+
+// DEBUG: Endpoint untuk search booking tertentu
+app.get("/api/debug/booking/:bookingId", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    console.log(`🔍 DEBUG: Searching for booking: ${bookingId}`);
+
+    // Cari dengan berbagai cara
+    const searchResults = {
+      byCustomId: await BookingModel.findOne({ customId: bookingId }),
+      byId: bookingId.match(/^[0-9a-fA-F]{24}$/)
+        ? await BookingModel.findById(bookingId)
+        : null,
+      similar: await BookingModel.find({
+        customId: {
+          $regex: bookingId.replace(/[^A-Z0-9]/g, ""),
+          $options: "i",
+        },
+      }).limit(5),
+    };
+
+    res.json({
+      success: true,
+      searchId: bookingId,
+      results: searchResults,
+      found: !!(searchResults.byCustomId || searchResults.byId),
+    });
+  } catch (error) {
+    console.error("❌ Error in debug booking search:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error searching booking",
+      error: error.message,
+    });
+  }
+});
+
+// 🔥 FIX: Test booking creation endpoint
+app.post("/api/debug/create-test-booking", async (req, res) => {
+  try {
+    console.log("🔧 Creating test booking...");
+
+    // Generate ID yang konsisten
+    const now = new Date();
+    const dateStr = now.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD format
+    const timeStr =
+      now.getHours().toString().padStart(2, "0") +
+      now.getMinutes().toString().padStart(2, "0");
+    const randomStr = Math.floor(Math.random() * 100)
+      .toString()
+      .padStart(2, "0");
+
+    const bookingId = `BOOK-${dateStr}${timeStr}${randomStr}`;
+
+    const testBooking = new BookingModel({
+      customId: bookingId,
+      customerInfo: {
+        nama: "Test Customer",
+        email: "test@example.com",
+        noTelp: "081234567890",
+      },
+      packageId: null,
+      jumlahPeserta: 1,
+      tanggalAwal: new Date(),
+      tanggalAkhir: new Date(),
+      harga: 100000,
+      status: "pending_verification",
+      paymentStatus: "pending",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await testBooking.save();
+
+    console.log(`✅ Test booking created: ${bookingId}`);
+
+    res.json({
+      success: true,
+      message: "Test booking created",
+      booking: {
+        customId: testBooking.customId,
+        _id: testBooking._id,
+        status: testBooking.status,
+        createdAt: testBooking.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error creating test booking:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating test booking",
+      error: error.message,
+    });
+  }
+});
+
+// 🔥 SOLUTION 3: Enhanced Debug Route
+app.get("/api/debug/booking/:bookingId", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    console.log(`🔍 DEBUG: Enhanced search for booking: ${bookingId}`);
+
+    // Multiple search strategies
+    const byCustomId = await BookingModel.findOne({ customId: bookingId });
+    const byObjectId = bookingId.match(/^[0-9a-fA-F]{24}$/)
+      ? await BookingModel.findById(bookingId)
+      : null;
+
+    // Get recent bookings for comparison
+    const recent = await BookingModel.find()
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select("customId status paymentStatus createdAt");
+
+    // Search for similar IDs
+    const similarPattern = bookingId.replace(/[^A-Z0-9]/g, "");
+    const similar = await BookingModel.find({
+      customId: { $regex: similarPattern, $options: "i" },
+    }).limit(5);
+
+    const foundBooking = byCustomId || byObjectId;
+
+    res.json({
+      success: true,
+      searchId: bookingId,
+      found: !!foundBooking,
+      booking: foundBooking,
+      searchStrategies: {
+        byCustomId: !!byCustomId,
+        byObjectId: !!byObjectId,
+      },
+      recentBookings: recent.map((b) => ({
+        id: b.customId,
+        status: b.status,
+        paymentStatus: b.paymentStatus,
+        created: b.createdAt,
+      })),
+      similarBookings: similar.map((b) => ({
+        id: b.customId,
+        status: b.status,
+      })),
+      debug: {
+        totalInDB: await BookingModel.countDocuments(),
+        searchPattern: similarPattern,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error in enhanced debug search:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error in debug search",
       error: error.message,
     });
   }

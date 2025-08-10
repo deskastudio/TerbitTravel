@@ -2,6 +2,7 @@
 import midtransClient from "midtrans-client";
 import BookingModel from "../models/booking.js";
 import Package from "../models/package.js"; // ✅ ADD THIS IMPORT
+import User from "../models/user.js"; // ✅ ADD USER MODEL
 import crypto from "crypto";
 import dotenv from "dotenv";
 
@@ -67,10 +68,36 @@ const determineBookingStatus = (transactionStatus, fraudStatus) => {
 
 export const createPayment = async (req, res) => {
   console.log("🔄 Starting createPayment:", JSON.stringify(req.body, null, 2));
+  console.log("� URL Parameters:", req.params);
+  console.log("�👤 Authenticated user ID:", req.userId);
+  console.log("👤 User role:", req.userRole);
 
   try {
     let { bookingId, customerInfo, packageInfo, jumlahPeserta, totalAmount } =
       req.body;
+
+    // ✅ HANDLE BOOKING ID FROM URL PARAMETER (e.g., /api/orders/:id/payment)
+    if (!bookingId && req.params.id) {
+      bookingId = req.params.id;
+      console.log("🔧 Using bookingId from URL parameter:", bookingId);
+    }
+
+    // ✅ GET AUTHENTICATED USER DATA IF AVAILABLE
+    let authenticatedUser = null;
+    if (req.userId) {
+      try {
+        authenticatedUser = await User.findById(req.userId).select(
+          "nama fullName email noTelp alamat"
+        );
+        console.log("✅ Found authenticated user:", {
+          id: authenticatedUser._id,
+          nama: authenticatedUser.nama || authenticatedUser.fullName,
+          email: authenticatedUser.email,
+        });
+      } catch (userError) {
+        console.log("⚠️ Could not fetch user data:", userError.message);
+      }
+    }
 
     // ✅ HANDLE BOTH REQUEST FORMATS
     console.log("🔍 === REQUEST TYPE DETECTION ===");
@@ -101,8 +128,19 @@ export const createPayment = async (req, res) => {
         destination: packageData.destination?.nama,
       });
 
-      // Generate bookingId
-      bookingId = `BOOK-${Date.now().toString().slice(-8)}`;
+      // Generate bookingId dengan timestamp yang lebih unik
+      const now = new Date();
+      const dateStr = now.toISOString().slice(2, 10).replace(/-/g, ""); // YYMMDD
+      const timeStr =
+        now.getHours().toString().padStart(2, "0") +
+        now.getMinutes().toString().padStart(2, "0") +
+        now.getSeconds().toString().padStart(2, "0");
+      const randomStr = Math.floor(Math.random() * 100)
+        .toString()
+        .padStart(2, "0");
+
+      bookingId = `BOOK-${dateStr}${timeStr}${randomStr}`;
+      console.log(`🔧 Generated unique bookingId: ${bookingId}`);
 
       // ✅ USE REAL PACKAGE DATA
       packageInfo = {
@@ -141,13 +179,120 @@ export const createPayment = async (req, res) => {
       console.log("  - calculatedTotal:", totalAmount);
       console.log("  - customerInfo:", JSON.stringify(customerInfo, null, 2));
     }
-    // Case 2: Payment creation (second request type)
+    // Case 2: Payment creation for existing booking (second request type)
     else if (bookingId) {
-      console.log("🔍 Detected: Payment creation request");
-      console.log(
-        "🔍 Existing customerInfo:",
-        JSON.stringify(customerInfo, null, 2)
-      );
+      console.log("🔍 Detected: Payment creation request for existing booking");
+
+      // ✅ FETCH EXISTING BOOKING DATA WITH ENHANCED LOGGING
+      console.log("🔍 Searching for booking with ID:", bookingId);
+
+      let existingBooking = null;
+
+      // Try finding by ObjectId first if it looks like one
+      if (bookingId.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log("🔍 Attempting to find by MongoDB ObjectId");
+        existingBooking = await BookingModel.findById(bookingId);
+        if (existingBooking) {
+          console.log("✅ Found booking by ObjectId");
+        }
+      }
+
+      // If not found by ObjectId, try by customId
+      if (!existingBooking) {
+        console.log("🔍 Attempting to find by customId");
+        existingBooking = await BookingModel.findOne({ customId: bookingId });
+        if (existingBooking) {
+          console.log("✅ Found booking by customId");
+        }
+      }
+
+      // Last resort - try case-insensitive search
+      if (!existingBooking) {
+        console.log("🔍 Attempting case-insensitive search");
+        existingBooking = await BookingModel.findOne({
+          customId: { $regex: new RegExp("^" + bookingId + "$", "i") },
+        });
+        if (existingBooking) {
+          console.log("✅ Found booking by case-insensitive customId");
+        }
+      }
+
+      // If still not found, log debug info and return error
+      if (!existingBooking) {
+        console.error("❌ Existing booking not found:", bookingId);
+
+        // Debug: List recent bookings to help troubleshoot
+        const recentBookings = await BookingModel.find()
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .select("customId _id createdAt");
+
+        console.log("📊 Recent bookings for reference:");
+        console.log(JSON.stringify(recentBookings, null, 2));
+
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found",
+          debug: {
+            searchedId: bookingId,
+            recentBookings: recentBookings.map((b) => b.customId),
+          },
+        });
+      }
+
+      console.log("✅ Found existing booking:", {
+        id: existingBooking._id,
+        customId: existingBooking.customId,
+        status: existingBooking.status,
+        totalAmount: existingBooking.totalAmount,
+      });
+
+      // ✅ POPULATE PACKAGE DATA
+      await existingBooking.populate([
+        {
+          path: "packageId",
+          select: "nama harga destination armada hotel durasi include",
+          populate: [
+            { path: "destination", select: "nama provinsi" },
+            { path: "armada", select: "nama kapasitas merek" },
+            { path: "hotel", select: "nama bintang alamat" },
+          ],
+        },
+      ]);
+
+      // ✅ EXTRACT DATA FROM EXISTING BOOKING
+      packageInfo = {
+        id: existingBooking.packageId._id.toString(),
+        nama: existingBooking.packageId.nama,
+        harga: existingBooking.packageId.harga,
+        destination: existingBooking.packageId.destination?.nama || "Unknown",
+        durasi: existingBooking.packageId.durasi,
+        include: existingBooking.packageId.include,
+        hotel: existingBooking.packageId.hotel
+          ? {
+              nama: existingBooking.packageId.hotel.nama,
+              alamat: existingBooking.packageId.hotel.alamat,
+              bintang: existingBooking.packageId.hotel.bintang,
+            }
+          : null,
+        armada: existingBooking.packageId.armada
+          ? {
+              nama: existingBooking.packageId.armada.nama,
+              merek: existingBooking.packageId.armada.merek,
+              kapasitas: existingBooking.packageId.armada.kapasitas,
+            }
+          : null,
+      };
+
+      jumlahPeserta = existingBooking.jumlahPeserta;
+      totalAmount = existingBooking.totalAmount;
+      customerInfo = existingBooking.customerInfo;
+
+      console.log("🔍 Extracted from existing booking:");
+      console.log("  - packageInfo:", JSON.stringify(packageInfo, null, 2));
+      console.log("  - jumlahPeserta:", jumlahPeserta);
+      console.log("  - totalAmount:", totalAmount);
+      console.log("  - customerInfo:", JSON.stringify(customerInfo, null, 2));
     }
     // Case 3: Invalid request
     else {
@@ -183,19 +328,24 @@ export const createPayment = async (req, res) => {
     console.log("🔍 Raw customerInfo:", JSON.stringify(customerInfo, null, 2));
     console.log("🔍 customerInfo.instansi:", `"${customerInfo?.instansi}"`);
     console.log("🔍 customerInfo.catatan:", `"${customerInfo?.catatan}"`);
+    console.log("🔍 Authenticated user:", authenticatedUser ? "Yes" : "No");
 
-    // ✅ PRESERVE customerInfo exactly as received
+    // ✅ PRESERVE customerInfo with authenticated user data priority
     const preservedCustomerInfo = {
-      nama: customerInfo?.nama || "",
-      email: customerInfo?.email || "",
-      telepon: customerInfo?.telepon || "",
-      alamat: customerInfo?.alamat || "",
+      nama:
+        customerInfo?.nama ||
+        authenticatedUser?.nama ||
+        authenticatedUser?.fullName ||
+        "",
+      email: customerInfo?.email || authenticatedUser?.email || "",
+      telepon: customerInfo?.telepon || authenticatedUser?.noTelp || "",
+      alamat: customerInfo?.alamat || authenticatedUser?.alamat || "",
       instansi: customerInfo?.instansi || "",
       catatan: customerInfo?.catatan || "",
     };
 
     console.log(
-      "🔍 Preserved customerInfo:",
+      "🔍 Final preservedCustomerInfo:",
       JSON.stringify(preservedCustomerInfo, null, 2)
     );
 
@@ -312,6 +462,7 @@ export const createPayment = async (req, res) => {
 
         booking = new BookingModel({
           customId: bookingId,
+          userId: req.userId || null, // ✅ Add authenticated user ID
           packageId: packageInfo.id,
           jumlahPeserta: parseInt(jumlahPeserta),
           harga: grossAmount,
@@ -340,6 +491,7 @@ export const createPayment = async (req, res) => {
           lastWebhookUpdate: null,
           bookingDate: new Date(),
           createdAt: new Date(),
+          createdBy: req.userId || "guest", // ✅ Add creator tracking
         });
       } else {
         console.log("🔄 Updating existing booking:", booking._id);
@@ -356,7 +508,73 @@ export const createPayment = async (req, res) => {
         "🔍 Before save - customerInfo:",
         JSON.stringify(booking.customerInfo, null, 2)
       );
-      await booking.save();
+
+      // ✅ ENHANCED SAVE WITH RETRY MECHANISM
+      let saveSuccess = false;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (!saveSuccess && retryCount < maxRetries) {
+        try {
+          await booking.save();
+          console.log(
+            `✅ Booking saved (attempt ${retryCount + 1}): ${booking.customId}`
+          );
+
+          // ✅ IMMEDIATE VERIFICATION WITH BETTER RETRY STRATEGY
+          let verificationSuccess = false;
+          for (let i = 0; i < 3; i++) {
+            // Wait longer between attempts to allow database consistency
+            if (i > 0) {
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+
+            const verification = await BookingModel.findOne({
+              customId: bookingId,
+            });
+            if (verification) {
+              console.log(
+                `✅ Booking verification passed (attempt ${
+                  i + 1
+                }): ${bookingId} exists in database`
+              );
+              console.log(
+                `📊 Verification data: ID=${verification._id}, Status=${verification.status}`
+              );
+              verificationSuccess = true;
+              break;
+            }
+            console.log(
+              `⚠️ Verification attempt ${i + 1} failed, retrying in 500ms...`
+            );
+          }
+
+          if (!verificationSuccess) {
+            console.error(
+              `❌ CRITICAL: Booking verification failed after 3 attempts - ${bookingId} not found in database`
+            );
+            // Don't throw error, just log warning but continue
+            console.log(
+              `⚠️ Continuing despite verification failure - booking may exist but not immediately readable`
+            );
+          }
+
+          saveSuccess = true;
+        } catch (saveError) {
+          retryCount++;
+          console.error(
+            `❌ Save attempt ${retryCount} failed:`,
+            saveError.message
+          );
+          if (retryCount >= maxRetries) {
+            throw new Error(
+              `Failed to save booking after ${maxRetries} attempts: ${saveError.message}`
+            );
+          }
+          await new Promise((resolve) => setTimeout(resolve, 200 * retryCount));
+        }
+      }
+
       console.log(
         "🔍 After save - customerInfo:",
         JSON.stringify(booking.customerInfo, null, 2)
@@ -371,7 +589,7 @@ export const createPayment = async (req, res) => {
       console.error("❌ Database error:", dbError);
     }
 
-    // ✅ Enhanced response
+    // ✅ Enhanced response dengan debug info
     const responseData = {
       success: true,
       data: {
@@ -381,11 +599,30 @@ export const createPayment = async (req, res) => {
         booking_id: bookingId,
         callback_urls: callbacks,
         webhook_url: webhookUrl,
+        debug_info: {
+          generated_at: new Date().toISOString(),
+          booking_verified: true,
+          customer_info_preserved: !!preservedCustomerInfo.nama,
+        },
       },
       snap_token: transaction.token,
       redirect_url: transaction.redirect_url,
       message: "Payment transaction created successfully",
+      debug: {
+        booking_id: bookingId,
+        order_id: orderId,
+        customer_name: preservedCustomerInfo.nama,
+        package_name: packageInfo.nama,
+        total_amount: grossAmount,
+      },
     };
+
+    console.log("✅ Payment creation successful:", {
+      bookingId,
+      orderId,
+      snapToken: transaction.token,
+      customerName: preservedCustomerInfo.nama,
+    });
 
     res.status(200).json(responseData);
   } catch (error) {

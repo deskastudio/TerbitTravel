@@ -225,10 +225,10 @@ export default function BookingSuccess() {
           setLastStatusCheck(new Date());
 
           // Update booking data dengan status terbaru
-          setBookingData((prev) => ({
+          setBookingData((prev: any) => ({
             ...prev,
             paymentStatus: newStatus,
-            status: statusResponse.data.status,
+            status: statusResponse.data?.status || prev.status,
           }));
 
           // Jika pembayaran berhasil, redirect ke e-voucher
@@ -328,11 +328,18 @@ export default function BookingSuccess() {
     const fetchBookingData = async () => {
       try {
         setIsLoading(true);
+        console.log("🔍 Fetching booking data for ID:", bookingId);
 
+        // ✅ First, try to get booking ID from URL params
         if (!bookingId) {
+          console.log("⚠️ No bookingId in URL, checking localStorage...");
           const lastBooking = localStorage.getItem("lastBooking");
           if (lastBooking) {
             const parsedBooking = JSON.parse(lastBooking);
+            console.log(
+              "✅ Found booking in localStorage:",
+              parsedBooking.bookingId
+            );
             setBookingData(parsedBooking);
             setPaymentStatus(parsedBooking.paymentStatus || "pending");
 
@@ -353,9 +360,13 @@ export default function BookingSuccess() {
           throw new Error("Booking ID tidak ditemukan");
         }
 
+        // ✅ Try API first, with better error handling
         try {
+          console.log("🌐 Trying API for booking:", bookingId);
           const response = await BookingService.getBookingById(bookingId);
+
           if (response && response.success && response.data) {
+            console.log("✅ Got booking data from API:", response.data);
             setBookingData(response.data);
             setPaymentStatus(response.data.paymentStatus || "pending");
 
@@ -370,34 +381,63 @@ export default function BookingSuccess() {
               }
             }
           } else {
-            throw new Error("Data booking tidak ditemukan");
+            throw new Error("Data booking tidak ditemukan di API");
           }
-        } catch (err) {
-          console.error("Error fetching booking data:", err);
+        } catch (apiErr) {
+          console.error("❌ API call failed:", apiErr);
 
+          // ✅ Fallback to localStorage with more detailed logging
+          console.log("🔄 Falling back to localStorage...");
           const lastBooking = localStorage.getItem("lastBooking");
+
           if (lastBooking) {
             const parsedBooking = JSON.parse(lastBooking);
-            setBookingData(parsedBooking);
-            setPaymentStatus(parsedBooking.paymentStatus || "pending");
+            console.log(
+              "✅ Using localStorage booking:",
+              parsedBooking.bookingId
+            );
 
-            if (parsedBooking.packageInfo && parsedBooking.packageInfo.id) {
-              try {
-                const packageData = await TourPackageService.getPackageById(
-                  parsedBooking.packageInfo.id
-                );
-                setPaketWisata(packageData);
-              } catch (pkgErr) {
-                console.error("Error fetching package data:", pkgErr);
+            // ✅ Verify the booking ID matches
+            if (
+              parsedBooking.bookingId === bookingId ||
+              parsedBooking._id === bookingId
+            ) {
+              setBookingData(parsedBooking);
+              setPaymentStatus(parsedBooking.paymentStatus || "pending");
+
+              if (parsedBooking.packageInfo && parsedBooking.packageInfo.id) {
+                try {
+                  const packageData = await TourPackageService.getPackageById(
+                    parsedBooking.packageInfo.id
+                  );
+                  setPaketWisata(packageData);
+                } catch (pkgErr) {
+                  console.error("Error fetching package data:", pkgErr);
+                }
               }
+            } else {
+              console.error("❌ Booking ID mismatch:", {
+                urlId: bookingId,
+                storageId: parsedBooking.bookingId,
+              });
+              throw new Error(
+                `Data booking ${bookingId} tidak cocok dengan localStorage`
+              );
             }
           } else {
+            console.error("❌ No booking data in localStorage either");
             throw new Error("Data booking tidak ditemukan");
           }
         }
       } catch (error) {
-        console.error("Error in booking success page:", error);
-        setError("Gagal mengambil data pemesanan");
+        console.error("💥 Error in booking success page:", error);
+        setError(
+          `Gagal mengambil data pemesanan: ${
+            typeof error === "object" && error !== null && "message" in error
+              ? (error as { message?: string }).message
+              : String(error)
+          }`
+        );
       } finally {
         setIsLoading(false);
       }
@@ -413,8 +453,22 @@ export default function BookingSuccess() {
     try {
       const devModeBypass = process.env.NODE_ENV === "development";
 
+      // ✅ Get userId from current authenticated user if not in bookingData
+      const currentUserId = bookingData.userId || user?._id;
+
+      console.log("🔍 User info for payment:", {
+        bookingUserId: bookingData.userId,
+        currentUser: user,
+        finalUserId: currentUserId,
+      });
+
+      // ✅ Clear any existing payment token to force new payment session
+      localStorage.removeItem("midtrans_snap_token");
+      localStorage.removeItem("payment_session");
+
       const response = await processPayment({
         bookingId: bookingData.bookingId,
+        userId: currentUserId, // ✅ Use current user ID if bookingData doesn't have it
         customerInfo: bookingData.customerInfo,
         packageInfo: {
           id: bookingData.packageInfo.id,

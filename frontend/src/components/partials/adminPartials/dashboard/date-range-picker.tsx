@@ -17,9 +17,12 @@ import {
 export function CalendarDateRangePicker({
   className,
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 20),
-    to: addDays(new Date(2023, 0, 20), 20),
+  const [date, setDate] = React.useState<DateRange | undefined>(() => {
+    const today = new Date();
+    return {
+      from: new Date(today.getFullYear(), today.getMonth(), 1), // First day of current month
+      to: new Date(today.getFullYear(), today.getMonth() + 1, 0), // Last day of current month
+    };
   })
 
   return (

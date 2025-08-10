@@ -10,6 +10,7 @@ import {
   deleteOrder,
   getUserBookings,
 } from "../controllers/orderController.js";
+import { createPayment } from "../controllers/payment.controller.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -31,6 +32,9 @@ router.get("/:id", getOrderById);
 
 // Update booking status (admin only)
 router.put("/:id/status", authMiddleware, updateOrderStatus);
+
+// Payment endpoint - create Midtrans snap token for booking
+router.post("/:id/payment", createPayment);
 
 // Delete booking
 router.delete("/:id", authMiddleware, deleteOrder);

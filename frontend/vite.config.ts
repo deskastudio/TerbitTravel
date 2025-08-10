@@ -5,22 +5,30 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "localhost",
+    host: "localhost", // Force localhost
     port: 5173,
     strictPort: true,
-    open: true,
+    open: "http://localhost:5173", // ✅ Force open with localhost
+    // ✅ Fix for 504 issues - increased timeout
+    hmr: {
+      timeout: 5000, // Increased timeout to 5 seconds
+    },
+    watch: {
+      usePolling: true, // Better detection of file changes
+    },
     // ✅ Tambahkan proxy untuk development
     proxy: {
       "/api": {
         target: "http://localhost:5000", // Use localhost for development
         changeOrigin: true,
         secure: false,
+        timeout: 60000, // Increased timeout for backend requests
         // Tidak perlu rewrite karena backend sudah menggunakan /api prefix
-        configure: (proxy, options) => {
-          proxy.on("error", (err, req, res) => {
+        configure: (proxy) => {
+          proxy.on("error", (err, _req) => {
             console.log("Proxy error:", err);
           });
-          proxy.on("proxyReq", (proxyReq, req, res) => {
+          proxy.on("proxyReq", (proxyReq, _req, _res) => {
             console.log("Proxying request to:", proxyReq.path);
           });
         },

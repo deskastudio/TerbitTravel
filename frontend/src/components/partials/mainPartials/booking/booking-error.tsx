@@ -143,6 +143,7 @@ export default function BookingError() {
       // Gunakan hook untuk retry payment
       await processPayment({
         bookingId: bookingData.bookingId,
+        userId: bookingData.userId, // ✅ ADD userId from bookingData
         customerInfo: bookingData.customerInfo,
         packageInfo: {
           id: bookingData.packageInfo.id,

@@ -1,4 +1,4 @@
-// booking-form.tsx
+// booking-form-fixed.tsx
 import type React from "react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -1194,10 +1194,10 @@ function BookingForm() {
                         <RadioGroupItem value="dp" id="dp" className="mr-3" />
                         <div className="flex-1">
                           <Label htmlFor="dp" className="font-medium">
-                            DP 50%
+                            Bayar DP
                           </Label>
                           <p className="text-sm text-muted-foreground">
-                            Bayar DP dulu, sisanya dibayar nanti
+                            Pembayaran uang muka 50%
                           </p>
                         </div>
                         <div className="text-primary font-bold">
@@ -1306,31 +1306,29 @@ function BookingForm() {
                     />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">
-                      {paketWisata.nama}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1 text-muted-foreground text-sm">
-                      <MapPin className="h-4 w-4" />
-                      <span>{paketWisata.destination.nama}</span>
-                    </div>
+                    <h3 className="font-medium">{paketWisata.nama}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {paketWisata.destination.nama}
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg">
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">
-                      Tanggal
+                      Tanggal Berangkat
                     </span>
                     <span className="font-medium">
-                      {formatDate(selectedSchedule.tanggalAwal)} -{" "}
-                      {formatDate(selectedSchedule.tanggalAkhir)}
+                      {formatDate(selectedSchedule.tanggalAwal)}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">
-                      Durasi
+                      Tanggal Kembali
                     </span>
-                    <span className="font-medium">{paketWisata.durasi}</span>
+                    <span className="font-medium">
+                      {formatDate(selectedSchedule.tanggalAkhir)}
+                    </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-muted-foreground">
@@ -1359,7 +1357,7 @@ function BookingForm() {
                     <div className="text-sm text-muted-foreground">
                       Harga per orang
                     </div>
-                    <div className="font-medium">
+                    <div className="font-bold text-lg">
                       {formatCurrency(paketWisata.harga)}
                     </div>
                   </div>
@@ -1368,56 +1366,43 @@ function BookingForm() {
                 <Separator />
 
                 <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Harga per orang
-                    </span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Harga Paket</span>
                     <span className="font-medium">
                       {formatCurrency(paketWisata.harga)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      Jumlah peserta
-                    </span>
-                    <span className="font-medium">x {jumlahPeserta}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Jumlah Peserta</span>
+                    <span className="font-medium">× {jumlahPeserta}</span>
                   </div>
                   <Separator className="my-2" />
-                  <div className="flex justify-between font-semibold">
-                    <span>
-                      {formData.metodePembayaran === "full"
-                        ? "Total"
-                        : "DP (50%)"}
-                    </span>
-                    <span className="text-primary text-lg">
-                      {formData.metodePembayaran === "full"
-                        ? formatCurrency(
-                            calculateTotal(paketWisata, jumlahPeserta)
-                          )
-                        : formatCurrency(
-                            calculateDP(paketWisata, jumlahPeserta)
-                          )}
+                  <div className="flex justify-between items-center font-bold">
+                    <span>Total</span>
+                    <span className="text-primary">
+                      {formatCurrency(
+                        calculateTotal(paketWisata, jumlahPeserta)
+                      )}
                     </span>
                   </div>
-                  <div className="text-xs text-muted-foreground text-right">
-                    *Harga sudah termasuk pajak dan biaya layanan
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-muted-foreground">DP (50%)</span>
+                    <span className="text-muted-foreground">
+                      {formatCurrency(calculateDP(paketWisata, jumlahPeserta))}
+                    </span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="bg-muted/50 flex flex-col items-start p-4">
-                <h4 className="font-medium mb-2">Fasilitas Termasuk:</h4>
-                <ul className="space-y-1 text-sm text-muted-foreground">
-                  {paketWisata.include.slice(0, 5).map((item, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                  {paketWisata.include.length > 5 && (
-                    <li className="text-sm text-muted-foreground">
-                      + {paketWisata.include.length - 5} fasilitas lainnya
-                    </li>
-                  )}
+                <h4 className="font-semibold mb-2 text-sm">Fasilitas</h4>
+                <ul className="text-sm space-y-1 w-full">
+                  {paketWisata.include &&
+                    paketWisata.include.slice(0, 5).map((item, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
                 </ul>
               </CardFooter>
             </Card>
@@ -1437,21 +1422,7 @@ function BookingForm() {
                   </AlertTitle>
                   <AlertDescription className="text-xs text-blue-700">
                     Setelah mengisi formulir, Anda akan diarahkan ke halaman
-                    detail pemesanan untuk melakukan pembayaran via Midtrans.
-                  </AlertDescription>
-                </Alert>
-
-                <Alert
-                  variant="default"
-                  className="py-2 bg-green-50 border-green-200"
-                >
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-xs font-medium text-green-800">
-                    Konfirmasi Otomatis
-                  </AlertTitle>
-                  <AlertDescription className="text-xs text-green-700">
-                    E-voucher akan otomatis tersedia setelah pembayaran berhasil
-                    dan dapat diunduh langsung dari halaman detail pemesanan.
+                    pembayaran Midtrans.
                   </AlertDescription>
                 </Alert>
 
@@ -1461,73 +1432,54 @@ function BookingForm() {
                 >
                   <Info className="h-4 w-4 text-amber-600" />
                   <AlertTitle className="text-xs font-medium text-amber-800">
-                    Pembatalan
+                    Batas Waktu
                   </AlertTitle>
                   <AlertDescription className="text-xs text-amber-700">
-                    Pembatalan gratis hingga 7 hari sebelum keberangkatan.
-                    Setelah itu akan dikenakan biaya administrasi.
-                  </AlertDescription>
-                </Alert>
-
-                <Alert
-                  variant="default"
-                  className="py-2 bg-purple-50 border-purple-200"
-                >
-                  <CreditCard className="h-4 w-4 text-purple-600" />
-                  <AlertTitle className="text-xs font-medium text-purple-800">
-                    Metode Pembayaran
-                  </AlertTitle>
-                  <AlertDescription className="text-xs text-purple-700">
-                    Mendukung pembayaran via Virtual Account, E-Wallet, Credit
-                    Card, dan transfer bank melalui Midtrans.
+                    Selesaikan pembayaran dalam 24 jam atau pesanan akan
+                    otomatis dibatalkan.
                   </AlertDescription>
                 </Alert>
               </CardContent>
             </Card>
 
-            {/* Informasi Hotel & Akomodasi */}
-            <Card className="shadow-sm overflow-hidden">
-              <CardHeader className="pb-2 bg-primary/5">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Hotel className="h-5 w-5 text-primary" />
-                  Detail Akomodasi
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="mb-4">
-                  <h4 className="font-medium mb-1">{paketWisata.hotel.nama}</h4>
-                  <div className="flex items-center gap-1 mb-2">
-                    {[...Array(paketWisata.hotel.bintang)].map((_, index) => (
-                      <Star
-                        key={index}
-                        className="h-3 w-3 fill-yellow-500 text-yellow-500"
-                      />
-                    ))}
-                    <span className="text-xs text-muted-foreground">
-                      Hotel {paketWisata.hotel.bintang} Bintang
-                    </span>
+            <Card className="shadow-sm">
+              <CardContent className="p-4">
+                {paketWisata.hotel && (
+                  <div className="mb-2">
+                    <h4 className="font-medium mb-1 flex items-center gap-2">
+                      <Hotel className="h-4 w-4 text-primary" />
+                      Akomodasi
+                    </h4>
+                    <p className="text-sm">{paketWisata.hotel.nama}</p>
+                    {paketWisata.hotel.bintang > 0 && (
+                      <div className="flex items-center mt-1">
+                        {[...Array(paketWisata.hotel.bintang)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className="h-3 w-3 fill-yellow-400 text-yellow-400"
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {paketWisata.hotel.alamat}
-                  </p>
-                </div>
+                )}
 
-                <div className="mb-4">
-                  <h4 className="font-medium mb-1 flex items-center gap-2">
-                    <Bus className="h-4 w-4 text-primary" />
-                    Transportasi
-                  </h4>
-                  <p className="text-sm">
-                    {paketWisata.armada.nama} - {paketWisata.armada.merek}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Kapasitas{" "}
-                    {Array.isArray(paketWisata.armada.kapasitas)
-                      ? paketWisata.armada.kapasitas[0]
-                      : paketWisata.armada.kapasitas}{" "}
-                    orang
-                  </p>
-                </div>
+                {paketWisata.armada && (
+                  <div className="mb-2">
+                    <h4 className="font-medium mb-1 flex items-center gap-2">
+                      <Bus className="h-4 w-4 text-primary" />
+                      Transportasi
+                    </h4>
+                    <p className="text-sm">{paketWisata.armada.nama}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {paketWisata.armada.merek} - Kapasitas{" "}
+                      {Array.isArray(paketWisata.armada.kapasitas)
+                        ? paketWisata.armada.kapasitas[0]
+                        : paketWisata.armada.kapasitas}{" "}
+                      orang
+                    </p>
+                  </div>
+                )}
 
                 {paketWisata.consume && (
                   <div className="mb-2">

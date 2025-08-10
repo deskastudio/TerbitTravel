@@ -4,9 +4,11 @@
 
 // Get backend URL from environment
 const getBackendUrl = () => {
+  // 🎯 SOLUTION: Use separate URL for static files (images)
   return (
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_STATIC_URL ||
+    import.meta.env.VITE_UPLOADS_URL ||
+    import.meta.env.VITE_BACKEND_URL ||
     "http://localhost:5000"
   );
 };

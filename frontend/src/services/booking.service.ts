@@ -73,6 +73,7 @@ export interface BookingResponse {
 
 export interface PaymentRequestData {
   bookingId: string;
+  userId?: string; // Add optional userId
   customerInfo: {
     nama: string;
     email: string;
@@ -112,11 +113,31 @@ export interface PaymentStatusResponse {
 }
 
 export class BookingService {
+  // � FIXED: Use localhost for everything except payment
   private static readonly API_BASE_URL =
-    import.meta.env.VITE_BACKEND_URL || // ✅ Use VITE_BACKEND_URL
-    (process.env.NODE_ENV === "development"
-      ? "http://localhost:5000" // ✅ Consistent dengan backend
-      : "https://your-production-api.com");
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+  // � FIXED: Only payment-related endpoints still use tunnel
+  private static readonly PAYMENT_API_URL =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+  // Helper method untuk mendapatkan headers dengan token
+  private static getAuthHeaders(): HeadersInit {
+    const token = localStorage.getItem("token");
+    console.log(
+      "🔑 Token from localStorage:",
+      token ? `${token.substring(0, 20)}...` : "No token found"
+    );
+
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    };
+
+    console.log("📋 Request headers:", headers);
+    return headers;
+  }
 
   // Retry mechanism
   private static async callWithRetry<T>(
@@ -150,27 +171,32 @@ export class BookingService {
   static async createBooking(data: BookingFormData): Promise<BookingResponse> {
     try {
       console.log("🔄 Creating booking with data:", data);
+      console.log("🌐 Using API URL:", this.API_BASE_URL);
 
       return await this.callWithRetry(async () => {
         try {
-          // Call backend endpoint yang baru
-          const response = await fetch(
-            `${this.API_BASE_URL}/api/payments/create`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-              body: JSON.stringify(data),
-            }
-          );
+          // 🔥 FIXED: Use local API for creating booking
+          const paymentUrl = `${this.API_BASE_URL}/api/payments/create`;
+          console.log("🌐 Using API URL:", paymentUrl);
+
+          const response = await fetch(paymentUrl, {
+            method: "POST",
+            headers: this.getAuthHeaders(),
+            body: JSON.stringify(data),
+          });
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           const result = await response.json();
+
+          console.log("🔍 === PAYMENT/CREATE API RESPONSE DEBUG ===");
+          console.log("🔍 Full result:", JSON.stringify(result, null, 2));
+          console.log("🔍 result.success:", result.success);
+          console.log("🔍 result.data:", result.data);
+          console.log("🔍 result.data.bookingId:", result.data?.bookingId);
+          console.log("🔍 === END PAYMENT/CREATE API RESPONSE DEBUG ===");
 
           if (result.success && result.data) {
             // Simpan ke localStorage untuk fallback
@@ -185,45 +211,21 @@ export class BookingService {
           }
         } catch (apiError: any) {
           console.error("❌ API call failed:", apiError);
+          console.error("❌ Response status:", apiError.status);
+          console.error("❌ Response text:", apiError.message);
 
-          // Fallback untuk development
-          if (process.env.NODE_ENV === "development") {
-            const dummyBooking = {
-              success: true,
-              data: {
-                bookingId: `BOOK-${Date.now().toString().slice(-8)}`,
-                _id: `dummy-${Date.now()}`,
-                userId: data.userId,
-                packageInfo: {
-                  id: data.packageId,
-                  nama: "Tour Package",
-                  harga: 1000000,
-                  destination: "Unknown Destination",
-                },
-                selectedSchedule: data.selectedSchedule || {
-                  tanggalAwal: new Date().toISOString(),
-                  tanggalAkhir: new Date(
-                    Date.now() + 3 * 24 * 60 * 60 * 1000
-                  ).toISOString(),
-                },
-                customerInfo: data.customerInfo,
-                jumlahPeserta: data.jumlahPeserta,
-                harga: 1000000 * data.jumlahPeserta,
-                status: "pending" as const,
-                paymentStatus: "pending" as const,
-                createdAt: new Date().toISOString(),
-                createdBy: "user",
-              },
-            };
+          // 🚨 PENTING: Jangan gunakan dummy booking untuk production
+          // Fallback dummy hanya untuk development testing UI, TIDAK untuk payment
+          console.error(
+            "🚨 CRITICAL: API call failed, booking NOT created in database!"
+          );
+          console.error("🚨 Any attempt to process payment will fail!");
 
-            localStorage.setItem(
-              "lastBooking",
-              JSON.stringify(dummyBooking.data)
-            );
-            return dummyBooking;
-          }
-
-          throw apiError;
+          throw new Error(
+            `Failed to create booking: ${
+              apiError.message || apiError.toString()
+            }`
+          );
         }
       });
     } catch (error) {
@@ -239,19 +241,51 @@ export class BookingService {
     try {
       return await this.callWithRetry(async () => {
         try {
-          // Coba endpoint baru yang support customId
-          const response = await fetch(`${this.API_BASE_URL}/orders/${id}`);
+          // � FIX: Try multiple API endpoints in sequence
+          // Try both /orders/{id} and /api/orders/{id} endpoints
+          const endpoints = [
+            `/orders/${id}`,
+            `/api/orders/${id}`,
+            `/api/bookings/${id}`,
+            `/api/booking/${id}`,
+          ];
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+          let response = null;
+          let result = null;
+          let success = false;
+
+          // Try each endpoint until one works
+          for (const endpoint of endpoints) {
+            const orderUrl = `${this.API_BASE_URL}${endpoint}`;
+            console.log(`🌐 Trying endpoint: ${orderUrl}`);
+
+            try {
+              response = await fetch(orderUrl, {
+                headers: this.getAuthHeaders(),
+              });
+
+              if (response.ok) {
+                result = await response.json();
+                if (result.success) {
+                  console.log(`✅ Success with endpoint: ${endpoint}`);
+                  success = true;
+                  break;
+                }
+              }
+            } catch (endpointError) {
+              console.log(`❌ Endpoint ${endpoint} failed:`, endpointError);
+              // Continue to next endpoint
+            }
           }
 
-          const result = await response.json();
-
-          if (result.success && result.data) {
+          if (success && result.success && (result.data || result.booking)) {
+            // Handle different response formats
+            if (result.booking && !result.data) {
+              result.data = result.booking;
+            }
             return result;
           } else {
-            throw new Error(result.message || "Booking not found");
+            throw new Error("Booking not found in any endpoint");
           }
         } catch (apiError) {
           console.error(`❌ API call failed for booking ID ${id}:`, apiError);
@@ -285,20 +319,25 @@ export class BookingService {
   ): Promise<PaymentResponse> {
     try {
       console.log("💳 Processing payment:", data);
+      console.log("👤 User data in request:", {
+        userId: data.userId,
+        customerInfo: data.customerInfo,
+      });
 
       return await this.callWithRetry(async () => {
         try {
-          const response = await fetch(
-            `${this.API_BASE_URL}/api/payments/create`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-              body: JSON.stringify(data),
-            }
-          );
+          const headers = this.getAuthHeaders();
+          console.log("📤 Sending payment request with headers:", headers);
+
+          // � FIXED: Use local API for payment processing
+          const paymentUrl = `${this.API_BASE_URL}/api/payments/create`;
+          console.log("🌐 Processing payment at:", paymentUrl);
+
+          const response = await fetch(paymentUrl, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(data),
+          });
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -357,9 +396,13 @@ export class BookingService {
     try {
       return await this.callWithRetry(async () => {
         try {
-          const response = await fetch(
-            `${this.API_BASE_URL}/api/payments/status/${bookingId}`
-          );
+          // � FIXED: Use local API for payment status check
+          const paymentStatusUrl = `${this.API_BASE_URL}/api/payments/status/${bookingId}`;
+          console.log("🌐 Checking payment status at:", paymentStatusUrl);
+
+          const response = await fetch(paymentStatusUrl, {
+            headers: this.getAuthHeaders(),
+          });
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

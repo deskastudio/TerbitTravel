@@ -476,8 +476,9 @@ const fetchBookingData = async (bookingId: string) => {
   try {
     console.log(`📋 Fetching booking: ${bookingId}`);
 
-    // ✅ Use correct endpoint
-    const response = await fetch(`http://localhost:5000/orders/${bookingId}`);
+    // ✅ Use environment variable for API URL
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const response = await fetch(`${apiUrl}/orders/${bookingId}`);
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -502,8 +503,10 @@ const generateVoucher = async (bookingId: string) => {
   try {
     console.log(`🎫 Generating voucher for: ${bookingId}`);
 
+    // ✅ Use environment variable for API URL
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
     const response = await fetch(
-      `http://localhost:5000/api/voucher/generate/${bookingId}`,
+      `${apiUrl}/api/voucher/generate/${bookingId}`,
       {
         method: "POST",
         headers: {
@@ -534,8 +537,10 @@ const checkPaymentStatus = async (bookingId: string) => {
   try {
     console.log(`🔄 Checking payment status for: ${bookingId}`);
 
+    // ✅ Use environment variable for API URL
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
     const response = await fetch(
-      `http://localhost:5000/api/booking/check-payment/${bookingId}`,
+      `${apiUrl}/api/booking/check-payment/${bookingId}`,
       {
         method: "POST",
         headers: {

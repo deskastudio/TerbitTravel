@@ -6,6 +6,16 @@ $rootDir = $PSScriptRoot
 $backendDir = Join-Path $rootDir "backend"
 $frontendDir = Join-Path $rootDir "frontend"
 
+# Clean frontend Vite cache to prevent 504 errors
+Write-Host "Cleaning Vite cache..." -ForegroundColor Yellow
+$nodeModulesDir = Join-Path $frontendDir "node_modules"
+$viteCache = Join-Path $nodeModulesDir ".vite"
+if (Test-Path $viteCache) {
+    Write-Host "Removing .vite cache directory..." -ForegroundColor Yellow
+    Remove-Item -Path $viteCache -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "Vite cache cleaned successfully!" -ForegroundColor Green
+}
+
 Write-Host "Fixing CORS settings..." -ForegroundColor Yellow
 Set-Location $backendDir
 npm run cors-fix

@@ -21,7 +21,19 @@ export const getImageUrl = (path: string): string => {
     cleanPath = `/${cleanPath}`;
   }
 
-  // Gunakan API URL dari environment variable, dengan fallback ke localhost
-  const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  return `${apiBaseUrl}${cleanPath}`;
+  // 🎯 SOLUTION: Use localhost untuk static files (gambar), bukan tunnel URL
+  const staticBaseUrl =
+    import.meta.env.VITE_STATIC_URL ||
+    import.meta.env.VITE_UPLOADS_URL ||
+    import.meta.env.VITE_BACKEND_URL ||
+    "http://localhost:5000";
+
+  const finalUrl = `${staticBaseUrl}${cleanPath}`;
+
+  // Debug logging
+  if (import.meta.env.VITE_NODE_ENV === "development") {
+    console.log(`🖼️ Image URL: ${path} -> ${finalUrl}`);
+  }
+
+  return finalUrl;
 };

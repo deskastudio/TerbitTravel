@@ -2,9 +2,14 @@
 
 import axios from "axios";
 
-// ✅ FIXED: Use environment variable with fallback
+// ✅ CORS-FIXED: Always use localhost for development to avoid CORS mismatch
 const API_BASE_URL = (() => {
   const envUrl = import.meta.env.VITE_API_URL;
+
+  // ✅ For development, always use localhost to match frontend origin
+  if (import.meta.env.DEV) {
+    return "http://localhost:5000";
+  }
 
   if (envUrl) {
     return envUrl.replace(/\/$/, ""); // Remove trailing slash
