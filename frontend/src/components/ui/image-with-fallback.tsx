@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   getSafeImageUrl,
   handleImageError,
@@ -7,13 +7,14 @@ import {
 } from "@/utils/image-utils";
 
 interface ImageWithFallbackProps {
-  src?: string;
+  src?: string | null;
   alt: string;
   className?: string;
   fallbackClassName?: string;
   width?: number;
   height?: number;
   fallbackText?: string;
+  fallbackSrc?: string;
 }
 
 const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
@@ -24,34 +25,70 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   width,
   height,
   fallbackText = "Image",
+  fallbackSrc,
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(!!src);
+  const [currentSrc, setCurrentSrc] = useState<string | null | undefined>(src);
+
+  // Debug image loading (in development only)
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      if (src) {
+        console.log(`🖼️ Loading image: ${src}`);
+      }
+    }
+  }, [src]);
+
+  // Update current source if props change
+  useEffect(() => {
+    setCurrentSrc(src);
+    setHasError(false);
+    setIsLoading(!!src);
+  }, [src]);
 
   // Get safe image URL with proper backend URL conversion
-  const imageUrl = getImageUrl(src);
-  const safeImageUrl = getSafeImageUrl(imageUrl, fallbackText);
+  const imageUrl = getImageUrl(currentSrc);
+  const safeImageUrl = getSafeImageUrl(imageUrl || fallbackSrc, fallbackText);
 
   const handleError = (
     event: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
+    // If we're using the main source and it failed, try the fallback if provided
+    if (currentSrc === src && fallbackSrc && !hasError) {
+      console.log(`🖼️ Primary image failed, trying fallback: ${fallbackSrc}`);
+      setCurrentSrc(fallbackSrc);
+      setIsLoading(true);
+      return;
+    }
+    
+    // Otherwise use the SVG fallback
     setHasError(true);
     setIsLoading(false);
     handleImageError(event, fallbackText);
+    
+    if (import.meta.env.DEV) {
+      console.warn(`🖼️ Image failed to load: ${currentSrc}`);
+    }
   };
 
   const handleLoad = () => {
     setIsLoading(false);
+    
+    if (import.meta.env.DEV && currentSrc) {
+      console.log(`✅ Image loaded successfully: ${currentSrc}`);
+    }
   };
 
-  // If no src provided or error occurred, show SVG fallback
-  if (!src || hasError || !imageUrl) {
+  // If no src provided or error occurred after all attempts, show SVG fallback
+  if ((!currentSrc && !fallbackSrc) || (hasError && !imageUrl)) {
     return (
       <div
         className={`bg-gray-200 flex items-center justify-center ${
           fallbackClassName || className
         }`}
         style={{ width, height }}
+        title={`Image not available: ${alt}`}
       >
         <svg
           className="w-1/3 h-1/3 text-gray-400 min-w-6 min-h-6"
@@ -91,7 +128,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
         </div>
       )}
       <img
-        src={safeImageUrl}
+        src={safeImageUrl || generateImagePlaceholder(width || 400, height || 300, fallbackText)}
         alt={alt}
         className={`${className} ${isLoading ? "hidden" : "block"}`}
         onError={handleError}

@@ -28,6 +28,7 @@ import {
   Loader2,
   RefreshCw,
 } from "lucide-react";
+import ImageWithFallback from "@/components/ui/image-with-fallback";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -154,6 +155,24 @@ const EVoucher = ({
   jumlahPeserta: number;
   bookingData: any;
 }) => {
+  // Debug image paths if available
+  useEffect(() => {
+    if (bookingData) {
+      console.log("📸 EVoucher component - Available image paths:");
+      console.log("- imagesPaths:", bookingData.imagesPaths?.slice(0, 3));
+      console.log("- packageDetail?.foto:", bookingData.packageDetail?.foto);
+      console.log("- packageId?.foto?.[0]:", bookingData.packageId?.foto?.[0]);
+      console.log("- packageId?.destination?.foto:", bookingData.packageId?.destination?.foto);
+      
+      // Try to load the first image to see if it works
+      if (bookingData.imagesPaths?.[0]) {
+        const img = new Image();
+        img.onload = () => console.log("✅ Test image loaded successfully:", bookingData.imagesPaths[0]);
+        img.onerror = () => console.error("❌ Test image failed to load:", bookingData.imagesPaths[0]);
+        img.src = bookingData.imagesPaths[0];
+      }
+    }
+  }, [bookingData]);
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPrinting, setPrinting] = useState(false);
@@ -300,6 +319,7 @@ Generated: ${formatDateTime(voucherData.generatedAt)}
       </div>
 
       <div className="flex justify-center mb-6">
+        {/* QR Code - Package image removed as requested */}
         <div className="p-3 border-2 border-dashed border-primary/30 rounded-lg relative bg-white">
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${bookingId}&margin=10`}
@@ -676,7 +696,12 @@ export default function EVoucherPage() {
         }
 
         setBookingData(actualBookingData);
-        console.log("✅ Booking data loaded");
+        console.log("✅ Booking data loaded:", JSON.stringify({
+          "packageId": actualBookingData.packageId,
+          "packageInfo": actualBookingData.packageInfo,
+          "packageDetail": actualBookingData.packageDetail,
+          "foto source": actualBookingData.packageDetail?.foto || actualBookingData.packageId?.foto?.[0]
+        }, null, 2));
 
         // ✅ Step 3: Generate voucher
         try {
@@ -692,22 +717,99 @@ export default function EVoucherPage() {
           });
         }
 
-        // ✅ Step 4: Get package details if available
-        if (
-          actualBookingData.packageId &&
-          typeof actualBookingData.packageId === "object"
-        ) {
+        // ✅ Step 4: Get package details and images from all possible sources
+        // Initialize an array to store possible image paths
+        let possibleImages: string[] = [];
+        
+        if (actualBookingData.packageId && typeof actualBookingData.packageId === "object") {
           setPaketWisata(actualBookingData.packageId);
-        } else if (actualBookingData.packageInfo?.id) {
+          console.log("✅ Using packageId object data:", actualBookingData.packageId);
+          
+          // Add images from packageId.foto array if available
+          if (actualBookingData.packageId.foto && Array.isArray(actualBookingData.packageId.foto)) {
+            possibleImages = [...possibleImages, ...actualBookingData.packageId.foto];
+          } else if (actualBookingData.packageId.foto) {
+            possibleImages.push(actualBookingData.packageId.foto);
+          }
+          
+          // Check for imageUrl as well (alternate format)
+          if (actualBookingData.packageId.imageUrl) {
+            possibleImages.push(actualBookingData.packageId.imageUrl);
+          }
+        }
+        
+        // Check packageDetail for images (usually from localStorage in booking form)
+        if (actualBookingData.packageDetail) {
+          console.log("✅ Using packageDetail data:", actualBookingData.packageDetail);
+          
+          if (actualBookingData.packageDetail.foto) {
+            if (Array.isArray(actualBookingData.packageDetail.foto)) {
+              possibleImages = [...possibleImages, ...actualBookingData.packageDetail.foto];
+            } else {
+              possibleImages.push(actualBookingData.packageDetail.foto);
+            }
+          }
+        }
+        
+        // Check destination for images
+        if (actualBookingData.packageId?.destination?.foto) {
+          console.log("✅ Found destination images:", actualBookingData.packageId.destination.foto);
+          
+          if (Array.isArray(actualBookingData.packageId.destination.foto)) {
+            possibleImages = [...possibleImages, ...actualBookingData.packageId.destination.foto];
+          } else {
+            possibleImages.push(actualBookingData.packageId.destination.foto);
+          }
+        }
+        
+        // If no images found, fetch from API as a last resort
+        if (possibleImages.length === 0 && actualBookingData.packageInfo?.id) {
           try {
+            console.log("🔍 Fetching package data from API with ID:", actualBookingData.packageInfo.id);
             const packageData = await TourPackageService.getPackageById(
               actualBookingData.packageInfo.id
             );
+            console.log("✅ Fetched package data:", packageData);
             setPaketWisata(packageData);
+            
+            // Add images from fetched package
+            if (packageData.foto && Array.isArray(packageData.foto)) {
+              possibleImages = [...possibleImages, ...packageData.foto];
+            } else if (packageData.foto) {
+              possibleImages.push(packageData.foto);
+            }
+            
+            // Check for imageUrl as well
+            if (packageData.imageUrl) {
+              possibleImages.push(packageData.imageUrl);
+            }
+            
+            // Check destination images from fetched package
+            if (packageData.destination?.foto) {
+              if (Array.isArray(packageData.destination.foto)) {
+                possibleImages = [...possibleImages, ...packageData.destination.foto];
+              } else {
+                possibleImages.push(packageData.destination.foto);
+              }
+            }
           } catch (packageError) {
             console.error("❌ Error loading package data:", packageError);
           }
         }
+        
+        // Store the found images in booking data for easy access in components
+        actualBookingData.imagesPaths = possibleImages.filter(Boolean);
+        
+        // Debug the available image sources
+        console.log("🖼️ Available image sources found:", possibleImages.length);
+        console.log("🖼️ First 3 images:", possibleImages.slice(0, 3));
+        
+        // Store the enhanced data
+        setBookingData({
+          ...actualBookingData,
+          imagesPaths: possibleImages.filter(Boolean)
+        });
+        
 
         toast({
           title: "E-Voucher berhasil dimuat",
@@ -896,6 +998,7 @@ export default function EVoucherPage() {
                   packageName={
                     bookingData.packageId?.nama ||
                     bookingData.packageInfo?.nama ||
+                    bookingData.packageDetail?.nama ||
                     "Travel Package"
                   }
                   date={`${formatDate(
@@ -910,6 +1013,7 @@ export default function EVoucherPage() {
                   destination={
                     bookingData.packageId?.destination?.nama ||
                     bookingData.packageInfo?.destination ||
+                    bookingData.packageDetail?.destination ||
                     "Unknown Destination"
                   }
                   jumlahPeserta={bookingData.jumlahPeserta}
@@ -951,23 +1055,14 @@ export default function EVoucherPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
-                    <img
-                      src={
-                        paketWisata?.foto?.[0] ||
-                        `https://source.unsplash.com/random/800x600/?travel,${
-                          bookingData.packageId?.destination?.nama ||
-                          bookingData.packageInfo?.destination
-                        }`
-                      }
-                      alt={
-                        bookingData.packageId?.nama ||
-                        bookingData.packageInfo?.nama
-                      }
+                    <ImageWithFallback
+                      src={bookingData?.imagesPaths?.[0] || paketWisata?.foto?.[0] || bookingData?.packageDetail?.foto}
+                      alt={bookingData.packageId?.nama || bookingData.packageInfo?.nama || "Paket Wisata"}
                       className="h-full w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f3f4f6'/%3E%3Ctext x='32' y='32' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='10' fill='%236b7280'%3ENo Image%3C/text%3E%3C/svg%3E";
-                      }}
+                      fallbackClassName="h-full w-full rounded-md"
+                      fallbackText="Travel Package"
+                      width={64}
+                      height={64}
                     />
                   </div>
                   <div>

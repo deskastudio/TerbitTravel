@@ -34,6 +34,7 @@ export const IMAGE_PLACEHOLDER = generateImagePlaceholder(400, 300, "No Image");
 
 /**
  * Convert backend image path to full URL
+ * Enhanced version that handles more path formats
  */
 export const getImageUrl = (imagePath?: string): string | null => {
   if (!imagePath || imagePath.trim() === "") {
@@ -49,7 +50,48 @@ export const getImageUrl = (imagePath?: string): string | null => {
     return imagePath;
   }
 
-  // Convert relative path to full URL
+  // Handle specific domain in path (sometimes API returns partial URLs)
+  if (imagePath.includes("localhost:") || imagePath.includes(".com/")) {
+    try {
+      // Try to extract the full URL if embedded in a string
+      const urlMatch = imagePath.match(/(https?:\/\/[^/\s]+\/[^\s]+)/);
+      if (urlMatch) {
+        return urlMatch[0];
+      }
+    } catch (e) {
+      console.warn("Failed to extract URL from path:", imagePath);
+    }
+  }
+
+  // Check if it's a local public file with various formats
+  const publicPatterns = [
+    /^\/public\//,
+    /^public\//,
+    /^\/Logo\//,
+    /^Logo\//,
+    /^\/Beranda\//,
+    /^Beranda\//,
+    /^\/Profile\//,
+    /^Profile\//
+  ];
+
+  for (const pattern of publicPatterns) {
+    if (pattern.test(imagePath)) {
+      // For Vite, public files should be referenced from the root
+      const path = imagePath.replace(/^\/(public\/|Logo\/|Beranda\/|Profile\/)/i, '/');
+      return path.replace(/^(public\/|Logo\/|Beranda\/|Profile\/)/i, '/');
+    }
+  }
+
+  // Handle uploads folder references
+  if (imagePath.includes("/uploads/") || imagePath.startsWith("uploads/")) {
+    const backendUrl = getBackendUrl();
+    // Make sure we don't double the uploads path
+    const path = imagePath.replace(/^\/?(uploads\/)/i, '/uploads/');
+    return `${backendUrl}${path}`;
+  }
+
+  // Convert relative path to full URL for any other case
   const backendUrl = getBackendUrl();
   const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
   return `${backendUrl}${cleanPath}`;
