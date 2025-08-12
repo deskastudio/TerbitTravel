@@ -1,14 +1,15 @@
 import axios from "axios";
 import { LoginData, AuthResponse, User } from "../types/auth.types";
 
-// ✅ Konfigurasi URL berdasarkan environment
-const isDevelopment = import.meta.env.DEV;
-const API_URL = isDevelopment
-  ? "http://localhost:5000" // Development: langsung ke localhost
-  : import.meta.env.VITE_API_URL || "https://6dc4-36-71-64-84.ngrok-free.app"; // Production: ngrok URL
+// ✅ Always use localhost for API calls
+const API_URL = "http://localhost:5000";
 
-console.log("🔧 Environment:", isDevelopment ? "Development" : "Production");
+// ✅ Store tunnel URL for external callbacks only
+const TUNNEL_URL = import.meta.env.VITE_TUNNEL_URL;
+
+console.log("🔧 Environment:", import.meta.env.MODE);
 console.log("🌐 API URL:", API_URL);
+console.log("🚇 Tunnel URL (for external callbacks):", TUNNEL_URL);
 
 // ✅ Buat axios instance dengan konfigurasi yang benar
 const apiClient = axios.create({

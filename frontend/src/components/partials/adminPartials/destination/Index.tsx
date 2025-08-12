@@ -421,9 +421,8 @@ const DestinationPage = () => {
                               src={getImageUrl(destination.foto[0])}
                               alt={destination.nama}
                               className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              onError={(e) => {
-                                e.currentTarget.src =
-                                  "https://placehold.co/200x200?text=No+Image";
+                              onError={() => {
+                                // No fallback image
                               }}
                               loading="lazy"
                             />

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
-  Calendar,
   Clock,
   MapPin,
   Star,
@@ -13,10 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
-  Info,
   Camera,
-  Map,
-  Users,
   Sun,
   ParkingCircle,
   Coffee,
@@ -36,15 +32,7 @@ import { useDestination } from "@/hooks/use-destination";
 import { IDestination } from "@/types/destination.types";
 import { getImageUrl } from "@/utils/image-helper";
 
-// Format currency
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+// No currency formatting needed in this component
 
 // Komponen Skeleton untuk loading
 const DetailSkeleton = () => {
@@ -247,8 +235,10 @@ export default function DestinationDetail() {
   useEffect(() => {
     if (destination) {
       console.log("Destination data received:", destination);
+      console.log("Destination ID:", destination._id);
+      
       // Mengubah destination dari API menjadi format yang dibutuhkan UI
-      setEnhancedDestination({
+      const enhanced = {
         ...destination,
         ...defaultData,
         // Override deskripsiLengkap dengan data dari API jika ada deskripsi
@@ -260,7 +250,12 @@ export default function DestinationDetail() {
           destination.foto && destination.foto.length > 0
             ? destination.foto
             : defaultData.galeri,
-      });
+      };
+      
+      console.log("Enhanced destination created:", enhanced);
+      setEnhancedDestination(enhanced);
+    } else {
+      console.warn("No destination data available");
     }
   }, [destination]);
 
@@ -357,9 +352,8 @@ export default function DestinationDetail() {
             }
             alt={`${enhancedDestination.nama} - Foto ${currentImageIndex + 1}`}
             className="h-full w-full object-cover"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://placehold.co/1200x675?text=No+Image";
+            onError={() => {
+              // No fallback image
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
@@ -766,7 +760,31 @@ export default function DestinationDetail() {
                 </div>
 
                 <div className="mt-6">
-                  <Button className="w-full">Lihat Paket Wisata</Button>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => {
+                      if (enhancedDestination && enhancedDestination._id) {
+                        // Log the navigation action
+                        console.log("Navigating to packages with destination:", enhancedDestination._id);
+                        
+                        // Navigate with state - using the correct route /tour-package
+                        navigate(`/tour-package?destinationId=${enhancedDestination._id}`, {
+                          state: { 
+                            destinationName: enhancedDestination.nama,
+                            filterByDestination: true,
+                            destinationId: enhancedDestination._id
+                          }
+                        });
+                      } else {
+                        console.error("Cannot navigate: destination ID is missing", { enhancedDestination });
+                        // Show an alert if the ID is missing
+                        alert("Tidak dapat melihat paket wisata untuk destinasi ini. Coba refresh halaman.");
+                      }
+                    }}
+                    disabled={!enhancedDestination || !enhancedDestination._id}
+                  >
+                    Lihat Paket Wisata
+                  </Button>
                 </div>
               </CardContent>
             </Card>

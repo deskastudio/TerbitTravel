@@ -145,10 +145,9 @@ export class MidtransService {
     try {
       console.log(`🔄 Creating snap token for booking: ${bookingId}`);
 
+      // Always use localhost for API calls
       const response = await fetch(
-        `${
-          import.meta.env.VITE_API_URL || "http://localhost:5000"
-        }/api/orders/${bookingId}/payment`,
+        `http://localhost:5000/api/orders/${bookingId}/payment`,
         {
           method: "POST",
           headers: {

@@ -424,8 +424,8 @@ export default function AddDestinationPage() {
                                         src={url}
                                         alt={`Preview ${index + 1}`}
                                         className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          e.currentTarget.src = 'https://placehold.co/200x200?text=Error';
+                                        onError={() => {
+                                          // No fallback image
                                         }}
                                       />
                                     </div>

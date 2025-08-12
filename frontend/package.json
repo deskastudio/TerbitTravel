@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host localhost --port 5173",
+    "dev:tunnel": "node src/scripts/set-tunnel-url.js && vite --host localhost --port 5173",
     "build": "tsc && vite build",
+    "build:tunnel": "node src/scripts/set-tunnel-url.js && tsc && vite build",
     "lint": "eslint .",
     "preview": "vite preview --host localhost --port 4173"
   },

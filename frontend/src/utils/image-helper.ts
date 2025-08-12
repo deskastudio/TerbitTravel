@@ -1,16 +1,26 @@
-// utils/image-helper.ts - SIMPLE LOCALHOST VERSION
+// utils/image-helper.ts - IMAGES ALWAYS FROM LOCAL SERVER
+/**
+ * Gets the correct image URL, always from localhost backend
+ * 
+ * IMPORTANT: This function ALWAYS returns URLs from localhost:5000
+ * regardless of whether the app is running in tunnel mode or not.
+ * This ensures fast image loading and prevents CORS issues.
+ * 
+ * External callbacks (Midtrans, Google) still use the tunnel URL
+ * which is managed separately in their respective services.
+ */
 export const getImageUrl = (path: string): string => {
   // Handle empty/null path
   if (!path || path.trim() === "") {
     return "https://placehold.co/400x400?text=No+Image";
   }
 
-  // Handle jika path sudah berupa URL lengkap
+  // Handle if path is already a complete URL
   if (path.startsWith("http://") || path.startsWith("https://")) {
     return path;
   }
 
-  // Clean path dari prefix yang tidak perlu
+  // Clean path from unnecessary prefix
   let cleanPath = path;
   if (cleanPath.startsWith("./")) {
     cleanPath = cleanPath.slice(2);
@@ -20,19 +30,15 @@ export const getImageUrl = (path: string): string => {
   if (!cleanPath.startsWith("/")) {
     cleanPath = `/${cleanPath}`;
   }
-
-  // 🎯 SOLUTION: Use localhost untuk static files (gambar), bukan tunnel URL
-  const staticBaseUrl =
-    import.meta.env.VITE_STATIC_URL ||
-    import.meta.env.VITE_UPLOADS_URL ||
-    import.meta.env.VITE_BACKEND_URL ||
-    "http://localhost:5000";
-
-  const finalUrl = `${staticBaseUrl}${cleanPath}`;
+  
+  // FIXED: Always use local backend URL (localhost:5000) for images
+  // No matter what environment variables are set, images always load from localhost
+  const baseUrl = "http://localhost:5000";
+  const finalUrl = `${baseUrl}${cleanPath}`;
 
   // Debug logging
-  if (import.meta.env.VITE_NODE_ENV === "development") {
-    console.log(`🖼️ Image URL: ${path} -> ${finalUrl}`);
+  if (import.meta.env.MODE === "development") {
+    console.log(`🖼️ Image URL: ${path} -> ${finalUrl} (Always using local backend)`);
   }
 
   return finalUrl;

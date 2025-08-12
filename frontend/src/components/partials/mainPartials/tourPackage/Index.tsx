@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Search, MapPin, Calendar, Users, Filter, Heart } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -75,6 +75,7 @@ interface IPaketWisata {
   _id: string;
   nama: string;
   destinasi: string[];
+  destinationId?: string;  // Added: ID destinasi untuk filter
   deskripsi: string;
   harga: number;
   diskon?: number;
@@ -111,6 +112,7 @@ const convertToUIFormat = (tourPackage: ITourPackage): IPaketWisata => {
     _id: tourPackage._id,
     nama: tourPackage.nama,
     destinasi: [tourPackage.destination.nama, tourPackage.destination.lokasi], // Tambahkan lokasi
+    destinationId: tourPackage.destination._id, // Add the destination ID for filtering
     deskripsi: tourPackage.deskripsi,
     harga: tourPackage.harga,
     diskon: diskon, // Random diskon
@@ -369,6 +371,7 @@ const RecommendationSection = ({
 // Main Component
 const PaketWisataPage: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [selectedCategory, setSelectedCategory] =
@@ -379,6 +382,14 @@ const PaketWisataPage: React.FC = () => {
   const [durasiFilter, setDurasiFilter] = useState("");
   const [hargaFilter, setHargaFilter] = useState("");
   const [fasilitasFilter, setFasilitasFilter] = useState("");
+
+  // State untuk filter berdasarkan destinasi
+  const [destinationFilter, setDestinationFilter] = useState<string | null>(null);
+  const [destinationName, setDestinationName] = useState<string | null>(null);
+  
+  // Get destination filter from URL query parameters
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   // State untuk menyimpan data kategori dari API
   const [categories, setCategories] = useState<IPackageCategory[]>([]);
@@ -408,7 +419,40 @@ const PaketWisataPage: React.FC = () => {
     };
 
     checkFavorites();
-  }, [paketWisata.length]);
+  }, [paketWisata]);
+
+  // Check for destination filter in URL params or location state
+  useEffect(() => {
+    const destinationId = searchParams.get('destinationId');
+    const locationState = location.state as { destinationName?: string, filterByDestination?: boolean, destinationId?: string } | null;
+    
+    console.log("🔄 URL parameters changed:");
+    console.log("  destinationId from URL:", destinationId);
+    console.log("  Location state:", locationState);
+    
+    // Run a debug check to see if any packages are available
+    const runDebugCheck = async () => {
+      try {
+        const samplePackage = await TourPackageService.debugGetSinglePackage();
+        console.log("🔍 Debug check complete. Package available:", !!samplePackage);
+      } catch (error) {
+        console.error("❌ Debug check failed:", error);
+      }
+    };
+    
+    runDebugCheck();
+    
+    if (destinationId) {
+      console.log("📍 Setting destination filter from URL parameter:", destinationId);
+      setDestinationFilter(destinationId);
+    } else if (locationState?.filterByDestination && locationState.destinationId) {
+      console.log("📍 Setting destination filter from location state:", locationState.destinationId);
+      setDestinationFilter(locationState.destinationId);
+      if (locationState.destinationName) {
+        setDestinationName(locationState.destinationName);
+      }
+    }
+  }, [searchParams, location]);
 
   // Fetch data kategori dan paket wisata dari API pada saat komponen dimount
   useEffect(() => {
@@ -417,11 +461,92 @@ const PaketWisataPage: React.FC = () => {
         setIsLoading(true);
         setFetchError(null);
 
+        // Get destination ID from URL or state
+        const locationState = location.state as { 
+          destinationId?: string;
+          destinationName?: string;
+        } | null;
+        
+        // Check URL parameters and location state
+        console.log("URL params:", Object.fromEntries(searchParams.entries()));
+        console.log("Location state:", locationState);
+        
+        const destId = searchParams.get('destinationId') || 
+                     locationState?.destinationId || null;
+                     
+        console.log("Destination ID for filtering:", destId);
+        
+        // Set destination name if available
+        if (locationState?.destinationName) {
+          setDestinationName(locationState.destinationName);
+          console.log("Setting destination name:", locationState.destinationName);
+        } else if (destId) {
+          // If we have destId but no name, use a generic name
+          setDestinationName("Pilihan Anda");
+          console.log("Using generic destination name");
+        }
+
         // Ambil kategori dan paket wisata secara parallel
-        const [categoriesData, packagesData] = await Promise.all([
-          TourPackageService.getAllCategories(),
-          TourPackageService.getAllPackages(),
-        ]);
+        const categoriesPromise = TourPackageService.getAllCategories();
+        
+        // If destination filter is applied, get packages by destination
+        // Variable to store package data
+        let packagesData;
+        
+        // First fetch categories
+        const categoriesData = await categoriesPromise;
+        
+        if (destId) {
+          setDestinationFilter(destId);
+          console.log(`🔍 Searching for packages with destination ID: ${destId}`);
+          
+          // Pendekatan sederhana: Pertama coba dengan ID destinasi yang diberikan
+          console.log(`🔍 Mencoba mencari paket dengan ID destinasi: ${destId}`);
+          packagesData = await TourPackageService.getPackagesByDestination(destId);
+          
+          // Jika tidak ditemukan dan kita punya nama destinasi, gunakan nama untuk mencari
+          if (packagesData.length === 0 && destinationName) {
+            console.log(`🔍 Tidak ditemukan paket dengan ID destinasi, mencoba dengan nama: "${destinationName}"`);
+            packagesData = await TourPackageService.getPackagesByDestinationName(destinationName);
+            
+            if (packagesData.length > 0) {
+              console.log(`✅ Berhasil menemukan ${packagesData.length} paket berdasarkan nama destinasi`);
+              toast({
+                title: "Paket wisata ditemukan!",
+                description: `Ditemukan ${packagesData.length} paket wisata untuk destinasi "${destinationName}"`,
+              });
+            }
+          }
+          
+          // Jika masih tidak ditemukan, coba metode ID similar sebagai cadangan
+          if (packagesData.length === 0) {
+  console.log(`🔍 Mencoba metode pencarian ID yang mirip...`);
+  
+  // Coba cari ID yang mirip
+  const similarDestResult = await TourPackageService.findPackagesByAlmostMatchingDestination(destId);
+  
+  if (similarDestResult.packages.length > 0) {
+    packagesData = similarDestResult.packages;
+    console.log(`✅ Ditemukan ${packagesData.length} paket dengan ID destinasi yang mirip: ${similarDestResult.matchedId}`);
+    
+    toast({
+      title: "Paket wisata ditemukan!",
+      description: `Ditemukan ${packagesData.length} paket wisata untuk destinasi serupa.`,
+    });
+    
+    // Update filter ke ID yang ditemukan
+    if (similarDestResult.matchedId) {
+      console.log(`🔄 Memperbarui filter dari ${destId} ke ${similarDestResult.matchedId}`);
+      setDestinationFilter(similarDestResult.matchedId);
+    }
+  } else {
+    // Jika masih tidak ditemukan, tampilkan debug info
+    console.log(`❌ Tidak ditemukan paket wisata untuk destinasi ini`);
+  }
+}
+        } else {
+          packagesData = await TourPackageService.getAllPackages();
+        }
 
         console.log("Data kategori dari API:", categoriesData);
         console.log("Data paket wisata dari API:", packagesData);
@@ -447,6 +572,12 @@ const PaketWisataPage: React.FC = () => {
           const savedFavorites = JSON.parse(
             localStorage.getItem("favoritePackages") || "[]"
           );
+
+          // Log for debugging if filtering by destination
+          if (destId) {
+            console.log(`🔍 Destination filter active: ${destId}`);
+            console.log(`📦 Found ${packagesData.length} packages for this destination`);
+          }
 
           // Konversi data dari API ke format yang dibutuhkan UI dan tandai yang favorit
           const convertedData = packagesData.map((pkg) => {
@@ -485,9 +616,9 @@ const PaketWisataPage: React.FC = () => {
     };
 
     fetchData();
-  }, [toast]);
+  }, [toast, searchParams, location.state, destinationName]);
 
-  // Filter packages based on search, category, and other filters
+  // Filter packages based on search, category, destination, and other filters
   const filteredPaket = paketWisata.filter((paket) => {
     // Search filter
     const matchesSearch =
@@ -504,6 +635,44 @@ const PaketWisataPage: React.FC = () => {
     let matchesCategory = true;
     if (selectedCategory !== "semua") {
       matchesCategory = paket.kategoriId === selectedCategory;
+    }
+    
+    // Double-check destination filtering at UI level as well
+    // This is a fallback in case the API-level filtering didn't work
+    let matchesDestination = true;
+    if (destinationFilter && paket.destinationId) {
+      // Log for debugging
+      console.log(`🔍 Checking package ${paket._id} destination: ${paket.destinationId} against filter: ${destinationFilter}`);
+      
+      // Clean both IDs for comparison
+      const cleanPaketDestId = paket.destinationId.replace(/[^a-fA-F0-9]/g, '');
+      const cleanFilterDestId = destinationFilter.replace(/[^a-fA-F0-9]/g, '');
+      
+      // Try multiple comparison strategies
+      matchesDestination = 
+        // Exact match
+        paket.destinationId === destinationFilter ||
+        // Match on cleaned IDs
+        cleanPaketDestId === cleanFilterDestId ||
+        // Substring match (in case one format is a subset of the other)
+        cleanPaketDestId.includes(cleanFilterDestId) ||
+        cleanFilterDestId.includes(cleanPaketDestId);
+        
+      // If still no match and both IDs are valid ObjectId format (24 hex chars),
+      // check for high similarity (only 1-2 characters different)
+      if (!matchesDestination && cleanPaketDestId.length === 24 && cleanFilterDestId.length === 24) {
+        let matchingChars = 0;
+        for (let i = 0; i < 24; i++) {
+          if (cleanPaketDestId[i] === cleanFilterDestId[i]) matchingChars++;
+        }
+        
+        const similarityPercentage = (matchingChars / 24) * 100;
+        // If IDs are 90%+ similar (typically only 1-2 characters different), consider a match
+        if (similarityPercentage >= 90) {
+          console.log(`📊 High similarity match: ${paket.destinationId} is ${similarityPercentage.toFixed(1)}% similar to ${destinationFilter}`);
+          matchesDestination = true;
+        }
+      }
     }
 
     // Durasi filter
@@ -544,7 +713,8 @@ const PaketWisataPage: React.FC = () => {
       matchesCategory &&
       matchesDurasi &&
       matchesHarga &&
-      matchesFasilitas
+      matchesFasilitas &&
+      matchesDestination
     );
   });
 
@@ -657,6 +827,179 @@ const PaketWisataPage: React.FC = () => {
           <p className="text-sm text-red-600 mt-1">
             Silakan coba muat ulang halaman ini
           </p>
+        </div>
+      )}
+
+      {/* Destination filter info if applied */}
+      {destinationFilter && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-blue-800 font-medium flex items-center">
+                <MapPin className="h-5 w-5 mr-2" />
+                Paket Wisata untuk: {destinationName || "Destinasi Pilihan"}
+              </h3>
+              <p className="text-sm text-blue-600 mt-1 mb-2">
+                {filteredPaket.length > 0 ? (
+                  `Ditemukan ${filteredPaket.length} paket wisata untuk destinasi ini`
+                ) : (
+                  "Mencari paket wisata yang sesuai dengan destinasi ini..."
+                )}
+              </p>
+              <div className="flex flex-wrap gap-2 mt-1">
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Run the debug utility
+                    TourPackageService.debugDestinationIdMatching(destinationFilter || "");
+                  }}
+                  className="text-xs bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-blue-700"
+                >
+                  Debug ID Format
+                </button>
+                {destinationName && (
+                  <button 
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      
+                      if (!destinationName) return;
+                      
+                      // Show loading toast
+                      toast({
+                        title: "Mencari paket...",
+                        description: `Mencari paket wisata untuk: ${destinationName}`,
+                      });
+                      
+                      try {
+                        // Try to get packages by destination name
+                        const nameResult = await TourPackageService.getPackagesByDestinationName(destinationName);
+                        
+                        if (nameResult && nameResult.length > 0) {
+                          // Convert to UI format
+                          const savedFavorites = JSON.parse(
+                            localStorage.getItem("favoritePackages") || "[]"
+                          );
+                          
+                          const convertedData = nameResult.map((pkg) => {
+                            const converted = convertToUIFormat(pkg);
+                            converted.isFavorite = savedFavorites.includes(converted._id);
+                            return converted;
+                          });
+                          
+                          // Update the packages
+                          setPaketWisata(convertedData);
+                          
+                          toast({
+                            title: "Paket ditemukan!",
+                            description: `Berhasil menemukan ${nameResult.length} paket wisata untuk ${destinationName}`,
+                          });
+                        } else {
+                          toast({
+                            variant: "destructive",
+                            title: "Tidak ditemukan",
+                            description: `Tidak ada paket wisata untuk destinasi: ${destinationName}`,
+                          });
+                        }
+                      } catch (error) {
+                        console.error("Error searching by name:", error);
+                        toast({
+                          variant: "destructive",
+                          title: "Gagal mencari",
+                          description: "Terjadi kesalahan saat mencari paket wisata",
+                        });
+                      }
+                    }}
+                    className="text-xs bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded text-amber-700"
+                  >
+                    Cari Dengan Nama
+                  </button>
+                )}
+                <button
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (!destinationFilter) return;
+                    
+                    // Check for similar destination IDs and show the result
+                    const similarResult = await TourPackageService.findPackagesByAlmostMatchingDestination(destinationFilter);
+                    
+                    if (similarResult.packages.length > 0) {
+                      toast({
+                        title: `Ditemukan ${similarResult.packages.length} paket!`,
+                        description: `Tipe: ${similarResult.matchType === 'exact' ? 'ID persis sama' : 
+                                             similarResult.matchType === 'high-similarity' ? 'ID sangat mirip' :
+                                             'ID dengan prefiks sama'}`,
+                      });
+                      
+                      // If there's a match, update the filter to the matched ID
+                      if (similarResult.matchedId && similarResult.matchedId !== destinationFilter) {
+                        setDestinationFilter(similarResult.matchedId);
+                        toast({
+                          title: "ID Diperbarui",
+                          description: "Menggunakan ID destinasi yang mirip yang memiliki paket",
+                        });
+                      }
+                      
+                      // Convert packages to UI format
+                      const savedFavorites = JSON.parse(
+                        localStorage.getItem("favoritePackages") || "[]"
+                      );
+                      
+                      const convertedData = similarResult.packages.map((pkg) => {
+                        const converted = convertToUIFormat(pkg);
+                        converted.isFavorite = savedFavorites.includes(converted._id);
+                        return converted;
+                      });
+                      
+                      // Update the packages
+                      setPaketWisata(convertedData);
+                    } else {
+                      toast({
+                        variant: "destructive",
+                        title: "Tidak ditemukan",
+                        description: "Tidak dapat menemukan destinasi dengan ID yang mirip",
+                      });
+                    }
+                  }}
+                  className="text-xs bg-purple-100 hover:bg-purple-200 px-2 py-1 rounded text-purple-700"
+                >
+                  Cari ID Serupa
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => {
+                  if (!destinationName) return;
+                  
+                  // Set search query to destination name to aid in manual search
+                  setSearchQuery(destinationName);
+                  // Clear destination filter
+                  setDestinationFilter(null);
+                  setDestinationName(null);
+                }}
+              >
+                <Search className="h-3.5 w-3.5 mr-1" />
+                Cari Manual
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setDestinationFilter(null);
+                  setDestinationName(null);
+                  navigate('/tour-package');
+                }}
+              >
+                Lihat Semua Paket
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -824,10 +1167,170 @@ const PaketWisataPage: React.FC = () => {
               </div>
               <h3 className="text-lg font-medium mb-2">Tidak ada hasil</h3>
               <p className="text-muted-foreground mb-4">
-                Tidak ada paket wisata yang sesuai dengan filter Anda. Coba ubah
-                filter atau cari dengan kata kunci lain.
+                {destinationFilter
+                  ? `Tidak ada paket wisata yang tersedia untuk destinasi ini saat ini.`
+                  : `Tidak ada paket wisata yang sesuai dengan filter Anda. Coba ubah
+                    filter atau cari dengan kata kunci lain.`
+                }
               </p>
-              <Button onClick={resetFilters}>Reset Filter</Button>
+              {/* Show specific message when filtering by destination */}
+              {destinationFilter && (
+                <div className="bg-amber-50 border border-amber-200 p-4 mb-4 rounded-md text-sm">
+                  <h4 className="font-medium text-amber-800 mb-1">Informasi</h4>
+                  <p className="text-amber-700 mb-3">
+                    Sistem telah mencoba menemukan paket wisata untuk destinasi ini (ID: <span className="font-mono bg-amber-100 px-1 rounded">{destinationFilter}</span>), 
+                    namun belum menemukan paket yang sesuai. Beberapa kemungkinan penyebabnya:
+                  </p>
+                  <ul className="list-disc pl-5 text-amber-700 mb-3 space-y-1">
+                    <li>Belum ada paket wisata yang tersedia untuk destinasi ini</li>
+                    <li>Ada perbedaan ID destinasi pada database (format ID mungkin berbeda)</li>
+                    <li>Destinasi ini termasuk dalam paket wisata gabungan</li>
+                    <li>Coba klik "Lihat Semua Paket" dan filter secara manual</li>
+                  </ul>
+                  
+                  {/* Debug info for developers */}
+                  <div className="bg-gray-100 p-2 rounded-md mt-2 text-xs font-mono text-gray-700 overflow-auto">
+                    <p className="font-bold">Debug Info:</p>
+                    <p>ID: {destinationFilter}</p>
+                    <p>Name: {destinationName}</p>
+                    <p>Total Packages: {paketWisata.length}</p>
+                    <p>Clean ID: {destinationFilter?.replace(/[^a-fA-F0-9]/g, '')}</p>
+                    <p>Filtered Packages: {filteredPaket.length}</p>
+                    <div className="mt-2 mb-1 border-t border-gray-300 pt-2">
+                      <p className="font-semibold">Similar ID Checker:</p>
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          
+                          if (!destinationFilter) return;
+                          
+                          // Check for similar destination IDs and show the result
+                          const similarResult = await TourPackageService.findPackagesByAlmostMatchingDestination(destinationFilter);
+                          
+                          if (similarResult.packages.length > 0) {
+                            toast({
+                              title: `Found ${similarResult.packages.length} packages!`,
+                              description: `Match type: ${similarResult.matchType}, ID: ${similarResult.matchedId}`,
+                            });
+                            
+                            // If there's a match, update the filter to the matched ID
+                            if (similarResult.matchedId && similarResult.matchedId !== destinationFilter) {
+                              setDestinationFilter(similarResult.matchedId);
+                              toast({
+                                title: "ID Updated",
+                                description: "Using similar destination ID that has packages",
+                              });
+                            }
+                          } else {
+                            toast({
+                              variant: "destructive",
+                              title: "No matches found",
+                              description: "Could not find any destination with similar ID",
+                            });
+                          }
+                        }}
+                        className="px-2 py-1 bg-purple-600 text-white rounded text-xs mr-2 mt-1"
+                      >
+                        Find Similar ID
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          TourPackageService.debugDestinationIdMatching(destinationFilter || "");
+                        }}
+                        className="px-2 py-1 bg-blue-600 text-white rounded text-xs mr-2 mt-1"
+                      >
+                        Run ID Format Check
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          TourPackageService.logRawPackageData();
+                        }}
+                        className="px-2 py-1 bg-green-600 text-white rounded text-xs mt-1"
+                      >
+                        Log Raw Data
+                      </button>
+                      {destinationName && (
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            if (!destinationName) return;
+                            
+                            // Show loading toast
+                            toast({
+                              title: "Mencari paket...",
+                              description: `Mencari paket wisata untuk: ${destinationName}`,
+                            });
+                            
+                            try {
+                              // Try to get packages by destination name
+                              const nameResult = await TourPackageService.getPackagesByDestinationName(destinationName);
+                              
+                              if (nameResult && nameResult.length > 0) {
+                                // Convert to UI format
+                                const savedFavorites = JSON.parse(
+                                  localStorage.getItem("favoritePackages") || "[]"
+                                );
+                                
+                                const convertedData = nameResult.map((pkg) => {
+                                  const converted = convertToUIFormat(pkg);
+                                  converted.isFavorite = savedFavorites.includes(converted._id);
+                                  return converted;
+                                });
+                                
+                                // Update the packages
+                                setPaketWisata(convertedData);
+                                
+                                toast({
+                                  title: "Paket ditemukan!",
+                                  description: `Berhasil menemukan ${nameResult.length} paket wisata untuk ${destinationName}`,
+                                });
+                              } else {
+                                toast({
+                                  variant: "destructive",
+                                  title: "Tidak ditemukan",
+                                  description: `Tidak ada paket wisata untuk destinasi: ${destinationName}`,
+                                });
+                              }
+                            } catch (error) {
+                              console.error("Error searching by name:", error);
+                              toast({
+                                variant: "destructive",
+                                title: "Gagal mencari",
+                                description: "Terjadi kesalahan saat mencari paket wisata",
+                              });
+                            }
+                          }}
+                          className="px-2 py-1 bg-yellow-600 text-white rounded text-xs mr-2 mt-1"
+                        >
+                          Cari Dengan Nama
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="flex gap-2 justify-center">
+                <Button onClick={resetFilters}>Reset Filter</Button>
+                {destinationFilter && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setDestinationFilter(null);
+                      setDestinationName(null);
+                      navigate('/tour-package');
+                    }}
+                  >
+                    Lihat Semua Paket
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 

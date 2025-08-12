@@ -36,107 +36,75 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ===== CORS CONFIGURATION - PERBAIKAN LENGKAP =====
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  // ✅ MIDTRANS DOMAINS
-  "https://app.sandbox.midtrans.com",
-  "https://app.midtrans.com",
-  "https://simulator.sandbox.midtrans.com",
-  // ✅ PERBAIKAN: URL ngrok yang benar dari error log
-  "https://7957-180-254-75-63.ngrok-free.app",
-];
+// ===== BACKEND CORS CONFIGURATION - FINAL FIX =====
+// Ganti bagian CORS di index.js dengan kode ini:
 
-// ✅ TAMBAHAN: Dinamis ngrok atau localtunnel dari environment
-if (process.env.NGROK_URL) {
-  allowedOrigins.push(process.env.NGROK_URL);
-}
+// ✅ PERBAIKAN: Parse allowed origins dari .env dengan proper cleaning
+const allowedOrigins = (() => {
+  const envOrigins = process.env.ALLOWED_ORIGINS ? 
+    process.env.ALLOWED_ORIGINS.split(",").map(origin => origin.trim()).filter(Boolean) : 
+    [];
+  
+  // Default origins
+  const defaultOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "https://terbit-travel.loca.lt",
+    // Midtrans
+    "https://app.sandbox.midtrans.com",
+    "https://app.midtrans.com",
+  ];
+  
+  // Combine dan remove duplicates
+  const allOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
+  
+  console.log("🌐 Allowed Origins:", allOrigins);
+  return allOrigins;
+})();
 
-// Support untuk localtunnel
-if (process.env.LOCALTUNNEL_URL) {
-  allowedOrigins.push(process.env.LOCALTUNNEL_URL);
-}
-
-// ✅ TAMBAHAN: Parse dari ALLOWED_ORIGINS env
-if (process.env.ALLOWED_ORIGINS) {
-  const envOrigins = process.env.ALLOWED_ORIGINS.split(",");
-  allowedOrigins.push(...envOrigins);
-}
-
-// ✅ PERBAIKAN: Remove duplicate origins
-const uniqueAllowedOrigins = [...new Set(allowedOrigins)];
-
-// Debug mode
-const corsDebug = process.env.CORS_DEBUG === "true";
-if (corsDebug) {
-  console.log("🔍 CORS Debug Mode: ON");
-  console.log("🌐 CORS Debug - Allowed Origins:", uniqueAllowedOrigins);
-} else {
-  console.log(
-    "🌐 CORS Debug - Allowed Origins count:",
-    uniqueAllowedOrigins.length
-  );
-}
-
-// 🔥 FIXED: Set up CORS options
+// ✅ PERBAIKAN: Localtunnel optimized CORS
 const corsOptions = {
   origin: function (origin, callback) {
-    if (corsDebug) {
-      console.log(`🔍 CORS Check - Request Origin: "${origin}"`);
+    if (process.env.CORS_DEBUG === "true") {
+      console.log(`🔍 CORS Check - Origin: "${origin}"`);
     }
 
-    // ✅ Allow no origin (Postman, mobile apps, server-to-server)
+    // ✅ ALWAYS allow no origin (critical for localtunnel)
     if (!origin) {
-      if (corsDebug)
-        console.log("✅ CORS allowed: No origin (server-to-server request)");
+      if (process.env.CORS_DEBUG === "true") {
+        console.log("✅ CORS allowed: No origin (localtunnel/server-to-server)");
+      }
       return callback(null, true);
     }
 
-    // 🔥 FIXED: Always allow all origins in development mode for better compatibility
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`🔧 Development Mode: Allowing all origins: ${origin}`);
+    // ✅ ALWAYS allow in development
+    if (process.env.NODE_ENV === "development") {
+      if (process.env.CORS_DEBUG === "true") {
+        console.log(`✅ Development mode: Allowing ${origin}`);
+      }
       return callback(null, true);
     }
 
-    // ✅ Check exact match in allowed origins
+    // ✅ Check allowed origins
     if (allowedOrigins.includes(origin)) {
-      console.log(`✅ CORS allowed: Exact match - ${origin}`);
+      if (process.env.CORS_DEBUG === "true") {
+        console.log(`✅ CORS allowed: Listed origin - ${origin}`);
+      }
       return callback(null, true);
     }
 
-    // ✅ PERBAIKAN: Allow ALL ngrok and localtunnel domains in development
-    if (
-      process.env.NODE_ENV !== "production" &&
-      (origin.includes(".ngrok.io") ||
-        origin.includes(".ngrok-free.app") ||
-        origin.includes(".ngrok.app") ||
-        origin.includes("ngrok") ||
-        origin.includes(".loca.lt"))
-    ) {
-      console.log(
-        `✅ CORS allowed: Tunnel domain (ngrok/localtunnel) - ${origin}`
-      );
+    // ✅ Allow localtunnel patterns
+    if (origin.includes(".loca.lt") || origin.includes("localhost")) {
+      if (process.env.CORS_DEBUG === "true") {
+        console.log(`✅ CORS allowed: Tunnel/localhost pattern - ${origin}`);
+      }
       return callback(null, true);
     }
 
-    // ✅ Allow localhost variations in development
-    if (
-      process.env.NODE_ENV !== "production" &&
-      (origin.startsWith("http://localhost:") ||
-        origin.startsWith("http://127.0.0.1:") ||
-        origin.startsWith("https://localhost:") ||
-        origin.startsWith("https://127.0.0.1:"))
-    ) {
-      console.log(`✅ CORS allowed: Localhost - ${origin}`);
-      return callback(null, true);
-    }
-
-    // ❌ Reject other origins
+    // Reject others in production
     console.log(`❌ CORS rejected: ${origin}`);
-    console.log(`📝 Allowed origins: ${allowedOrigins.join(", ")}`);
+    console.log(`📝 Allowed: ${allowedOrigins.join(", ")}`);
     const corsError = new Error(`CORS Error: Origin ${origin} not allowed`);
     corsError.status = 403;
     callback(corsError);
@@ -146,67 +114,85 @@ const corsOptions = {
   allowedHeaders: [
     "Content-Type",
     "Authorization",
-    "X-Requested-With",
+    "X-Requested-With", 
     "Accept",
     "Origin",
     "Access-Control-Request-Method",
     "Access-Control-Request-Headers",
-    "ngrok-skip-browser-warning", // ✅ TAMBAHAN untuk ngrok
+    "bypass-tunnel-reminder",
+    "User-Agent",
+    "ngrok-skip-browser-warning",
   ],
   exposedHeaders: [
-    "set-cookie",
-    "access-control-allow-origin",
-    "access-control-allow-credentials",
-    "access-control-allow-methods",
-    "access-control-allow-headers",
+    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Credentials",
+    "Access-Control-Allow-Methods",
+    "Access-Control-Allow-Headers",
   ],
   preflightContinue: false,
   optionsSuccessStatus: 200,
 };
 
-// 🔥 FIXED: Apply CORS middleware
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
-// 🔥 FIXED: Add explicit OPTIONS handler for preflight requests
-app.options("*", cors(corsOptions));
+// ✅ PERBAIKAN: Explicit OPTIONS handler 
+app.options("*", (req, res) => {
+  const origin = req.headers.origin;
+  
+  if (process.env.CORS_DEBUG === "true") {
+    console.log(`✅ OPTIONS preflight for ${req.path} from ${origin}`);
+  }
+  
+  // Set headers manually for OPTIONS
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS,PATCH");
+  res.header("Access-Control-Allow-Headers", 
+    "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, bypass-tunnel-reminder, User-Agent");
+  
+  res.sendStatus(200);
+});
 
-// ✅ PERBAIKAN: Middleware tambahan untuk tunnel headers (ngrok/localtunnel)
+// ✅ PERBAIKAN: Universal CORS middleware for ALL requests
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  const corsDebug = process.env.CORS_DEBUG === "true";
-
-  // ✅ Set CORS headers secara manual untuk tunnel services atau saat debug mode
-  if (
-    corsDebug ||
-    (origin && (origin.includes("ngrok") || origin.includes("loca.lt")))
-  ) {
-    res.header("Access-Control-Allow-Origin", origin || "*");
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header(
-      "Access-Control-Allow-Methods",
-      "GET,PUT,POST,DELETE,OPTIONS,PATCH"
-    );
-    res.header(
-      "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept, Authorization, ngrok-skip-browser-warning"
-    );
-
-    if (corsDebug) {
-      console.log(
-        `🔧 Manual CORS headers set for: ${origin || "*"} (Debug Mode)`
-      );
-    } else {
-      console.log(`🔧 Manual CORS headers set for tunnel service: ${origin}`);
-    }
-  }
-
-  // ✅ Handle preflight OPTIONS requests
-  if (req.method === "OPTIONS") {
-    console.log(`✅ Handling OPTIONS preflight for ${req.path}`);
-    res.sendStatus(200);
+  
+  // ✅ Set CORS headers for ALL requests
+  if (origin) {
+    res.header("Access-Control-Allow-Origin", origin);
   } else {
-    next();
+    // No origin - set wildcard (for server-to-server, Postman, etc)
+    res.header("Access-Control-Allow-Origin", "*");
   }
+  
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS,PATCH");
+  res.header("Access-Control-Allow-Headers", 
+    "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, bypass-tunnel-reminder, User-Agent, ngrok-skip-browser-warning");
+  
+  // ✅ Debug logging for admin routes
+  if (req.path.includes("admin") && process.env.CORS_DEBUG === "true") {
+    console.log(`\n📨 ${req.method} ${req.path}`);
+    console.log(`🌐 Origin: ${origin || "No origin"}`);
+    console.log(`📋 Headers set: Origin=${origin || "*"}, Credentials=true`);
+  }
+  
+  next();
+});
+
+// ✅ PERBAIKAN: Specific middleware untuk admin routes
+app.use("/admin", (req, res, next) => {
+  if (process.env.CORS_DEBUG === "true") {
+    console.log(`\n🔑 Admin route accessed: ${req.method} ${req.path}`);
+    console.log(`🌐 Origin: ${req.headers.origin || "No origin"}`);
+    console.log(`📋 Content-Type: ${req.headers["content-type"]}`);
+    console.log(`🔐 Authorization: ${req.headers.authorization ? "Present" : "None"}`);
+  }
+  
+  next();
 });
 
 // Body parsing middleware

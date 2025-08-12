@@ -2,15 +2,11 @@
  * Image utility functions for handling fallbacks and preventing infinite loops
  */
 
-// Get backend URL from environment
+// Get backend URL
 const getBackendUrl = () => {
-  // 🎯 SOLUTION: Use separate URL for static files (images)
-  return (
-    import.meta.env.VITE_STATIC_URL ||
-    import.meta.env.VITE_UPLOADS_URL ||
-    import.meta.env.VITE_BACKEND_URL ||
-    "http://localhost:5000"
-  );
+  // FIXED: Always use local backend URL (localhost:5000) for images
+  // No matter what environment variables are set, images always load from localhost
+  return "http://localhost:5000";
 };
 
 // Generate a local SVG placeholder to avoid external requests
@@ -58,7 +54,7 @@ export const getImageUrl = (imagePath?: string): string | null => {
       if (urlMatch) {
         return urlMatch[0];
       }
-    } catch (e) {
+    } catch {
       console.warn("Failed to extract URL from path:", imagePath);
     }
   }

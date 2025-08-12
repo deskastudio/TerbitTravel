@@ -554,9 +554,8 @@ export default function EditDestinationPage() {
                                           }
                                           alt={`Foto ${index + 1}`}
                                           className="w-full h-full object-cover"
-                                          onError={(e) => {
-                                            e.currentTarget.src =
-                                              "https://placehold.co/200x200?text=Error";
+                                          onError={() => {
+                                            // No fallback image
                                           }}
                                         />
                                       </div>
@@ -601,9 +600,8 @@ export default function EditDestinationPage() {
                                           src={getImageUrl(imagePath)}
                                           alt={`Akan dihapus ${index + 1}`}
                                           className="w-full h-full object-cover grayscale"
-                                          onError={(e) => {
-                                            e.currentTarget.src =
-                                              "https://placehold.co/200x200?text=Error";
+                                          onError={() => {
+                                            // No fallback image
                                           }}
                                         />
                                       </div>

@@ -75,15 +75,7 @@ interface EnhancedDestination extends IDestination {
   maxPeople?: number;
 }
 
-// Format currency
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+// No formatting functions needed here
 
 // Destination Card Component
 const DestinationCard = ({
@@ -113,8 +105,8 @@ const DestinationCard = ({
           }
           alt={destination.nama}
           className="h-48 w-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src = "https://placehold.co/400x250?text=No+Image";
+          onError={() => {
+            // No fallback image
           }}
         />
       </div>
@@ -310,7 +302,7 @@ export default function DestinationPage() {
 
     // Price range filter dihapus karena destinasi tidak memiliki harga
     // Semua opsi filter harga akan selalu mengembalikan true
-    let matchesPriceRange = true;
+    const matchesPriceRange = true;
 
     // Duration filter
     let matchesDuration = true;

@@ -36,7 +36,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { TourPackageService } from "@/services/tour-package.service";
-import { ITourPackage, TourPackageStatus } from "@/types/tour-package.types";
+import { ITourPackage } from "@/types/tour-package.types";
 import { getImageUrl } from "@/utils/image-helper";
 
 // Format currency
@@ -60,26 +60,50 @@ const formatDate = (dateString: string): string => {
 };
 
 // Komponen untuk menampilkan status paket wisata
-const StatusBadge = ({ status }: { status: TourPackageStatus }) => {
-  const statusConfig = {
-    available: { label: "Tersedia", color: "bg-green-500 hover:bg-green-600" },
-    booked: {
-      label: "Sudah Dipesan",
-      color: "bg-orange-500 hover:bg-orange-600",
-    },
-    in_progress: {
-      label: "Sedang Berlangsung",
-      color: "bg-blue-500 hover:bg-blue-600",
-    },
-    completed: { label: "Selesai", color: "bg-gray-500 hover:bg-gray-600" },
-    cancelled: { label: "Dibatalkan", color: "bg-red-500 hover:bg-red-600" },
+// ✅ SIMPLE: StatusBadge yang simple dan praktis
+// Ganti StatusBadge di DetailPackage.tsx (line 54-80)
+
+const StatusBadge = ({ status }: { status?: string }) => {
+  // ✅ SIMPLE: Handle apa aja yang dateng dari backend
+  const getStatusDisplay = (status: string | undefined) => {
+    if (!status) return { label: "Tersedia", color: "bg-green-500" };
+    
+    const statusStr = String(status).toLowerCase();
+    
+    // ✅ Map semua kemungkinan ke tampilan yang masuk akal
+    if (statusStr.includes('tersedia') || statusStr.includes('available')) {
+      return { label: "Tersedia", color: "bg-green-500" };
+    }
+    if (statusStr.includes('booked') || statusStr.includes('dipesan')) {
+      return { label: "Sudah Dipesan", color: "bg-orange-500" };
+    }
+    if (statusStr.includes('progress') || statusStr.includes('berlangsung')) {
+      return { label: "Sedang Berlangsung", color: "bg-blue-500" };
+    }
+    if (statusStr.includes('completed') || statusStr.includes('selesai')) {
+      return { label: "Selesai", color: "bg-gray-500" };
+    }
+    if (statusStr.includes('cancelled') || statusStr.includes('batal')) {
+      return { label: "Dibatalkan", color: "bg-red-500" };
+    }
+    if (statusStr.includes('draft')) {
+      return { label: "Draft", color: "bg-gray-400" };
+    }
+    if (statusStr.includes('pending') || statusStr.includes('tunggu')) {
+      return { label: "Menunggu", color: "bg-yellow-500" };
+    }
+    if (statusStr.includes('active') || statusStr.includes('aktif')) {
+      return { label: "Aktif", color: "bg-green-500" };
+    }
+    
+    // ✅ Default: Apapun yang dateng, jadikan "Tersedia"
+    return { label: "Tersedia", color: "bg-green-500" };
   };
 
-  const config = statusConfig[status];
-
+  const config = getStatusDisplay(status);
+  
   return <Badge className={config.color}>{config.label}</Badge>;
 };
-
 // Komponen untuk menampilkan rating hotel dengan bintang
 const HotelStars = ({ rating }: { rating: number }) => {
   return (
@@ -152,6 +176,27 @@ export default function PaketWisataDetail() {
     }
   }, [id]);
 
+  // Fungsi untuk menyalin ke clipboard
+  const copyToClipboard = useCallback((text: string) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        toast({
+          title: "Disalin ke clipboard!",
+          description:
+            "Link paket wisata telah disalin. Anda dapat membagikannya sekarang",
+        });
+      })
+      .catch((err) => {
+        console.error("Error copying to clipboard:", err);
+        toast({
+          variant: "destructive",
+          title: "Gagal menyalin",
+          description: "Tidak dapat menyalin link ke clipboard",
+        });
+      });
+  }, [toast]);
+
   // Fungsi untuk toggle favorit
   const toggleFavorite = useCallback(() => {
     const savedFavorites = JSON.parse(
@@ -219,28 +264,7 @@ export default function PaketWisataDetail() {
       // Fallback to clipboard
       copyToClipboard(url);
     }
-  }, [paketWisata, toast]);
-
-  // Fungsi untuk menyalin ke clipboard
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        toast({
-          title: "Disalin ke clipboard!",
-          description:
-            "Link paket wisata telah disalin. Anda dapat membagikannya sekarang",
-        });
-      })
-      .catch((err) => {
-        console.error("Error copying to clipboard:", err);
-        toast({
-          variant: "destructive",
-          title: "Gagal menyalin",
-          description: "Tidak dapat menyalin link ke clipboard",
-        });
-      });
-  };
+  }, [paketWisata, toast, copyToClipboard]);
 
   // Ambil data paket wisata berdasarkan ID dan paket sejenis
   useEffect(() => {
@@ -260,7 +284,7 @@ export default function PaketWisataDetail() {
           data.hotel.fasilitas = [];
         }
 
-        // Generate placeholder images - mengambil foto dari destinasi jika tersedia
+        // Mengambil foto dari destinasi jika tersedia
         // Use getImageUrl to ensure proper formatting of image URLs
         const packageImages: string[] =
           data.destination &&
@@ -269,17 +293,7 @@ export default function PaketWisataDetail() {
             ? data.destination.foto.map((foto) =>
                 foto.startsWith("http") ? foto : getImageUrl(foto)
               )
-            : [
-                `https://source.unsplash.com/random/800x600/?travel,${
-                  data.destination?.nama || "destination"
-                }`,
-                `https://source.unsplash.com/random/800x600/?landscape,${
-                  data.destination?.nama || "landscape"
-                }`,
-                `https://source.unsplash.com/random/800x600/?hotel,${
-                  data.destination?.nama || "hotel"
-                }`,
-              ];
+            : [];
 
         // Set menu makanan dari field lauk di model consume
         const lauk: string[] = data.consume?.lauk || [];
@@ -340,13 +354,7 @@ export default function PaketWisataDetail() {
     navigate(`/booking/${id}/${selectedSchedule}`);
   }, [id, navigate, selectedSchedule]);
 
-  // Mendapatkan jadwal yang dipilih
-  const getSelectedSchedule = useCallback(() => {
-    if (!selectedSchedule || !paketWisata) return null;
-    return paketWisata.jadwal.find(
-      (j) => `${j.tanggalAwal}-${j.tanggalAkhir}` === selectedSchedule
-    );
-  }, [paketWisata, selectedSchedule]);
+  // (Removed unused getSelectedSchedule function)
 
   // Handle image load complete
   const handleImageLoad = () => {
@@ -429,9 +437,8 @@ export default function PaketWisataDetail() {
             alt={`${paketWisata.nama} - Foto ${currentImageIndex + 1}`}
             className="h-full w-full object-cover"
             onLoad={handleImageLoad}
-            onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-              // Fallback image if error
-              e.currentTarget.src = `https://source.unsplash.com/random/800x600/?travel,fallback`;
+            onError={() => {
+              // Just set loading to false when image errors
               setIsImageLoading(false);
             }}
           />
@@ -1098,17 +1105,13 @@ export default function PaketWisataDetail() {
                             pkg.destination &&
                             pkg.destination.foto &&
                             pkg.destination.foto.length > 0
-                              ? pkg.destination.foto[0]
-                              : `https://source.unsplash.com/random/800x600/?travel,${
-                                  pkg.destination?.nama || "travel"
-                                }`
+                              ? getImageUrl(pkg.destination.foto[0])
+                              : "https://placehold.co/400x400?text=No+Image"
                           }
                           alt={pkg.nama}
                           className="h-14 w-14 rounded-md object-cover"
-                          onError={(
-                            e: React.SyntheticEvent<HTMLImageElement, Event>
-                          ) => {
-                            e.currentTarget.src = `https://source.unsplash.com/random/800x600/?travel,fallback`;
+                          onError={() => {
+                            // No fallback image needed
                           }}
                         />
                         <div>

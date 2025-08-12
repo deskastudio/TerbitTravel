@@ -83,7 +83,7 @@ const DetailDestinationPage = () => {
             </Badge>
             <Badge variant="outline" className="flex items-center gap-1">
               <Tag className="w-3 h-3" />
-              {destination.category.title}
+              {destination.category?.title || "Tidak Ada Kategori"}
             </Badge>
           </div>
         </div>
@@ -128,8 +128,8 @@ const DetailDestinationPage = () => {
                           src={getImageUrl(image)}
                           alt={`${destination.nama} - Foto ${index + 1}`}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://placehold.co/600x400?text=Gambar+Tidak+Tersedia';
+                          onError={() => {
+                            // No fallback image
                           }}
                         />
                         <div className="absolute bottom-2 right-2 bg-black/50 text-white px-2 py-1 rounded text-sm">
@@ -193,7 +193,7 @@ const DetailDestinationPage = () => {
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-sm font-medium text-gray-500">Kategori</label>
                   <Badge variant="secondary" className="w-fit">
-                    {destination.category.title}
+                    {destination.category?.title || "Tidak Ada Kategori"}
                   </Badge>
                 </div>
               </div>
