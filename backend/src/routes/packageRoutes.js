@@ -6,6 +6,7 @@ import {
   addPackage,
   getAllPackages,
   getPackageById,
+  getPackagesByCategory,
   updatePackage,
   deletePackage,
 } from "../controllers/packageController.js";
@@ -85,19 +86,16 @@ const upload = multer(); // Middleware untuk menangani multipart form-data
  *               consume:
  *                 type: string
  *                 description: Consumption ID
+ *               kategori:
+ *                 type: string
+ *                 description: Category ID
  *     responses:
  *       201:
  *         description: Package added successfully
  *       400:
  *         description: Invalid data
  */
-router.post(
-  "/",
-  authMiddleware,
-  upload.none(),
-  validatePackageData,
-  addPackage
-);
+router.post("/", upload.none(), validatePackageData, addPackage);
 
 /**
  * @swagger
@@ -106,10 +104,16 @@ router.post(
  *     tags:
  *       - Packages
  *     summary: Get all packages
- *     description: Retrieve a list of all travel packages.
+ *     description: Retrieve all travel packages.
  *     responses:
  *       200:
- *         description: List of travel packages
+ *         description: A list of all packages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Package'
  */
 router.get("/", getAllPackages);
 
@@ -119,22 +123,64 @@ router.get("/", getAllPackages);
  *   get:
  *     tags:
  *       - Packages
- *     summary: Get a package by ID
- *     description: Retrieve a specific travel package by its ID.
+ *     summary: Get a specific package by ID
+ *     description: Retrieve details of a specific travel package by its ID.
  *     parameters:
  *       - in: path
  *         name: packageId
  *         required: true
+ *         description: The ID of the package to retrieve
  *         schema:
  *           type: string
- *         description: Package ID
  *     responses:
  *       200:
- *         description: Package found
+ *         description: The package details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Package'
  *       404:
  *         description: Package not found
  */
 router.get("/:packageId", getPackageById);
+
+/**
+ * @swagger
+ * /packages/category/{categoryId}:
+ *   get:
+ *     tags:
+ *       - Packages
+ *     summary: Get packages by category
+ *     description: Retrieve packages filtered by category ID.
+ *     parameters:
+ *       - in: path
+ *         name: categoryId
+ *         required: true
+ *         description: The ID of the category to filter by
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         description: Maximum number of packages to return
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: excludeId
+ *         description: Package ID to exclude from results
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of packages in the category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Package'
+ */
+router.get("/category/:categoryId", getPackagesByCategory);
 
 /**
  * @swagger
@@ -143,16 +189,16 @@ router.get("/:packageId", getPackageById);
  *     tags:
  *       - Packages
  *     summary: Update a package by ID
- *     description: Update a travel package with new data.
+ *     description: Update an existing travel package with new information.
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: packageId
  *         required: true
+ *         description: The ID of the package to update
  *         schema:
  *           type: string
- *         description: The ID of the package to update
  *     requestBody:
  *       required: true
  *       content:
@@ -215,20 +261,18 @@ router.get("/:packageId", getPackageById);
  *               consume:
  *                 type: string
  *                 description: Consumption ID
+ *               kategori:
+ *                 type: string
+ *                 description: Category ID
  *     responses:
  *       200:
  *         description: Package updated successfully
+ *       400:
+ *         description: Invalid data
  *       404:
  *         description: Package not found
  */
-router.put(
-  "/:packageId",
-  authMiddleware,
-  checkRole("admin"),
-  upload.none(),
-  validatePackageData,
-  updatePackage
-);
+router.put("/:packageId", upload.none(), validatePackageData, updatePackage);
 
 /**
  * @swagger
@@ -237,22 +281,22 @@ router.put(
  *     tags:
  *       - Packages
  *     summary: Delete a package by ID
- *     description: Delete a travel package by its ID.
+ *     description: Delete an existing travel package by its ID.
  *     security:
  *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: packageId
  *         required: true
+ *         description: The ID of the package to delete
  *         schema:
  *           type: string
- *         description: Package ID
  *     responses:
  *       200:
  *         description: Package deleted successfully
  *       404:
  *         description: Package not found
  */
-router.delete("/:packageId", authMiddleware, checkRole("admin"), deletePackage);
+router.delete("/:packageId", deletePackage);
 
 export default router;

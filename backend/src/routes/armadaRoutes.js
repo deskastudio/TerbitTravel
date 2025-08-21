@@ -6,10 +6,11 @@ import {
   updateArmada,
   deleteArmada,
   getAllArmada,
-  getArmadaById, // Import the new function
+  getArmadaById,
 } from "../controllers/armadaController.js";
 import { validateArmadaData } from "../middleware/armadaValidator.js";
 import { authMiddleware, checkRole } from "../middleware/authMiddleware.js";
+import { parseKapasitas } from "../middleware/parseKapasitas.js";
 
 // Konfigurasi Multer
 const storage = multer.diskStorage({
@@ -51,9 +52,11 @@ const router = express.Router();
  *                 description: Nama armada
  *                 example: "Armada A"
  *               kapasitas:
- *                 type: number
+ *                 type: array
+ *                 items:
+ *                   type: string
  *                 description: Kapasitas penumpang
- *                 example: 50
+ *
  *               harga:
  *                 type: number
  *                 description: Harga per hari
@@ -77,10 +80,11 @@ const router = express.Router();
  */
 router.post(
   "/add",
-  authMiddleware,
-  checkRole("admin"),
+  // authMiddleware,
+  // checkRole("admin"),
   upload.array("gambar"),
   validateArmadaData,
+  parseKapasitas,
   addArmada
 );
 
@@ -110,7 +114,9 @@ router.post(
  *                 type: string
  *                 description: Nama armada
  *               kapasitas:
- *                 type: number
+ *                 type: array
+ *                 items:
+ *                   type: string
  *                 description: Kapasitas penumpang
  *               harga:
  *                 type: number
@@ -133,10 +139,11 @@ router.post(
  */
 router.put(
   "/update/:id",
-  authMiddleware,
-  checkRole("admin"),
+  // authMiddleware,
+  // checkRole("admin"),
   upload.array("gambar"),
   validateArmadaData,
+  parseKapasitas,
   updateArmada
 );
 
@@ -163,7 +170,7 @@ router.put(
  *       500:
  *         description: Kesalahan server
  */
-router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
+router.delete("/delete/:id", deleteArmada);
 
 /**
  * @swagger
@@ -190,7 +197,9 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
  *                     type: string
  *                     description: Nama armada
  *                   kapasitas:
- *                     type: number
+ *                     type: array
+ *                     items:
+ *                       type: string
  *                     description: Kapasitas penumpang
  *                   gambar:
  *                     type: array
@@ -206,7 +215,7 @@ router.delete("/delete/:id", authMiddleware, checkRole("admin"), deleteArmada);
  *       500:
  *         description: Kesalahan server
  */
-router.get("/getAll", authMiddleware, checkRole("admin"), getAllArmada);
+router.get("/getAll", getAllArmada);
 
 /**
  * @swagger
@@ -231,6 +240,6 @@ router.get("/getAll", authMiddleware, checkRole("admin"), getAllArmada);
  *       500:
  *         description: Kesalahan server
  */
-router.get("/:id", authMiddleware, checkRole("admin"), getArmadaById);
+router.get("/:id",  getArmadaById);
 
 export default router;

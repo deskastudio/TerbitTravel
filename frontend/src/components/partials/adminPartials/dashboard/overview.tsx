@@ -10,23 +10,40 @@ import {
   Tooltip,
 } from "recharts";
 
-// Data dengan nilai yang jelas
-const data = [
-  { name: "Jan", total: 1200 },
-  { name: "Feb", total: 2400 },
-  { name: "Mar", total: 3000 },
-  { name: "Apr", total: 2000 },
-  { name: "May", total: 2780 },
-  { name: "Jun", total: 1890 },
-  { name: "Jul", total: 2390 },
-  { name: "Aug", total: 3490 },
-  { name: "Sep", total: 4200 },
-  { name: "Oct", total: 2800 },
-  { name: "Nov", total: 3000 },
-  { name: "Dec", total: 3500 },
+interface OverviewProps {
+  data?: Array<{
+    name: string;
+    total: number;
+  }>;
+}
+
+// Default data fallback
+const defaultData = [
+  { name: "Jan", total: 0 },
+  { name: "Feb", total: 0 },
+  { name: "Mar", total: 0 },
+  { name: "Apr", total: 0 },
+  { name: "May", total: 0 },
+  { name: "Jun", total: 0 },
+  { name: "Jul", total: 0 },
+  { name: "Aug", total: 0 },
+  { name: "Sep", total: 0 },
+  { name: "Oct", total: 0 },
+  { name: "Nov", total: 0 },
+  { name: "Dec", total: 0 },
 ];
 
-const Overview: React.FC = () => {
+const Overview: React.FC<OverviewProps> = ({ data = defaultData }) => {
+  // Format currency for Indonesia
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
     <ResponsiveContainer width="100%" height={350}>
       <BarChart data={data}>
@@ -42,9 +59,24 @@ const Overview: React.FC = () => {
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `$${value.toLocaleString()}`}
+          tickFormatter={(value) => {
+            if (value >= 1000000) {
+              return `${(value / 1000000).toFixed(1)}M`;
+            } else if (value >= 1000) {
+              return `${(value / 1000).toFixed(1)}K`;
+            }
+            return value.toString();
+          }}
         />
-        <Tooltip formatter={(value) => `$${value}`} />
+        <Tooltip
+          formatter={(value: number) => [formatCurrency(value), "Revenue"]}
+          labelStyle={{ color: "#000" }}
+          contentStyle={{
+            backgroundColor: "#fff",
+            border: "1px solid #ccc",
+            borderRadius: "4px",
+          }}
+        />
         <Bar dataKey="total" fill="#22c55e" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>

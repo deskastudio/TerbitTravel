@@ -2,7 +2,7 @@
 import { ReactNode } from "react";
 import AppSidebar from "@/components/partials/adminPartials/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import Search from "@/components/partials/adminPartials/sidebar/search";
+// import Search from "@/components/partials/adminPartials/sidebar/search";
 import UserNav from "@/components/partials/adminPartials/sidebar/user-nav";
 import { Separator } from "@/components/ui/separator";
 
@@ -23,7 +23,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-6" />
           <div className="ml-auto flex items-center space-x-2 md:space-x-4">
-            <Search />
+            {/* <Search /> */}
             <UserNav />
           </div>
         </header>

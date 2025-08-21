@@ -1,8 +1,11 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
-
+import { GoogleLogin } from '@react-oauth/google';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { z } from "zod";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -14,10 +17,23 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { loginSchema, LoginFormValues } from "@/lib/schemas";
 
-const LoginForm: React.FC = () => {
+const loginSchema = z.object({
+  email: z.string()
+    .min(1, "Email wajib diisi")
+    .email("Format email tidak valid"),
+  password: z.string()
+    .min(1, "Password wajib diisi")
+    .min(6, "Password minimal 6 karakter")
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+const LoginPage = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const { login, googleLogin } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -27,25 +43,69 @@ const LoginForm: React.FC = () => {
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    toast({
-      title: "Login Successful",
-      description: `Welcome back, ${data.email}`,
-    });
-    console.log(data);
-    setIsLoading(false);
+  const onSubmit = async (values: LoginFormValues) => {
+    try {
+      setIsLoading(true);
+      await login(values.email, values.password);
+      
+      toast({
+        title: "Berhasil",
+        description: "Login berhasil",
+      });
+      
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Gagal login",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (response: any) => {
+    try {
+      setIsLoading(true);
+      const result = await googleLogin(response.credential);
+      
+      toast({
+        title: "Berhasil",
+        description: "Login dengan Google berhasil",
+      });
+      
+      navigate('/');
+    } catch (error: any) {
+      if (error.message.includes('Akun tidak ditemukan')) {
+        toast({
+          title: "Error",
+          description: "Akun tidak ditemukan. Silakan register terlebih dahulu.",
+          variant: "destructive",
+        });
+        navigate('/register');
+        return;
+      }
+
+      toast({
+        title: "Error",
+        description: error.message || "Gagal login dengan Google",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-xl p-8">
-          <h1 className="text-4xl font-bold text-center mb-8 text-[#6B7280]">
-            Log In
-          </h1>
+          <h1 className="text-4xl font-bold text-center mb-8">Masuk</h1>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -53,90 +113,110 @@ const LoginForm: React.FC = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#6B7280] font-medium">Email</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Enter your email" 
+                        placeholder="Masukkan email Anda"
+                        type="email"
                         {...field}
-                        className="
-                          bg-white
-                          border-gray-200
-                          focus:border-[#B17457]
-                          focus:ring-[#B17457]/10
-                          text-gray-800
-                          placeholder-gray-400
-                          rounded-xl"
+                        className="rounded-xl"
                       />
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[#6B7280] font-medium">Password</FormLabel>
+                    <FormLabel>Kata Sandi</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="Enter your password"
-                        {...field}
-                        className="
-                          bg-white
-                          border-gray-200
-                          focus:border-[#B17457]
-                          focus:ring-[#B17457]/10
-                          text-gray-800
-                          placeholder-gray-400
-                          rounded-xl"
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Masukkan kata sandi Anda"
+                          {...field}
+                          className="rounded-xl"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </FormControl>
-                    <FormMessage className="text-red-500" />
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <Button
                 type="submit"
+                className="w-full rounded-xl"
                 disabled={isLoading}
-                className="
-                  w-full 
-                  bg-gradient-to-r from-[#B17457] to-blue-600
-                  hover:opacity-90
-                  text-white 
-                  transition-opacity 
-                  duration-200
-                  rounded-xl
-                  py-6"
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Please wait
+                    Silakan tunggu...
                   </>
                 ) : (
-                  "Log In"
+                  "Masuk"
                 )}
               </Button>
             </form>
           </Form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-muted-foreground">
+                Atau Lanjutkan dengan
+              </span>
+            </div>
+          </div>
+
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              toast({
+                title: "Error",
+                description: "Login dengan Google gagal",
+                variant: "destructive",
+              });
+            }}
+            useOneTap={false}
+          />
+
           <div className="mt-6 text-center space-y-2">
-            <p className="text-[#6B7280]">
-              Don't have an account?{" "}
-              <a 
-                href="/register" 
-                className="text-blue-600 hover:text-blue-700"
+            <p className="text-sm text-muted-foreground">
+                Belum punya akun?{" "}
+              <Link
+                to="/register"
+                className="text-primary hover:underline"
               >
-                Sign up
-              </a>
+                Daftar
+              </Link>
             </p>
-            <a 
-              href="/forgot-password" 
-              className="text-[#B17457] hover:text-[#B17457]/80 block"
+            {/* <Link
+              to="/forgot-password"
+              className="text-sm text-primary hover:underline"
             >
-              Forgot password?
-            </a>
+              Lupa Kata Sandi?
+            </Link> */}
           </div>
         </div>
       </div>
@@ -144,4 +224,4 @@ const LoginForm: React.FC = () => {
   );
 };
 
-export default LoginForm;
+export default LoginPage;

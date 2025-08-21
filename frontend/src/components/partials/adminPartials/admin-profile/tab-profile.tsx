@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { User, Lock } from 'lucide-react';
+import { User, Lock, Podcast } from 'lucide-react';
 
 const items = [
   {
@@ -13,6 +13,11 @@ const items = [
     title: "Password",
     href: "/admin-password",
     icon: Lock,
+  },
+  {
+    title: "Media Sosial",
+    href: "/admin-social-media",
+    icon: Podcast,
   },
 ];
 

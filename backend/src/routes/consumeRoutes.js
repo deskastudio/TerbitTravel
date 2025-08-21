@@ -5,7 +5,7 @@ import {
   updateConsume,
   deleteConsume,
   getAllConsumes,
-  getConsumeById, // Import function to get consume by ID
+  getConsumeById,
 } from "../controllers/consumeController.js";
 import {
   parseLauk,
@@ -62,7 +62,7 @@ const upload = multer();
  */
 router.post(
   "/add",
-  authMiddleware,
+  // authMiddleware, // Uncomment jika authentication diperlukan
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -115,7 +115,7 @@ router.post(
  */
 router.put(
   "/update/:id",
-  authMiddleware,
+  // authMiddleware, // Uncomment jika authentication diperlukan
   upload.none(),
   parseLauk,
   validateConsumeData,
@@ -145,11 +145,11 @@ router.put(
  *       500:
  *         description: Failed to delete consume
  */
-router.delete("/delete/:id", authMiddleware, deleteConsume);
+router.delete("/delete/:id", deleteConsume);
 
 /**
  * @swagger
- * /consume/get:
+ * /consume/getAll:
  *   get:
  *     summary: Get all consumes (Logged-in users)
  *     tags: [Consume]
@@ -194,7 +194,7 @@ router.delete("/delete/:id", authMiddleware, deleteConsume);
  *       500:
  *         description: Failed to fetch consumes
  */
-router.get("/get", authMiddleware, getAllConsumes);
+router.get("/getAll", getAllConsumes);
 
 /**
  * @swagger
@@ -219,6 +219,6 @@ router.get("/get", authMiddleware, getAllConsumes);
  *       500:
  *         description: Kesalahan server
  */
-router.get("/:id", authMiddleware, getConsumeById);
+router.get("/:id", getConsumeById);
 
 export default router;

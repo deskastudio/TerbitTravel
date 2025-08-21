@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 .htaccess
+.env
 
 tsconfig.app.tsbuildinfo
 tsconfig.node.tsbuildinfo

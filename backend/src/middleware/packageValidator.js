@@ -1,4 +1,3 @@
-// middleware/validatePackageData.js
 export const validatePackageData = (req, res, next) => {
   let { include, exclude, jadwal } = req.body;
 
@@ -39,7 +38,7 @@ export const validatePackageData = (req, res, next) => {
   if (jadwal.some((item) => !item.tanggalAwal || !item.tanggalAkhir)) {
     return res.status(400).json({
       message:
-        "Each 'jadwal' item must include 'tanggalAwal' and 'tanggalAkhir'",
+        "Each 'jadwal' item must include 'tanggalAwal' and 'tanggalAkhir' dates.",
     });
   }
 
