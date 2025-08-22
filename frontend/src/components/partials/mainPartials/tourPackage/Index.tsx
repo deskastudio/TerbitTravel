@@ -519,32 +519,32 @@ const PaketWisataPage: React.FC = () => {
           }
           
           // Jika masih tidak ditemukan, coba metode ID similar sebagai cadangan
-          if (packagesData.length === 0) {
-  console.log(`🔍 Mencoba metode pencarian ID yang mirip...`);
-  
-  // Coba cari ID yang mirip
-  const similarDestResult = await TourPackageService.findPackagesByAlmostMatchingDestination(destId);
-  
-  if (similarDestResult.packages.length > 0) {
-    packagesData = similarDestResult.packages;
-    console.log(`✅ Ditemukan ${packagesData.length} paket dengan ID destinasi yang mirip: ${similarDestResult.matchedId}`);
-    
-    toast({
-      title: "Paket wisata ditemukan!",
-      description: `Ditemukan ${packagesData.length} paket wisata untuk destinasi serupa.`,
-    });
-    
-    // Update filter ke ID yang ditemukan
-    if (similarDestResult.matchedId) {
-      console.log(`🔄 Memperbarui filter dari ${destId} ke ${similarDestResult.matchedId}`);
-      setDestinationFilter(similarDestResult.matchedId);
-    }
-  } else {
-    // Jika masih tidak ditemukan, tampilkan debug info
-    console.log(`❌ Tidak ditemukan paket wisata untuk destinasi ini`);
-  }
-}
-        } else {
+          if (packagesData.length === 0)
+            console.log(`🔍 Mencoba metode pencarian ID yang mirip...`);
+            
+            // Coba cari ID yang mirip
+            const similarDestResult = await TourPackageService.findPackagesByAlmostMatchingDestination(destId);
+            
+            if (similarDestResult.packages.length > 0) {
+              packagesData = similarDestResult.packages;
+              console.log(`✅ Ditemukan ${packagesData.length} paket dengan ID destinasi yang mirip: ${similarDestResult.matchedId}`);
+              
+              toast({
+                title: "Paket wisata ditemukan!",
+                description: `Ditemukan ${packagesData.length} paket wisata untuk destinasi serupa.`,
+              });
+              
+              // Update filter ke ID yang ditemukan
+              if (similarDestResult.matchedId) {
+                console.log(`🔄 Memperbarui filter dari ${destId} ke ${similarDestResult.matchedId}`);
+                setDestinationFilter(similarDestResult.matchedId);
+              }
+            } else {
+              // Jika masih tidak ditemukan, tampilkan debug info
+              console.log(`❌ Tidak ditemukan paket wisata untuk destinasi ini`);
+            }
+          }
+         else {
           packagesData = await TourPackageService.getAllPackages();
         }
 

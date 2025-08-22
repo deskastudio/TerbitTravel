@@ -22,7 +22,6 @@ import {
   AlertCircle,
   Copy,
   Info,
-  ChevronRight,
   QrCode,
   Star,
   Loader2,
@@ -303,9 +302,6 @@ Generated: ${formatDateTime(voucherData.generatedAt)}
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary/5 rounded-full -mb-12 -ml-12"></div>
 
       <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-          <QrCode className="h-6 w-6 text-primary" />
-        </div>
         <h3 className="text-lg font-bold">E-Voucher Travedia</h3>
         <p className="text-sm text-muted-foreground">
           Tunjukkan voucher ini kepada tour guide kami
@@ -316,25 +312,6 @@ Generated: ${formatDateTime(voucherData.generatedAt)}
         >
           ✓ Pembayaran Terkonfirmasi
         </Badge>
-      </div>
-
-      <div className="flex justify-center mb-6">
-        {/* QR Code - Package image removed as requested */}
-        <div className="p-3 border-2 border-dashed border-primary/30 rounded-lg relative bg-white">
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${bookingId}&margin=10`}
-            alt="QR Code E-Voucher"
-            className="border rounded-lg"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%23f3f4f6'/%3E%3Ctext x='90' y='90' text-anchor='middle' dy='0.3em' font-family='Arial' font-size='12' fill='%236b7280'%3EQR Code%3C/text%3E%3C/svg%3E";
-            }}
-          />
-          <div className="absolute -top-2 -left-2 w-4 h-4 bg-white border border-primary/30 rounded-full"></div>
-          <div className="absolute -top-2 -right-2 w-4 h-4 bg-white border border-primary/30 rounded-full"></div>
-          <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-white border border-primary/30 rounded-full"></div>
-          <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-white border border-primary/30 rounded-full"></div>
-        </div>
       </div>
 
       <div className="space-y-4 mb-6">
@@ -435,7 +412,7 @@ Generated: ${formatDateTime(voucherData.generatedAt)}
 // Contact Info Component
 const ContactInfo = () => {
   const openWhatsApp = () => {
-    const phone = "628123456789";
+    const phone = "6285947242348";
     const text =
       "Halo, saya membutuhkan bantuan terkait e-voucher perjalanan saya.";
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
@@ -450,7 +427,7 @@ const ContactInfo = () => {
         </div>
         <div>
           <h4 className="font-medium">Telepon</h4>
-          <p className="text-sm text-muted-foreground">+62 812-3456-789</p>
+          <p className="text-sm text-muted-foreground">+62 859-4724-2348</p>
           <p className="text-sm text-muted-foreground">
             Senin - Jumat, 08:00 - 17:00 WIB
           </p>
@@ -463,7 +440,7 @@ const ContactInfo = () => {
         </div>
         <div>
           <h4 className="font-medium">Email</h4>
-          <p className="text-sm text-muted-foreground">cs@travedia.com</p>
+          <p className="text-sm text-muted-foreground">travediaterbitsemesta@gmail.com</p>
           <p className="text-sm text-muted-foreground">Respon dalam 1x24 jam</p>
         </div>
       </div>
@@ -474,7 +451,7 @@ const ContactInfo = () => {
         </div>
         <div>
           <h4 className="font-medium">WhatsApp</h4>
-          <p className="text-sm text-muted-foreground">+62 812-3456-789</p>
+          <p className="text-sm text-muted-foreground">+62 859-4724-2348</p>
           <p className="text-sm text-muted-foreground">Layanan 24 jam</p>
           <Button
             variant="outline"
@@ -944,10 +921,10 @@ export default function EVoucherPage() {
           variant="ghost"
           size="sm"
           className="gap-1 p-0 hover:bg-transparent"
-          onClick={() => navigate(`/booking-detail/${bookingId}`)}
+          onClick={() => navigate(`/paket-wisata`)}
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Kembali ke Detail Pemesanan</span>
+          <span>Kembali ke Paket Wisata</span>
         </Button>
       </div>
 
@@ -1340,9 +1317,9 @@ export default function EVoucherPage() {
                       />
                     </div>
                     <div>
-                      <div className="font-medium">Budi Santoso</div>
+                      <div className="font-medium">Dias Yusdiansyah</div>
                       <div className="text-sm text-muted-foreground">
-                        +62 812-3456-7890
+                        +62 859-4724-2348
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Tour Guide Berpengalaman
@@ -1363,68 +1340,6 @@ export default function EVoucherPage() {
               </CardHeader>
               <CardContent className="pt-4 p-6">
                 <ContactInfo />
-              </CardContent>
-            </Card>
-
-            {/* Opsi Tindakan */}
-            <Card className="shadow-md overflow-hidden">
-              <CardHeader className="pb-2 bg-primary/5 border-b">
-                <CardTitle className="text-lg">Opsi & Bantuan</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2"
-                  onClick={() => {
-                    const url = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${
-                      bookingData.customId || bookingData.bookingId
-                    }&margin=20`;
-                    window.open(url, "_blank");
-                  }}
-                >
-                  <Download className="h-4 w-4" />
-                  Unduh QR Code Besar
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2"
-                  onClick={() => window.print()}
-                >
-                  <Printer className="h-4 w-4" />
-                  Cetak E-Voucher
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full flex items-center justify-center gap-2"
-                  onClick={() => navigate(`/booking-detail/${bookingId}`)}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Kembali ke Detail Pemesanan
-                </Button>
-                <Button
-                  className="w-full flex items-center justify-center gap-2"
-                  onClick={() => navigate(`/paket-wisata`)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                  Lihat Paket Wisata Lainnya
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Emergency Contact Card */}
-            <Card className="shadow-md bg-red-50 border-red-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg text-red-800 flex items-center gap-2">
-                  <Phone className="h-5 w-5" />
-                  Kontak Darurat
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-sm text-red-700">
-                  <p className="font-medium">Tour Guide: +62 812-3456-7890</p>
-                  <p>Customer Service 24/7: +62 812-3456-789</p>
-                  <p>Email: emergency@travedia.com</p>
-                </div>
               </CardContent>
             </Card>
           </div>

@@ -381,20 +381,6 @@ export default function ArticlePage() {
         </TabsContent>
       </Tabs>
 
-      {/* Newsletter Subscription */}
-      <div className="mt-16 mb-8 bg-primary/5 rounded-xl p-8">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-2">Dapatkan Artikel Terbaru</h2>
-          <p className="text-muted-foreground mb-6">
-            Berlangganan newsletter kami untuk mendapatkan informasi terbaru seputar wisata dan travel.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-            <Input type="email" placeholder="Alamat email Anda" className="flex-1" />
-            <Button>Berlangganan</Button>
-          </div>
-        </div>
-      </div>
-
       {/* "Under Development" Section for empty states */}
       {articles.length === 0 && !isLoading && !searchTerm && categoryFilter === "all" && (
         <div className="bg-blue-50 rounded-xl p-8 text-center my-8">
