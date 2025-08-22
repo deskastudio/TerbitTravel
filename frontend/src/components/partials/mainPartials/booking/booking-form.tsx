@@ -726,7 +726,7 @@ function BookingForm() {
 
   // Buka WhatsApp
   const openWhatsApp = () => {
-    const phone = "628123456789";
+    const phone = "6285947242348";
     const packageInfo = paketWisata
       ? `${paketWisata.nama} (${formatCurrency(paketWisata.harga)})`
       : "";
@@ -1557,7 +1557,7 @@ function BookingForm() {
                       onClick={() => window.open("tel:+628123456789", "_blank")}
                     >
                       <Phone className="mr-2 h-4 w-4" />
-                      +62 812-3456-789
+                      +62 859-4724-2348
                     </Button>
                     <Button
                       variant="outline"

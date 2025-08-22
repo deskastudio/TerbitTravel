@@ -21,7 +21,7 @@ interface NavLink {
 
 type PathType =
   | "/"
-  | "/tour-package"
+  | "/paket-wisata"
   | "/destination"
   | "/profile"
   | "/article"
@@ -49,7 +49,7 @@ const Header = () => {
 
   const navLinks: NavLink[] = [
     { name: "Beranda", path: "/" },
-    { name: "Paket Wisata", path: "/tour-package" },
+    { name: "Paket Wisata", path: "/paket-wisata" },
     { name: "Destinasi", path: "/destination" },
     { name: "Profile", path: "/profile" },
     { name: "Artikel", path: "/article" },
