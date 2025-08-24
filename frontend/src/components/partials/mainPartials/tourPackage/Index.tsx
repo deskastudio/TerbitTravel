@@ -1062,66 +1062,6 @@ const PaketWisataPage: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Footer Banner */}
-      <div className="mt-12 bg-primary/5 rounded-xl p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-          <div>
-            <h2 className="text-2xl font-bold mb-3">
-              Butuh Bantuan Menemukan Paket Wisata?
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Tim kami siap membantu Anda merancang perjalanan sesuai dengan
-              kebutuhan dan preferensi Anda.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={() => {
-                  const phone = "628123456789";
-                  const text =
-                    "Halo, saya ingin konsultasi tentang paket wisata.";
-                  window.open(
-                    `https://wa.me/${phone}?text=${encodeURIComponent(text)}`,
-                    "_blank"
-                  );
-                }}
-              >
-                Hubungi Kami via WhatsApp
-              </Button>
-              <Button variant="outline">Lihat FAQ</Button>
-            </div>
-          </div>
-          <div className="hidden md:block">
-            <div className="w-full h-64">
-              <ImageWithFallback
-                src=""
-                alt="Customer Service"
-                className="w-full h-full rounded-lg shadow-lg object-cover"
-                fallbackText="Customer Service"
-                width={600}
-                height={400}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Newsletter Section */}
-      <div className="mt-12 mb-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">
-            Dapatkan Penawaran Terbaik
-          </h2>
-          <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            Berlangganan newsletter kami untuk mendapatkan informasi tentang
-            promosi dan paket wisata terbaru.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-            <Input type="email" placeholder="Email Anda" className="flex-1" />
-            <Button>Berlangganan</Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

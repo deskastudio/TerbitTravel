@@ -72,14 +72,17 @@ export const getImageUrl = (imagePath?: string): string | null => {
     /^\/Beranda\//,
     /^Beranda\//,
     /^\/Profile\//,
-    /^Profile\//
+    /^Profile\//,
   ];
 
   for (const pattern of publicPatterns) {
     if (pattern.test(imagePath)) {
       // For Vite, public files should be referenced from the root
-      const path = imagePath.replace(/^\/(public\/|Logo\/|Beranda\/|Profile\/)/i, '/');
-      return path.replace(/^(public\/|Logo\/|Beranda\/|Profile\/)/i, '/');
+      const path = imagePath.replace(
+        /^\/(public\/|Logo\/|Beranda\/|Profile\/)/i,
+        "/"
+      );
+      return path.replace(/^(public\/|Logo\/|Beranda\/|Profile\/)/i, "/");
     }
   }
 
@@ -87,7 +90,7 @@ export const getImageUrl = (imagePath?: string): string | null => {
   if (imagePath.includes("/uploads/") || imagePath.startsWith("uploads/")) {
     const backendUrl = getBackendUrl();
     // Make sure we don't double the uploads path
-    const path = imagePath.replace(/^\/?(uploads\/)/i, '/uploads/');
+    const path = imagePath.replace(/^\/?(uploads\/)/i, "/uploads/");
     return `${backendUrl}${path}`;
   }
 

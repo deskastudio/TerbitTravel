@@ -144,18 +144,7 @@ const Header = () => {
                         {user.email}
                       </p>
                     </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate("/user-profile")}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profil Saya</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => navigate("/user-profile/settings")}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Pengaturan</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+
                     <DropdownMenuItem
                       onClick={() => logout()}
                       className="text-red-600"
@@ -314,41 +303,6 @@ const Header = () => {
                           Akun Terbit Travel
                         </div>
                       </div>
-                    </div>
-                    <div className="grid gap-3">
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => {
-                          navigate("/user-profile");
-                          closeMenu();
-                        }}
-                      >
-                        <User className="mr-2 h-4 w-4" />
-                        Profil Saya
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="justify-start"
-                        onClick={() => {
-                          navigate("/user-profile/settings");
-                          closeMenu();
-                        }}
-                      >
-                        <Settings className="mr-2 h-4 w-4" />
-                        Pengaturan Akun
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() => {
-                          logout();
-                          closeMenu();
-                        }}
-                        className="justify-start"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Keluar
-                      </Button>
                     </div>
                   </div>
                 ) : (

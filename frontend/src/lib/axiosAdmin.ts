@@ -34,7 +34,7 @@ const adminAxiosInstance = axios.create({
     }),
   },
   withCredentials: true, // ✅ Diubah ke true agar cookies dikirim pada cross-origin request
-  timeout: 30000,
+  timeout: 10000, // ✅ PERBAIKAN: Kurangi timeout ke 10 detik untuk menghindari menunggu terlalu lama
   // ✅ PERBAIKAN: Validate status yang lebih permisif untuk debugging
   validateStatus: function (status) {
     return status >= 200 && status < 500; // Accept 4xx untuk error handling
@@ -101,6 +101,40 @@ adminAxiosInstance.interceptors.request.use(
   }
 );
 
+// Retry helper function for tunnel connections
+const retryLocaltunnelRequest = async (error: any) => {
+  const config = error.config;
+  
+  // Only retry for timeout errors with loca.lt or ngrok
+  if (
+    (error.code === "ECONNABORTED" || error.message.includes("timeout")) &&
+    (config.baseURL?.includes("loca.lt") || config.baseURL?.includes("ngrok")) &&
+    (!config._retryCount || config._retryCount < 2) // Max 2 retries
+  ) {
+    config._retryCount = config._retryCount || 0;
+    config._retryCount += 1;
+    
+    console.log(`🔄 Retry attempt ${config._retryCount}/2 for request to ${config.url}`);
+    
+    // Short delay before retry
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // If it's the second retry attempt, try a fallback URL if available
+    if (config._retryCount === 2) {
+      const fallbackUrl = import.meta.env.VITE_API_URL_BACKUP || "http://localhost:5000";
+      
+      if (fallbackUrl && fallbackUrl !== config.baseURL) {
+        console.log(`🔀 Trying fallback URL: ${fallbackUrl}`);
+        config.baseURL = fallbackUrl;
+      }
+    }
+    
+    return adminAxiosInstance(config);
+  }
+  
+  return Promise.reject(error);
+};
+
 // ✅ PERBAIKAN: Response interceptor dengan error handling yang lebih baik
 adminAxiosInstance.interceptors.response.use(
   (response) => {
@@ -122,8 +156,19 @@ adminAxiosInstance.interceptors.response.use(
 
     return response;
   },
-  (error) => {
+  async (error: any) => {
     console.error(`\n❌ [Admin API Error] ${error.config?.url}:`);
+    
+    // Try to retry localtunnel requests that time out
+    if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
+      try {
+        console.log("🔄 Attempting to retry timed out request...");
+        return await retryLocaltunnelRequest(error);
+      } catch (retryError) {
+        console.error("❌ Retry failed:", retryError);
+        // Continue with normal error handling
+      }
+    }
 
     // ✅ Enhanced error logging
     const errorInfo = {
