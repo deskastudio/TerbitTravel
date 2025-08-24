@@ -24,20 +24,21 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDestination } from "@/hooks/use-destination";
 import { IDestination } from "@/types/destination.types";
 import { getImageUrl } from "@/utils/image-helper";
+import MainLayout from '@/components/layouts/MainLayout';
 
 // No currency formatting needed in this component
 
 // Komponen Skeleton untuk loading
 const DetailSkeleton = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <Skeleton className="h-6 w-32 mb-4" />
         <Skeleton className="h-10 w-3/4 mb-2" />
@@ -60,6 +61,7 @@ const DetailSkeleton = () => {
         </div>
       </div>
     </div>
+    </MainLayout>
   );
 };
 
@@ -96,36 +98,6 @@ const defaultData = {
     "Persiapkan kamera dengan baterai penuh untuk mengabadikan momen",
     "Bawa air minum yang cukup selama perjalanan",
     "Gunakan alas kaki yang nyaman untuk berjalan-jalan",
-  ],
-
-  ulasan: [
-    {
-      id: "u1",
-      nama: "Budi Santoso",
-      foto: "/placeholder.svg?height=40&width=40",
-      rating: 5,
-      tanggal: "15 Maret 2023",
-      komentar:
-        "Pemandangan yang luar biasa! Salah satu keajaiban alam Indonesia yang wajib dikunjungi.",
-    },
-    {
-      id: "u2",
-      nama: "Siti Rahma",
-      foto: "/placeholder.svg?height=40&width=40",
-      rating: 4,
-      tanggal: "22 April 2023",
-      komentar:
-        "Pengalaman yang menyenangkan. Sayang beberapa area masih kurang terawat.",
-    },
-    {
-      id: "u3",
-      nama: "Agus Wijaya",
-      foto: "/placeholder.svg?height=40&width=40",
-      rating: 5,
-      tanggal: "10 Juni 2023",
-      komentar:
-        "Tempat yang sempurna untuk liburan keluarga. Penduduk lokalnya juga sangat ramah dan membantu.",
-    },
   ],
 
   ratingStats: {
@@ -191,14 +163,6 @@ interface EnhancedDestination extends IDestination {
   hargaTiket?: string;
   fasilitas?: string[];
   tips?: string[];
-  ulasan?: {
-    id: string;
-    nama: string;
-    foto: string;
-    rating: number;
-    tanggal: string;
-    komentar: string;
-  }[];
   ratingStats?: {
     total: number;
     average: number;
@@ -303,7 +267,8 @@ export default function DestinationDetail() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <MainLayout>
+      <div className="container mx-auto px-4 py-28">
       {/* Breadcrumb dan Tombol Kembali */}
       <div className="mb-6">
         <Button
@@ -426,7 +391,6 @@ export default function DestinationDetail() {
             <TabsList className="mb-6 grid w-full grid-cols-3">
               <TabsTrigger value="overview">Ikhtisar</TabsTrigger>
               <TabsTrigger value="facilities">Fasilitas</TabsTrigger>
-              <TabsTrigger value="reviews">Ulasan</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
@@ -627,60 +591,6 @@ export default function DestinationDetail() {
                       </div>
                     </div>
                   </div>
-
-                  {/* Reviews List */}
-                  <div className="md:w-2/3">
-                    <h2 className="mb-4 text-xl font-semibold">
-                      Ulasan Pengunjung
-                    </h2>
-                    <div className="space-y-4">
-                      {enhancedDestination.ulasan?.map((ulasan) => (
-                        <Card key={ulasan.id}>
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <Avatar>
-                                  <AvatarImage
-                                    src={ulasan.foto || "/placeholder.svg"}
-                                    alt={ulasan.nama}
-                                  />
-                                  <AvatarFallback>
-                                    {ulasan.nama.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium">
-                                    {ulasan.nama}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {ulasan.tanggal}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-4 w-4 ${
-                                      i < ulasan.rating
-                                        ? "fill-yellow-500 text-yellow-500"
-                                        : "text-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="mt-3 text-muted-foreground">
-                              {ulasan.komentar}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                    <div className="mt-4 text-center">
-                      <Button variant="outline">Lihat Semua Ulasan</Button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -768,13 +678,14 @@ export default function DestinationDetail() {
                         console.log("Navigating to packages with destination:", enhancedDestination._id);
                         
                         // Navigate with state - using the correct route /tour-package
-                        navigate(`/tour-package?destinationId=${enhancedDestination._id}`, {
-                          state: { 
-                            destinationName: enhancedDestination.nama,
-                            filterByDestination: true,
-                            destinationId: enhancedDestination._id
-                          }
-                        });
+                              // Navigate to paket-wisata using destination name only to avoid ID-format mismatches
+                              const encodedName = encodeURIComponent(enhancedDestination.nama || "");
+                              navigate(`/paket-wisata?destinationName=${encodedName}`, {
+                                state: {
+                                  destinationName: enhancedDestination.nama,
+                                  filterByDestination: true,
+                                },
+                              });
                       } else {
                         console.error("Cannot navigate: destination ID is missing", { enhancedDestination });
                         // Show an alert if the ID is missing
@@ -812,36 +723,10 @@ export default function DestinationDetail() {
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="mb-4 text-lg font-semibold">
-                  Destinasi Terdekat
-                </h3>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3">
-                      <img
-                        src="/placeholder.svg?height=60&width=60"
-                        alt={`Destinasi Terdekat ${i}`}
-                        className="h-14 w-14 rounded-md object-cover"
-                      />
-                      <div>
-                        <div className="font-medium">
-                          Destinasi Terdekat {i}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          15 km dari sini
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </MainLayout>
   );
 }

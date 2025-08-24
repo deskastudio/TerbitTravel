@@ -172,3 +172,6 @@ adminAxiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Default export so other services can import the axios instance
+export default adminAxiosInstance;

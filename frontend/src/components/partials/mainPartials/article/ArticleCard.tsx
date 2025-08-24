@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -40,15 +41,40 @@ export const ArticleCard = ({
 }: ArticleCardProps) => {
   const navigate = useNavigate();
 
+  // Saved (bookmark) state for this article (persisted in localStorage)
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Helper to safely get an article identifier
+  const getArticleId = React.useCallback(() => {
+    if (article._id) return article._id;
+    // some payloads use `id` or `slug`
+    const maybeId = (article as unknown) as Record<string, unknown>;
+    if (typeof maybeId.id === "string") return (maybeId.id as string) || null;
+    if (typeof article.slug === "string") return article.slug;
+    return null;
+  }, [article]);
+
+  useEffect(() => {
+    try {
+      const savedArticles: string[] = JSON.parse(
+        localStorage.getItem("savedArticles") || "[]"
+      );
+      const articleId = getArticleId();
+      if (articleId) setIsSaved(savedArticles.includes(articleId));
+    } catch (e) {
+      console.error("Failed to read saved articles from localStorage", e);
+    }
+  }, [article, getArticleId]);
+
   const handleViewDetail = () => {
     // Prioritas: slug dulu, lalu ID
     if (article.slug) {
       console.log(`Navigating to article detail with slug: ${article.slug}`);
       navigate(`/article/${article.slug}`);
     } else {
-      const articleId = article._id || (article as any).id;
-      console.log(`Navigating to article detail with ID: ${articleId}`);
-      navigate(`/article/id/${articleId}`);
+  const articleId = getArticleId();
+  console.log(`Navigating to article detail with ID: ${articleId}`);
+  navigate(`/article/id/${articleId}`);
     }
   };
 
@@ -69,6 +95,67 @@ export const ArticleCard = ({
 
   // Check if article is trending (if property exists)
   const isTrending = article.isTrending || false;
+
+  const toggleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const key = "savedArticles";
+      const saved: string[] = JSON.parse(localStorage.getItem(key) || "[]");
+  const articleId = getArticleId();
+      if (!articleId) return;
+
+      if (saved.includes(articleId)) {
+        const updated = saved.filter((id) => id !== articleId);
+        localStorage.setItem(key, JSON.stringify(updated));
+        setIsSaved(false);
+        console.log("Article removed from saved:", articleId);
+        // Notify other components (same-tab) that saved articles changed
+        try {
+          window.dispatchEvent(new Event("savedArticlesUpdated"));
+        } catch {
+          /* ignore */
+        }
+      } else {
+        saved.push(articleId);
+        localStorage.setItem(key, JSON.stringify(saved));
+        setIsSaved(true);
+        console.log("Article saved:", articleId);
+        // Notify other components (same-tab) that saved articles changed
+        try {
+          window.dispatchEvent(new Event("savedArticlesUpdated"));
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch (err) {
+      console.error("Failed to toggle save for article", err);
+    }
+  };
+
+  const shareArticle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const articleId = getArticleId();
+      const url =
+        window.location.origin +
+        (article.slug ? `/article/${article.slug}` : `/article/id/${articleId}`);
+
+      if (navigator.share) {
+        navigator
+          .share({ title: article.judul, text: article.ringkasan || "", url })
+          .catch(() => {});
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert("Link artikel disalin ke clipboard");
+        });
+      } else {
+  // Fallback: prompt with URL to copy manually
+  prompt("Salin link artikel:", url);
+      }
+    } catch (err) {
+      console.error("Failed to share article", err);
+    }
+  };
 
   if (isFeatured) {
     return (
@@ -229,12 +316,26 @@ export const ArticleCard = ({
           <span className="text-xs">{displayAuthor}</span>
         </div>
         <div className="flex gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Bookmark className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Share2 className="h-4 w-4" />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={toggleSave}
+              aria-label={isSaved ? "Hapus dari tersimpan" : "Simpan artikel"}
+            >
+              <Bookmark
+                className={`h-4 w-4 ${isSaved ? "fill-red-500 text-red-500" : ""}`}
+              />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={shareArticle}
+              aria-label="Bagikan artikel"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
         </div>
       </CardFooter>
     </Card>

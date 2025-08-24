@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
+import { IArticle } from "@/types/article.types";
 import { Search, ChevronRight, TrendingUp } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,7 @@ import { useArticle, useCategory } from "@/hooks/use-article";
 import { ArticleCard } from "./ArticleCard";
 
 // Featured Article Component
-const FeaturedArticle = ({ article }) => {
+const FeaturedArticle = ({ article }: { article: IArticle }) => {
   if (!article) return null;
   return <ArticleCard article={article} isFeatured={true} />;
 };
@@ -84,6 +85,35 @@ export default function ArticlePage() {
 
   // Get categories from the hook
   const { categories, isLoadingCategories } = useCategory();
+
+  // Saved articles state (persisted in localStorage under key 'savedArticles')
+  const [savedArticlesData, setSavedArticlesData] = useState<IArticle[]>([]);
+
+  // Load saved articles from localStorage and map to available articles
+  useEffect(() => {
+    const loadSaved = () => {
+      try {
+        const saved: string[] = JSON.parse(
+          localStorage.getItem("savedArticles") || "[]"
+        );
+        setSavedArticlesIds(saved);
+        // Map to available article objects
+        const mapped = (saved
+          .map((id) => articles.find((a) => a._id === id || a.slug === id))
+          .filter(Boolean) as unknown) as IArticle[];
+        setSavedArticlesData(mapped);
+      } catch (err) {
+        console.error("Failed to load saved articles", err);
+      }
+    };
+
+    loadSaved();
+
+    // Listen for updates from ArticleCard
+    const handler = () => loadSaved();
+    window.addEventListener("savedArticlesUpdated", handler);
+    return () => window.removeEventListener("savedArticlesUpdated", handler);
+  }, [articles]);
 
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("terbaru");
@@ -183,7 +213,7 @@ export default function ArticlePage() {
               <div className="flex flex-col gap-3">
                 {featuredArticles.slice(1, 3).map((article) => (
                   <Card
-                    key={article._id || article.id}
+                    key={article._id || article.slug}
                     className="overflow-hidden h-1/2"
                   >
                     <div className="flex h-full">
@@ -249,10 +279,7 @@ export default function ArticlePage() {
             <TabsTrigger value="all">Semua</TabsTrigger>
             {!isLoadingCategories &&
               categories.map((category) => (
-                <TabsTrigger
-                  key={category._id || category.id}
-                  value={category._id || category.id}
-                >
+                <TabsTrigger key={category._id} value={category._id}>
                   {category.title}
                 </TabsTrigger>
               ))}
@@ -288,7 +315,7 @@ export default function ArticlePage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {trendingArticles.map((article) => (
                     <Card
-                      key={article._id || article.id}
+                      key={article._id || article.slug}
                       className="overflow-hidden"
                     >
                       <div className="relative">
@@ -336,10 +363,7 @@ export default function ArticlePage() {
           ) : articles.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {articles.map((article) => (
-                <ArticleCard
-                  key={article._id || article.id}
-                  article={article}
-                />
+                <ArticleCard key={article._id || article.slug} article={article} />
               ))}
             </div>
           ) : (
@@ -477,6 +501,18 @@ export default function ArticlePage() {
             </p>
           </div>
         )}
+      {/* Saved Articles Section (like paket favorit) */}
+      {savedArticlesData.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold mb-4">Artikel Tersimpan</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {savedArticlesData.map((article) => (
+              <ArticleCard key={article._id || article.id || article.slug} article={article} />
+            ))}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

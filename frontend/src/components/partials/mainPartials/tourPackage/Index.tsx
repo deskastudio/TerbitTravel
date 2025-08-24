@@ -471,80 +471,57 @@ const PaketWisataPage: React.FC = () => {
         console.log("URL params:", Object.fromEntries(searchParams.entries()));
         console.log("Location state:", locationState);
         
-        const destId = searchParams.get('destinationId') || 
-                     locationState?.destinationId || null;
-                     
-        console.log("Destination ID for filtering:", destId);
-        
-        // Set destination name if available
-        if (locationState?.destinationName) {
-          setDestinationName(locationState.destinationName);
-          console.log("Setting destination name:", locationState.destinationName);
+        // Prefer destinationName if provided in URL or location state
+        const destNameFromUrl = searchParams.get("destinationName");
+        const destIdFromUrl = searchParams.get("destinationId") || null;
+        const destId = destIdFromUrl || locationState?.destinationId || null;
+
+        const effectiveDestinationName =
+          destNameFromUrl || locationState?.destinationName || null;
+
+        console.log("Destination filter inputs:", { destId, effectiveDestinationName });
+
+        if (effectiveDestinationName) {
+          setDestinationName(effectiveDestinationName);
+          console.log("Setting destination name:", effectiveDestinationName);
         } else if (destId) {
-          // If we have destId but no name, use a generic name
           setDestinationName("Pilihan Anda");
-          console.log("Using generic destination name");
+          console.log("Using generic destination name because only ID provided");
         }
 
         // Ambil kategori dan paket wisata secara parallel
         const categoriesPromise = TourPackageService.getAllCategories();
         
         // If destination filter is applied, get packages by destination
-        // Variable to store package data
-        let packagesData;
+  // Variable to store package data
+  let packagesData: ITourPackage[] = [];
         
         // First fetch categories
         const categoriesData = await categoriesPromise;
         
-        if (destId) {
+        if (effectiveDestinationName) {
+          // When a destination name is provided, search only by name to avoid duplicate merging
+          console.log(`🔍 Searching for packages by destination name: ${effectiveDestinationName}`);
+          packagesData = await TourPackageService.getPackagesByDestinationName(effectiveDestinationName);
+          if (packagesData.length > 0) {
+            toast({
+              title: "Paket wisata ditemukan!",
+              description: `Ditemukan ${packagesData.length} paket wisata untuk destinasi "${effectiveDestinationName}"`,
+            });
+          } else {
+            console.log(`❌ Tidak ditemukan paket berdasarkan nama: ${effectiveDestinationName}`);
+          }
+        } else if (destId) {
+          // Only ID provided — attempt ID-based search (no fuzzy fallbacks to avoid duplicates)
           setDestinationFilter(destId);
-          console.log(`🔍 Searching for packages with destination ID: ${destId}`);
-          
-          // Pendekatan sederhana: Pertama coba dengan ID destinasi yang diberikan
-          console.log(`🔍 Mencoba mencari paket dengan ID destinasi: ${destId}`);
+          console.log(`🔍 Searching for packages by destination ID: ${destId}`);
           packagesData = await TourPackageService.getPackagesByDestination(destId);
-          
-          // Jika tidak ditemukan dan kita punya nama destinasi, gunakan nama untuk mencari
-          if (packagesData.length === 0 && destinationName) {
-            console.log(`🔍 Tidak ditemukan paket dengan ID destinasi, mencoba dengan nama: "${destinationName}"`);
-            packagesData = await TourPackageService.getPackagesByDestinationName(destinationName);
-            
-            if (packagesData.length > 0) {
-              console.log(`✅ Berhasil menemukan ${packagesData.length} paket berdasarkan nama destinasi`);
-              toast({
-                title: "Paket wisata ditemukan!",
-                description: `Ditemukan ${packagesData.length} paket wisata untuk destinasi "${destinationName}"`,
-              });
-            }
+          if (!packagesData || packagesData.length === 0) {
+            console.log(`❌ Tidak ditemukan paket dengan ID: ${destId}`);
+            packagesData = [];
           }
-          
-          // Jika masih tidak ditemukan, coba metode ID similar sebagai cadangan
-          if (packagesData.length === 0)
-            console.log(`🔍 Mencoba metode pencarian ID yang mirip...`);
-            
-            // Coba cari ID yang mirip
-            const similarDestResult = await TourPackageService.findPackagesByAlmostMatchingDestination(destId);
-            
-            if (similarDestResult.packages.length > 0) {
-              packagesData = similarDestResult.packages;
-              console.log(`✅ Ditemukan ${packagesData.length} paket dengan ID destinasi yang mirip: ${similarDestResult.matchedId}`);
-              
-              toast({
-                title: "Paket wisata ditemukan!",
-                description: `Ditemukan ${packagesData.length} paket wisata untuk destinasi serupa.`,
-              });
-              
-              // Update filter ke ID yang ditemukan
-              if (similarDestResult.matchedId) {
-                console.log(`🔄 Memperbarui filter dari ${destId} ke ${similarDestResult.matchedId}`);
-                setDestinationFilter(similarDestResult.matchedId);
-              }
-            } else {
-              // Jika masih tidak ditemukan, tampilkan debug info
-              console.log(`❌ Tidak ditemukan paket wisata untuk destinasi ini`);
-            }
-          }
-         else {
+        } else {
+          // No filters — fetch all packages
           packagesData = await TourPackageService.getAllPackages();
         }
 
@@ -735,13 +712,21 @@ const PaketWisataPage: React.FC = () => {
     return 0;
   });
 
-  // Pagination
-  const totalPages = Math.ceil(sortedPaket.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedPaket = sortedPaket.slice(
-    startIndex,
-    startIndex + itemsPerPage
+  // Determine recommended IDs (top 3 by rating) and exclude them from main listing
+  const recommendedIds = new Set(
+    [...paketWisata]
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 3)
+      .map((p) => p._id)
   );
+
+  // Exclude recommended items from the list used for pagination so they don't repeat
+  const displayList = sortedPaket.filter((p) => !recommendedIds.has(p._id));
+
+  // Pagination over the display list
+  const totalPages = Math.ceil(displayList.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPaket = displayList.slice(startIndex, startIndex + itemsPerPage);
 
   // Handle page change
   const handlePageChange = useCallback((page: number) => {
@@ -1154,12 +1139,15 @@ const PaketWisataPage: React.FC = () => {
                   <PaketWisataCardSkeleton key={`skeleton-${index}`} />
                 ))}
             </div>
-          ) : paginatedPaket.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedPaket.map((paket) => (
-                <PaketWisataCard key={paket._id} paket={paket} />
-              ))}
-            </div>
+          ) : (paginatedPaket.length > 0 || recommendedIds.size > 0) ? (
+            // If there are paginated results show them; if not, recommendations are shown above so skip the grid
+            paginatedPaket.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedPaket.map((paket) => (
+                  <PaketWisataCard key={paket._id} paket={paket} />
+                ))}
+              </div>
+            ) : null
           ) : (
             <div className="text-center py-12">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
