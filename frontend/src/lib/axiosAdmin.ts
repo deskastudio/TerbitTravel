@@ -24,9 +24,10 @@ const adminAxiosInstance = axios.create({
       // User-Agent dihapus karena browser tidak mengizinkan override
     }),
   },
-  // ✅ CRITICAL FIX: Disable credentials untuk localtunnel
+  // ✅ CRITICAL FIX: Disable credentials untuk localtunnel, enable for others
   withCredentials: !IS_LOCALTUNNEL,
-  timeout: 30000,
+  timeout: IS_LOCALTUNNEL ? 30000 : 10000, // 30s for tunnel, 10s for local
+  // ✅ PERBAIKAN: Validate status yang lebih permisif untuk debugging
   validateStatus: function (status) {
     return status >= 200 && status < 500;
   },
@@ -70,11 +71,35 @@ adminAxiosInstance.interceptors.request.use(
   }
 );
 
-// ✅ PERBAIKAN: Response interceptor with localtunnel error handling
+// Retry helper function for tunnel connections
+const retryLocaltunnelRequest = async (error: any) => {
+  const config = error.config;
+  // Only retry for timeout errors with loca.lt or ngrok
+  if (
+    (error.code === "ECONNABORTED" || error.message.includes("timeout")) &&
+    (config.baseURL?.includes("loca.lt") || config.baseURL?.includes("ngrok")) &&
+    (!config._retryCount || config._retryCount < 2) // Max 2 retries
+  ) {
+    config._retryCount = config._retryCount || 0;
+    config._retryCount += 1;
+    console.log(`🔄 Retry attempt ${config._retryCount}/2 for request to ${config.url}`);
+    // Short delay before retry
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // If it's the second retry attempt, try a fallback URL if available
+    if (config._retryCount === 2) {
+      const fallbackUrl = import.meta.env.VITE_API_URL_BACKUP || "http://localhost:5000";
+      if (fallbackUrl && fallbackUrl !== config.baseURL) {
+        console.log(`🔀 Trying fallback URL: ${fallbackUrl}`);
+        config.baseURL = fallbackUrl;
+      }
+    }
+    return adminAxiosInstance(config);
+  }
+  return Promise.reject(error);
+};
 adminAxiosInstance.interceptors.response.use(
   (response) => {
     console.log(`✅ [Admin API] ${response.status} ${response.config.url}`);
-    
     // ✅ Log response headers for CORS debugging
     if (IS_DEVELOPMENT) {
       console.log("📋 Response Headers:", {
@@ -83,12 +108,21 @@ adminAxiosInstance.interceptors.response.use(
         "content-type": response.headers["content-type"],
       });
     }
-    
     return response;
   },
-  (error) => {
-    console.error(`❌ [Admin API Error] ${error.config?.url}:`);
-    
+  async (error) => {
+    console.error(`\n❌ [Admin API Error] ${error.config?.url}:`);
+    // Try to retry localtunnel requests that time out
+    if (error.code === "ECONNABORTED" || error.message.includes("timeout")) {
+      try {
+        console.log("🔄 Attempting to retry timed out request...");
+        return await retryLocaltunnelRequest(error);
+      } catch (retryError) {
+        console.error("❌ Retry failed:", retryError);
+        // Continue with normal error handling
+      }
+    }
+    // ✅ Enhanced error logging
     const errorInfo = {
       status: error.response?.status,
       statusText: error.response?.statusText,
@@ -97,13 +131,10 @@ adminAxiosInstance.interceptors.response.use(
       url: error.config?.baseURL,
       isLocaltunnel: IS_LOCALTUNNEL,
     };
-    
     console.error("📊 Error Details:", errorInfo);
-
     // ✅ PERBAIKAN: Specific localtunnel error handling
     if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
       console.error("🚫 Network/CORS Error Detected:");
-      
       if (IS_LOCALTUNNEL) {
         console.error("🚇 Localtunnel Specific Troubleshooting:");
         console.error("   1. Open https://terbit-travel.loca.lt in browser first");
@@ -112,13 +143,11 @@ adminAxiosInstance.interceptors.response.use(
         console.error("   4. Try restarting localtunnel if expired");
         console.error("   5. Alternative: Use ngrok instead");
       }
-      
       console.error("🔍 General Troubleshooting:");
       console.error("   1. Check backend server: http://localhost:5000/api/health");
       console.error("   2. Verify CORS configuration");
       console.error("   3. Check network connectivity");
     }
-
     // ✅ PERBAIKAN: Handle 511 Network Authentication Required
     if (error.response?.status === 511) {
       console.error("🚫 511 Network Authentication Required:");
@@ -126,83 +155,20 @@ adminAxiosInstance.interceptors.response.use(
       console.error("   - Visit: https://terbit-travel.loca.lt");
       console.error("   - Accept the warning page");
       console.error("   - Then retry the request");
-      
       // Show user-friendly error
       alert("Localtunnel memerlukan verifikasi browser. Silakan buka https://terbit-travel.loca.lt di browser terlebih dahulu, kemudian coba lagi.");
     }
-
     // Handle 401 Unauthorized
     if (error.response?.status === 401) {
       console.log("🔒 Unauthorized - clearing auth data");
       localStorage.removeItem("adminToken");
       localStorage.removeItem("adminUser");
       localStorage.removeItem("adminTokenExpiration");
-      
       if (window.location.pathname.startsWith("/admin") && 
           window.location.pathname !== "/admin/login") {
         window.location.href = "/admin/login";
       }
     }
-
     return Promise.reject(error);
   }
 );
-
-// ✅ PERBAIKAN: Test connection function for localtunnel
-export const testAdminConnection = async () => {
-  try {
-    console.log("🔍 Testing admin API connection...");
-    console.log(`🎯 Target URL: ${ADMIN_API_BASE_URL}/api/health`);
-    
-    if (IS_LOCALTUNNEL) {
-      console.log("🚇 Localtunnel detected - testing with simple fetch first");
-      
-      // Test with fetch first for localtunnel
-      const fetchResponse = await fetch(`${ADMIN_API_BASE_URL}/api/health`, {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "bypass-tunnel-reminder": "true",
-        },
-        // No credentials for localtunnel
-      });
-      
-      if (fetchResponse.ok) {
-        console.log("✅ Fetch test successful, trying axios...");
-      } else {
-        console.error("❌ Fetch test failed:", fetchResponse.status, fetchResponse.statusText);
-        return {
-          success: false,
-          error: `Fetch failed: ${fetchResponse.status}`,
-          suggestion: "Visit https://terbit-travel.loca.lt in browser first"
-        };
-      }
-    }
-
-    const response = await adminAxiosInstance.get("/api/health");
-    console.log("✅ Admin API connection successful:", response.data);
-    return { success: true, data: response.data };
-  } catch (error: unknown) {
-    console.error("❌ Admin API connection failed:", error);
-    let errorMessage = "Unknown error";
-    let errorCode = undefined;
-    let errorStatus = undefined;
-    if (typeof error === "object" && error !== null) {
-      errorMessage = (error as { message?: string }).message || errorMessage;
-      errorCode = (error as { code?: string }).code;
-      errorStatus = (error as { response?: { status?: number } }).response?.status;
-    }
-    return {
-      success: false,
-      error: errorMessage,
-      details: {
-        code: errorCode,
-        status: errorStatus,
-        baseURL: ADMIN_API_BASE_URL,
-        isLocaltunnel: IS_LOCALTUNNEL,
-      },
-    };
-  }
-};
-
-export default adminAxiosInstance;

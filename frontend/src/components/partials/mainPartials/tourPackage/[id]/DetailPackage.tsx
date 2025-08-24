@@ -396,7 +396,7 @@ export default function PaketWisataDetail() {
           variant="ghost"
           size="sm"
           className="gap-1 p-0 hover:bg-transparent"
-          onClick={() => navigate("/paket-wisata")}
+          onClick={() => navigate("/tour-package")}
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Kembali ke Paket Wisata</span>

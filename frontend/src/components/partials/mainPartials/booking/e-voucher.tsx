@@ -161,13 +161,24 @@ const EVoucher = ({
       console.log("- imagesPaths:", bookingData.imagesPaths?.slice(0, 3));
       console.log("- packageDetail?.foto:", bookingData.packageDetail?.foto);
       console.log("- packageId?.foto?.[0]:", bookingData.packageId?.foto?.[0]);
-      console.log("- packageId?.destination?.foto:", bookingData.packageId?.destination?.foto);
-      
+      console.log(
+        "- packageId?.destination?.foto:",
+        bookingData.packageId?.destination?.foto
+      );
+
       // Try to load the first image to see if it works
       if (bookingData.imagesPaths?.[0]) {
         const img = new Image();
-        img.onload = () => console.log("✅ Test image loaded successfully:", bookingData.imagesPaths[0]);
-        img.onerror = () => console.error("❌ Test image failed to load:", bookingData.imagesPaths[0]);
+        img.onload = () =>
+          console.log(
+            "✅ Test image loaded successfully:",
+            bookingData.imagesPaths[0]
+          );
+        img.onerror = () =>
+          console.error(
+            "❌ Test image failed to load:",
+            bookingData.imagesPaths[0]
+          );
         img.src = bookingData.imagesPaths[0];
       }
     }
@@ -673,12 +684,21 @@ export default function EVoucherPage() {
         }
 
         setBookingData(actualBookingData);
-        console.log("✅ Booking data loaded:", JSON.stringify({
-          "packageId": actualBookingData.packageId,
-          "packageInfo": actualBookingData.packageInfo,
-          "packageDetail": actualBookingData.packageDetail,
-          "foto source": actualBookingData.packageDetail?.foto || actualBookingData.packageId?.foto?.[0]
-        }, null, 2));
+        console.log(
+          "✅ Booking data loaded:",
+          JSON.stringify(
+            {
+              packageId: actualBookingData.packageId,
+              packageInfo: actualBookingData.packageInfo,
+              packageDetail: actualBookingData.packageDetail,
+              "foto source":
+                actualBookingData.packageDetail?.foto ||
+                actualBookingData.packageId?.foto?.[0],
+            },
+            null,
+            2
+          )
+        );
 
         // ✅ Step 3: Generate voucher
         try {
@@ -697,74 +717,104 @@ export default function EVoucherPage() {
         // ✅ Step 4: Get package details and images from all possible sources
         // Initialize an array to store possible image paths
         let possibleImages: string[] = [];
-        
-        if (actualBookingData.packageId && typeof actualBookingData.packageId === "object") {
+
+        if (
+          actualBookingData.packageId &&
+          typeof actualBookingData.packageId === "object"
+        ) {
           setPaketWisata(actualBookingData.packageId);
-          console.log("✅ Using packageId object data:", actualBookingData.packageId);
-          
+          console.log(
+            "✅ Using packageId object data:",
+            actualBookingData.packageId
+          );
+
           // Add images from packageId.foto array if available
-          if (actualBookingData.packageId.foto && Array.isArray(actualBookingData.packageId.foto)) {
-            possibleImages = [...possibleImages, ...actualBookingData.packageId.foto];
+          if (
+            actualBookingData.packageId.foto &&
+            Array.isArray(actualBookingData.packageId.foto)
+          ) {
+            possibleImages = [
+              ...possibleImages,
+              ...actualBookingData.packageId.foto,
+            ];
           } else if (actualBookingData.packageId.foto) {
             possibleImages.push(actualBookingData.packageId.foto);
           }
-          
+
           // Check for imageUrl as well (alternate format)
           if (actualBookingData.packageId.imageUrl) {
             possibleImages.push(actualBookingData.packageId.imageUrl);
           }
         }
-        
+
         // Check packageDetail for images (usually from localStorage in booking form)
         if (actualBookingData.packageDetail) {
-          console.log("✅ Using packageDetail data:", actualBookingData.packageDetail);
-          
+          console.log(
+            "✅ Using packageDetail data:",
+            actualBookingData.packageDetail
+          );
+
           if (actualBookingData.packageDetail.foto) {
             if (Array.isArray(actualBookingData.packageDetail.foto)) {
-              possibleImages = [...possibleImages, ...actualBookingData.packageDetail.foto];
+              possibleImages = [
+                ...possibleImages,
+                ...actualBookingData.packageDetail.foto,
+              ];
             } else {
               possibleImages.push(actualBookingData.packageDetail.foto);
             }
           }
         }
-        
+
         // Check destination for images
         if (actualBookingData.packageId?.destination?.foto) {
-          console.log("✅ Found destination images:", actualBookingData.packageId.destination.foto);
-          
+          console.log(
+            "✅ Found destination images:",
+            actualBookingData.packageId.destination.foto
+          );
+
           if (Array.isArray(actualBookingData.packageId.destination.foto)) {
-            possibleImages = [...possibleImages, ...actualBookingData.packageId.destination.foto];
+            possibleImages = [
+              ...possibleImages,
+              ...actualBookingData.packageId.destination.foto,
+            ];
           } else {
             possibleImages.push(actualBookingData.packageId.destination.foto);
           }
         }
-        
+
         // If no images found, fetch from API as a last resort
         if (possibleImages.length === 0 && actualBookingData.packageInfo?.id) {
           try {
-            console.log("🔍 Fetching package data from API with ID:", actualBookingData.packageInfo.id);
+            console.log(
+              "🔍 Fetching package data from API with ID:",
+              actualBookingData.packageInfo.id
+            );
             const packageData = await TourPackageService.getPackageById(
               actualBookingData.packageInfo.id
             );
             console.log("✅ Fetched package data:", packageData);
             setPaketWisata(packageData);
-            
+
             // Add images from fetched package
             if (packageData.foto && Array.isArray(packageData.foto)) {
               possibleImages = [...possibleImages, ...packageData.foto];
             } else if (packageData.foto) {
               possibleImages.push(packageData.foto);
             }
-            
+
             // Check for imageUrl as well
             if (packageData.imageUrl) {
               possibleImages.push(packageData.imageUrl);
             }
-            
+
             // Check destination images from fetched package
             if (packageData.destination?.foto) {
               if (Array.isArray(packageData.destination.foto)) {
-                possibleImages = [...possibleImages, ...packageData.destination.foto];
+                possibleImages = [
+                  ...possibleImages,
+                  ...packageData.destination.foto,
+                ];
               } else {
                 possibleImages.push(packageData.destination.foto);
               }
@@ -773,20 +823,19 @@ export default function EVoucherPage() {
             console.error("❌ Error loading package data:", packageError);
           }
         }
-        
+
         // Store the found images in booking data for easy access in components
         actualBookingData.imagesPaths = possibleImages.filter(Boolean);
-        
+
         // Debug the available image sources
         console.log("🖼️ Available image sources found:", possibleImages.length);
         console.log("🖼️ First 3 images:", possibleImages.slice(0, 3));
-        
+
         // Store the enhanced data
         setBookingData({
           ...actualBookingData,
-          imagesPaths: possibleImages.filter(Boolean)
+          imagesPaths: possibleImages.filter(Boolean),
         });
-        
 
         toast({
           title: "E-Voucher berhasil dimuat",
@@ -1033,8 +1082,16 @@ export default function EVoucherPage() {
                 <div className="flex items-center gap-3">
                   <div className="h-16 w-16 rounded-md overflow-hidden bg-muted shrink-0">
                     <ImageWithFallback
-                      src={bookingData?.imagesPaths?.[0] || paketWisata?.foto?.[0] || bookingData?.packageDetail?.foto}
-                      alt={bookingData.packageId?.nama || bookingData.packageInfo?.nama || "Paket Wisata"}
+                      src={
+                        bookingData?.imagesPaths?.[0] ||
+                        paketWisata?.foto?.[0] ||
+                        bookingData?.packageDetail?.foto
+                      }
+                      alt={
+                        bookingData.packageId?.nama ||
+                        bookingData.packageInfo?.nama ||
+                        "Paket Wisata"
+                      }
                       className="h-full w-full object-cover"
                       fallbackClassName="h-full w-full rounded-md"
                       fallbackText="Travel Package"

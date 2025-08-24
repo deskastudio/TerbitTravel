@@ -61,12 +61,12 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
       setIsLoading(true);
       return;
     }
-    
+
     // Otherwise use the SVG fallback
     setHasError(true);
     setIsLoading(false);
     handleImageError(event, fallbackText);
-    
+
     if (import.meta.env.DEV) {
       console.warn(`🖼️ Image failed to load: ${currentSrc}`);
     }
@@ -74,7 +74,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
 
   const handleLoad = () => {
     setIsLoading(false);
-    
+
     if (import.meta.env.DEV && currentSrc) {
       console.log(`✅ Image loaded successfully: ${currentSrc}`);
     }
@@ -128,7 +128,10 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
         </div>
       )}
       <img
-        src={safeImageUrl || generateImagePlaceholder(width || 400, height || 300, fallbackText)}
+        src={
+          safeImageUrl ||
+          generateImagePlaceholder(width || 400, height || 300, fallbackText)
+        }
         alt={alt}
         className={`${className} ${isLoading ? "hidden" : "block"}`}
         onError={handleError}
