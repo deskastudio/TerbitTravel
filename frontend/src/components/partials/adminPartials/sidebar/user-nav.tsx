@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { BadgeCheck, ChevronsUpDown, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -11,7 +10,6 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -115,18 +113,6 @@ const NavUser: React.FC = () => {
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem asChild>
-                  <Link 
-                    to="/admin-profile" 
-                    className="flex items-center gap-2 cursor-pointer w-full"
-                  >
-                    <BadgeCheck className="h-4 w-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={handleLogoutClick}

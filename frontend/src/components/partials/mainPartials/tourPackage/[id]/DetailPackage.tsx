@@ -396,7 +396,7 @@ export default function PaketWisataDetail() {
           variant="ghost"
           size="sm"
           className="gap-1 p-0 hover:bg-transparent"
-          onClick={() => navigate("/tour-package")}
+          onClick={() => navigate("/paket-wisata")}
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Kembali ke Paket Wisata</span>
@@ -1086,48 +1086,6 @@ export default function PaketWisataDetail() {
                 </div>
               </CardContent>
             </Card>
-
-            {similarPackages.length > 0 && (
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="mb-4 text-lg font-semibold">
-                    Paket Wisata Serupa
-                  </h3>
-                  <div className="space-y-4" id="similar-packages">
-                    {similarPackages.map((pkg) => (
-                      <div
-                        key={pkg._id}
-                        className="flex gap-3 cursor-pointer hover:bg-muted/50 p-2 rounded-md transition-colors"
-                        onClick={() => navigate(`/paket-wisata/${pkg._id}`)}
-                      >
-                        <img
-                          src={
-                            pkg.destination &&
-                            pkg.destination.foto &&
-                            pkg.destination.foto.length > 0
-                              ? getImageUrl(pkg.destination.foto[0])
-                              : "https://placehold.co/400x400?text=No+Image"
-                          }
-                          alt={pkg.nama}
-                          className="h-14 w-14 rounded-md object-cover"
-                          onError={() => {
-                            // No fallback image needed
-                          }}
-                        />
-                        <div>
-                          <div className="font-medium line-clamp-2">
-                            {pkg.nama}
-                          </div>
-                          <div className="text-sm text-primary font-medium">
-                            {formatCurrency(pkg.harga)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>

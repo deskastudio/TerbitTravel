@@ -1190,22 +1190,6 @@ function BookingForm() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center p-3 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
-                        <RadioGroupItem value="dp" id="dp" className="mr-3" />
-                        <div className="flex-1">
-                          <Label htmlFor="dp" className="font-medium">
-                            DP 50%
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
-                            Bayar DP dulu, sisanya dibayar nanti
-                          </p>
-                        </div>
-                        <div className="text-primary font-bold">
-                          {formatCurrency(
-                            calculateDP(paketWisata, jumlahPeserta)
-                          )}
-                        </div>
-                      </div>
                     </RadioGroup>
                   </div>
 

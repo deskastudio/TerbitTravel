@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Layanan = () => {
   const categories = [
-    { name: "Paket Wisata", image: "../Beranda/Layanan/bromo.jpeg", link: "/tour-package" },
+    { name: "Paket Wisata", image: "../Beranda/Layanan/bromo.jpeg", link: "/paket-wisata" },
     { name: "Destinasi", image: "../Beranda/Layanan/jogja.jpg", link: "/destination" },
   ];
 

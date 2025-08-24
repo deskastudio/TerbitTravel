@@ -293,7 +293,7 @@ const PrivacyPolicyPage: React.FC = () => {
         <ul>
             <li>Login ke akun dan akses "Pengaturan Privasi"</li>
             <li>Email ke privacy@travedia.co.id dengan subject "Data Rights Request"</li>
-            <li>Hubungi customer service di +62-XXX-XXXX-XXXX</li>
+            <li>Hubungi customer service di +62-59-4724-2348</li>
             <li>Kami akan respond maksimal dalam 7 hari kerja</li>
         </ul>
     </div>
@@ -337,8 +337,8 @@ const PrivacyPolicyPage: React.FC = () => {
 
     <div class="contact-info">
         <h2>KONTAK DATA PROTECTION OFFICER</h2>
-        <p><strong>Email:</strong> privacy@travedia.co.id</p>
-        <p><strong>Phone:</strong> +62-XXX-XXXX-XXXX</p>
+        <p><strong>Email:</strong> travediaterbitsemesta@gmail.com</p>
+        <p><strong>Phone:</strong> +62-59-4724-2348</p>
         <p><strong>Address:</strong> Jakarta, Indonesia</p>
         <p><strong>Response Time:</strong> Maksimal 7 hari kerja</p>
         <p><strong>Jam Operasional:</strong> Senin - Jumat, 09:00 - 17:00 WIB</p>
@@ -861,7 +861,7 @@ const blob = new Blob([pdfContent], { type: 'text/html' });
                         <li>• Email: privacy@travedia.co.id</li>
                       </ul>
                       <ul className="text-green-700 text-sm space-y-2">
-                        <li>• Customer Service: +62-XXX-XXX</li>
+                        <li>• Customer Service: +62-59-4724-2348</li>
                         <li>• Response time: 7 hari kerja</li>
                       </ul>
                     </div>
@@ -940,7 +940,7 @@ const blob = new Blob([pdfContent], { type: 'text/html' });
                         <Phone className="w-6 h-6" />
                       </div>
                       <h4 className="font-semibold mb-2">Customer Service</h4>
-                      <p className="text-emerald-100">+62 859-4724-2348</p>
+                      <p className="text-emerald-100">+62-59-4724-2348</p>
                       <p className="text-emerald-200 text-sm">Senin-Jumat 09:00-17:00</p>
                     </div>
                     <div className="text-center">
@@ -1095,14 +1095,14 @@ const blob = new Blob([pdfContent], { type: 'text/html' });
                       <Mail className="w-5 h-5 text-emerald-600" />
                     </div>
                     <p className="text-emerald-700 text-sm font-medium">Email Privacy Officer</p>
-                    <p className="text-emerald-600 text-xs">privacy@travedia.co.id</p>
+                    <p className="text-emerald-600 text-xs">travediaterbitsemesta@gmail.com</p>
                   </div>
                   <div className="text-center">
                     <div className="bg-emerald-100 p-3 rounded-lg w-fit mx-auto mb-2">
                       <Phone className="w-5 h-5 text-emerald-600" />
                     </div>
                     <p className="text-emerald-700 text-sm font-medium">Customer Service</p>
-                    <p className="text-emerald-600 text-xs">+62-XXX-XXXX-XXXX</p>
+                    <p className="text-emerald-600 text-xs">+62-59-4724-2348</p>
                   </div>
                   <div className="text-center">
                     <div className="bg-emerald-100 p-3 rounded-lg w-fit mx-auto mb-2">
